@@ -1,0 +1,140 @@
+digital-estore/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/example/digitalestore/
+│   │   │       ├── DigitalEstoreApplication.java
+│   │   │       │
+│   │   │       ├── api/
+│   │   │       │   ├── UserController.java
+│   │   │       │   ├── ProductController.java
+│   │   │       │   ├── CategoryController.java
+│   │   │       │   ├── OrderController.java
+│   │   │       │   ├── PaymentController.java
+│   │   │       │   └── ReviewController.java
+│   │   │       │
+│   │   │       ├── config/
+│   │   │       │   ├── SecurityConfig.java
+│   │   │       │   ├── SwaggerConfig.java
+│   │   │       │   ├── EmailConfig.java
+│   │   │       │   └── AuditConfig.java
+│   │   │       │
+│   │   │       ├── domain/
+│   │   │       │   ├── user/
+│   │   │       │   │   ├── User.java
+│   │   │       │   │   └── UserType.java
+│   │   │       │   ├── product/
+│   │   │       │   │   ├── Product.java
+│   │   │       │   │   ├── ProductTranslation.java
+│   │   │       │   │   └── DigitalProductDetails.java
+│   │   │       │   ├── category/
+│   │   │       │   │   ├── Category.java
+│   │   │       │   │   └── CategoryTranslation.java
+│   │   │       │   ├── order/
+│   │   │       │   │   ├── Order.java
+│   │   │       │   │   ├── OrderItem.java
+│   │   │       │   │   └── OrderStatus.java
+│   │   │       │   ├── payment/
+│   │   │       │   │   ├── Payment.java
+│   │   │       │   │   └── PaymentStatus.java
+│   │   │       │   ├── download/
+│   │   │       │   │   └── DigitalDownload.java
+│   │   │       │   ├── currency/
+│   │   │       │   │   └── Currency.java
+│   │   │       │   └── review/
+│   │   │       │       └── Review.java
+│   │   │       │
+│   │   │       ├── dto/
+│   │   │       │   ├── request/
+│   │   │       │   │   ├── UserRequest.java
+│   │   │       │   │   ├── ProductRequest.java
+│   │   │       │   │   ├── OrderRequest.java
+│   │   │       │   │   └── PaymentRequest.java
+│   │   │       │   └── response/
+│   │   │       │       ├── UserResponse.java
+│   │   │       │       ├── ProductResponse.java
+│   │   │       │       ├── OrderResponse.java
+│   │   │       │       └── ApiResponse.java
+│   │   │       │
+│   │   │       ├── exception/
+│   │   │       │   ├── GlobalExceptionHandler.java
+│   │   │       │   ├── ResourceNotFoundException.java
+│   │   │       │   ├── BusinessException.java
+│   │   │       │   └── ValidationException.java
+│   │   │       │
+│   │   │       ├── repository/
+│   │   │       │   ├── UserRepository.java
+│   │   │       │   ├── ProductRepository.java
+│   │   │       │   ├── CategoryRepository.java
+│   │   │       │   ├── OrderRepository.java
+│   │   │       │   ├── PaymentRepository.java
+│   │   │       │   ├── DownloadRepository.java
+│   │   │       │   └── CurrencyRepository.java
+│   │   │       │
+│   │   │       ├── security/
+│   │   │       │   ├── JwtTokenProvider.java
+│   │   │       │   ├── JwtAuthFilter.java
+│   │   │       │   └── CustomUserDetailsService.java
+│   │   │       │
+│   │   │       ├── service/
+│   │   │       │   ├── user/
+│   │   │       │   │   ├── UserService.java
+│   │   │       │   │   └── UserServiceImpl.java
+│   │   │       │   ├── product/
+│   │   │       │   │   ├── ProductService.java
+│   │   │       │   │   └── ProductServiceImpl.java
+│   │   │       │   ├── order/
+│   │   │       │   │   ├── OrderService.java
+│   │   │       │   │   └── OrderServiceImpl.java
+│   │   │       │   ├── payment/
+│   │   │       │   │   ├── PaymentService.java
+│   │   │       │   │   └── StripePaymentService.java
+│   │   │       │   ├── email/
+│   │   │       │   │   ├── EmailService.java
+│   │   │       │   │   └── EmailServiceImpl.java
+│   │   │       │   └── invoice/
+│   │   │       │       ├── InvoiceService.java
+│   │   │       │       └── PdfInvoiceService.java
+│   │   │       │
+│   │   │       └── util/
+│   │   │           ├── PdfGenerator.java
+│   │   │           ├── DateUtils.java
+│   │   │           └── ValidationUtils.java
+│   │   │
+│   │   └── resources/
+│   │       ├── application.properties
+│   │       ├── application-dev.properties
+│   │       ├── application-prod.properties
+│   │       ├── db/migration/
+│   │       │   ├── V1__initial_schema.sql
+│   │       │   └── V2__sample_data.sql
+│   │       ├── templates/
+│   │       │   ├── email/
+│   │       │   │   ├── order-confirmation.html
+│   │       │   │   └── invoice.html
+│   │       │   └── pdf/
+│   │       │       └── invoice-template.html
+│   │       └── static/
+│   │           ├── css/
+│   │           │   └── styles.css
+│   │           └── images/
+│   │               └── logo.png
+│   │
+│   └── test/
+│       └── java/
+│           └── com/example/digitalestore/
+│               ├── api/
+│               │   ├── UserControllerTest.java
+│               │   ├── ProductControllerTest.java
+│               │   └── OrderControllerTest.java
+│               ├── service/
+│               │   ├── UserServiceTest.java
+│               │   ├── ProductServiceTest.java
+│               │   └── OrderServiceTest.java
+│               └── repository/
+│                   ├── UserRepositoryTest.java
+│                   ├── ProductRepositoryTest.java
+│                   └── OrderRepositoryTest.java
+│
+├── pom.xml
+└── README.md
