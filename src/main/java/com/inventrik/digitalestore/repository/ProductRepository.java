@@ -1,6 +1,6 @@
-package com.example.digitalestore.repository;
+package com.inventrik.digitalestore.repository;
 
-import com.example.digitalestore.domain.product.Product;
+import com.inventrik.digitalestore.domain.product.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

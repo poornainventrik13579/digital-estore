@@ -1,4 +1,4 @@
-package com.example.digitalestore.config;
+package com.inventrik.digitalestore.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

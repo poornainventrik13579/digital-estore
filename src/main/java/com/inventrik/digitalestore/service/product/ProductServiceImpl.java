@@ -1,11 +1,11 @@
-package com.example.digitalestore.service.product;
+package com.inventrik.digitalestore.service.product;
 
-import com.example.digitalestore.domain.product.Product;
-import com.example.digitalestore.dto.request.ProductRequest;
-import com.example.digitalestore.dto.request.ProductUpdateRequest;
-import com.example.digitalestore.dto.response.ProductResponse;
-import com.example.digitalestore.exception.ResourceNotFoundException;
-import com.example.digitalestore.repository.ProductRepository;
+import com.inventrik.digitalestore.domain.product.Product;
+import com.inventrik.digitalestore.dto.request.ProductRequest;
+import com.inventrik.digitalestore.dto.request.ProductUpdateRequest;
+import com.inventrik.digitalestore.dto.response.ProductResponse;
+import com.inventrik.digitalestore.exception.ResourceNotFoundException;
+import com.inventrik.digitalestore.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

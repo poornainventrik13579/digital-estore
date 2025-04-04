@@ -1,4 +1,4 @@
-package com.example.digitalestore.config;
+package com.inventrik.digitalestore.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

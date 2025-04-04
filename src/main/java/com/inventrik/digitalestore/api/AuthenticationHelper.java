@@ -1,4 +1,4 @@
-package com.example.digitalestore.api;
+package com.inventrik.digitalestore.api;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

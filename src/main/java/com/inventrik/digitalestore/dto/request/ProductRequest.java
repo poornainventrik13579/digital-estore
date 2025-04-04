@@ -1,4 +1,4 @@
-package com.example.digitalestore.dto.request;
+package com.inventrik.digitalestore.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

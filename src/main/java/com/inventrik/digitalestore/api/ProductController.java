@@ -1,9 +1,9 @@
-package com.example.digitalestore.api;
+package com.inventrik.digitalestore.api;
 
-import com.example.digitalestore.dto.request.ProductRequest;
-import com.example.digitalestore.dto.request.ProductUpdateRequest;
-import com.example.digitalestore.dto.response.ProductResponse;
-import com.example.digitalestore.service.product.ProductService;
+import com.inventrik.digitalestore.dto.request.ProductRequest;
+import com.inventrik.digitalestore.dto.request.ProductUpdateRequest;
+import com.inventrik.digitalestore.dto.response.ProductResponse;
+import com.inventrik.digitalestore.service.product.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

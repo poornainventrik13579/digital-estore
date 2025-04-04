@@ -1,8 +1,8 @@
-package com.example.digitalestore.service.product;
+package com.inventrik.digitalestore.service.product;
 
-import com.example.digitalestore.dto.request.ProductRequest;
-import com.example.digitalestore.dto.request.ProductUpdateRequest;
-import com.example.digitalestore.dto.response.ProductResponse;
+import com.inventrik.digitalestore.dto.request.ProductRequest;
+import com.inventrik.digitalestore.dto.request.ProductUpdateRequest;
+import com.inventrik.digitalestore.dto.response.ProductResponse;
 
 import java.util.List;
 

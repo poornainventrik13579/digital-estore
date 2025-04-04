@@ -1,4 +1,4 @@
-package com.example.digitalestore.exception;
+package com.inventrik.digitalestore.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

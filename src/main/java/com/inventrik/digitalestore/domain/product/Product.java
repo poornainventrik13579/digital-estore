@@ -1,4 +1,4 @@
-package com.example.digitalestore.domain.product;
+package com.inventrik.digitalestore.domain.product;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
