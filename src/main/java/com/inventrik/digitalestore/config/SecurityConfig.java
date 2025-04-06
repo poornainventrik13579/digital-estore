@@ -23,6 +23,7 @@ public class SecurityConfig {
                 // For development - you might want to secure these in production
                 .requestMatchers("/api/v1/tenants/*/products/**").permitAll()
                 .requestMatchers("/api/v1/tenants/*/users/**").permitAll()
+                .requestMatchers("/api/v1/tenants/*/categories/**").permitAll() // Add this line
                 // Add other security rules as needed
                 .anyRequest().authenticated()
             )
