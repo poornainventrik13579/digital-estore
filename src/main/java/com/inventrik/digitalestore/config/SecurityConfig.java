@@ -18,13 +18,11 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(authorize -> authorize
-                // Permit Swagger UI resources
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                // For development - you might want to secure these in production
                 .requestMatchers("/api/v1/tenants/*/products/**").permitAll()
                 .requestMatchers("/api/v1/tenants/*/users/**").permitAll()
-                .requestMatchers("/api/v1/tenants/*/categories/**").permitAll() // Add this line
-                // Add other security rules as needed
+                .requestMatchers("/api/v1/tenants/*/categories/**").permitAll() 
+                .requestMatchers("/api/v1/tenants/*/orders/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

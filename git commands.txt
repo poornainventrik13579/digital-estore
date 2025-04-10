@@ -1,0 +1,9 @@
+merging two branches // can replace any branch name instead of dev
+
+git checkout dev
+
+git merge "branch that u want to merge"
+
+git push -u origin dev
+
+--------------------------------------------------------------------------------------
