@@ -1,6 +1,5 @@
 package com.inventrik.digitalestore.api;
 
-import com.inventrik.digitalestore.domain.order.OrderStatus;
 import com.inventrik.digitalestore.dto.request.OrderFormRequest;
 import com.inventrik.digitalestore.dto.request.OrderRequest;
 import com.inventrik.digitalestore.dto.request.OrderUpdateRequest;
