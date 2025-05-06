@@ -25,10 +25,13 @@ public class Order {
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
     
+    @Column(name = "user_id")
+    private Long userId;
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
         @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
-        @JoinColumn(name = "user_id", referencedColumnName = "user_id")
+        @JoinColumn(name = "user_id", referencedColumnName = "user_id", insertable = false, updatable = false)
     })
     private User user;
     
@@ -78,21 +81,14 @@ public class Order {
     public void addOrderItem(OrderItem orderItem) {
         orderItems.add(orderItem);
         orderItem.setOrder(this);
+        orderItem.setOrderId(this.orderId);
+        orderItem.setTenantId(this.tenantId);
     }
     
     // Helper method to remove an order item
     public void removeOrderItem(OrderItem orderItem) {
         orderItems.remove(orderItem);
         orderItem.setOrder(null);
-    }
-    
-    // Getter for backward compatibility
-    public Long getUserId() {
-        return user != null ? user.getUserId() : null;
-    }
-    
-    // Setter for backward compatibility
-    public void setUserId(Long userId) {
-        // Implementation handled in service layer
+        orderItem.setOrderId(null);
     }
 }

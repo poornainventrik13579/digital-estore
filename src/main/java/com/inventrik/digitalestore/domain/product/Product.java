@@ -26,6 +26,9 @@ public class Product {
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
     
+    @Column(name = "category_id")
+    private Long categoryId;
+    
     @Column(name = "product_name", nullable = false, length = 100)
     private String productName;
     
@@ -41,7 +44,7 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
         @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
-        @JoinColumn(name = "category_id", referencedColumnName = "category_id")
+        @JoinColumn(name = "category_id", referencedColumnName = "category_id", insertable = false, updatable = false)
     })
     private Category category;
     
@@ -76,11 +79,11 @@ public class Product {
     
     // Getter for backward compatibility
     public Long getCategoryId() {
-        return category != null ? category.getCategoryId() : null;
+        return categoryId;
     }
     
     // Setter for backward compatibility
     public void setCategoryId(Long categoryId) {
-        // Implementation handled in service layer
+        this.categoryId = categoryId;
     }
 }

@@ -3,8 +3,6 @@ package com.inventrik.digitalestore.service.order;
 import com.inventrik.digitalestore.domain.order.Order;
 import com.inventrik.digitalestore.domain.order.OrderItem;
 import com.inventrik.digitalestore.domain.order.OrderStatus;
-import com.inventrik.digitalestore.domain.product.Product;
-import com.inventrik.digitalestore.domain.user.User;
 import com.inventrik.digitalestore.dto.request.OrderItemRequest;
 import com.inventrik.digitalestore.dto.request.OrderRequest;
 import com.inventrik.digitalestore.dto.request.OrderUpdateRequest;
@@ -84,64 +82,73 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderResponse createOrder(Integer tenantId, String username, OrderRequest orderRequest) {
-        // Generate a new order ID (in production, use a better ID generation strategy)
+        // Generate a new order ID
         Long newOrderId = System.currentTimeMillis();
         
-        // Find the user entity
-        User user = userRepository.findByTenantIdAndUserId(tenantId, orderRequest.getUserId())
+        // Verify user exists
+        userRepository.findByTenantIdAndUserId(tenantId, orderRequest.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + orderRequest.getUserId()));
         
         Order order = new Order();
         order.setTenantId(tenantId);
         order.setOrderId(newOrderId);
-        order.setUser(user);
+        order.setUserId(orderRequest.getUserId());
         order.setOrderDate(LocalDateTime.now());
         order.setCurrency(orderRequest.getCurrency());
         order.setTotalAmount(orderRequest.getTotalAmount());
         order.setExchangeRate(orderRequest.getExchangeRate());
         order.setStatus(OrderStatus.PENDING.getDisplayName());
-        // Ensure username is truncated to 2 characters for DB constraints
+        
+        // Ensure username is truncated to 2 characters
         String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
         order.setCreatedBy(truncatedUsername);
         order.setUpdatedBy(truncatedUsername);
         
+        // Save order first to get the ID
+        Order savedOrder = orderRepository.save(order);
+        
         // Set order items
         List<OrderItem> orderItems = new ArrayList<>();
         for (OrderItemRequest itemRequest : orderRequest.getOrderItems()) {
-            // Find the product entity
-            Product product = productRepository.findByTenantIdAndProductId(tenantId, itemRequest.getProductId())
+            // Verify product exists
+            productRepository.findByTenantIdAndProductId(tenantId, itemRequest.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
             
             OrderItem orderItem = new OrderItem();
             orderItem.setTenantId(tenantId);
             orderItem.setOrderId(newOrderId);
-            orderItem.setOrderItemId(System.currentTimeMillis() + orderItems.size()); // Simple unique ID generation
-            orderItem.setProduct(product);
+            orderItem.setOrderItemId(System.currentTimeMillis() + orderItems.size());
+            orderItem.setProductId(itemRequest.getProductId());
             orderItem.setPriceAtPurchase(itemRequest.getPriceAtPurchase());
             orderItem.setLicenseKey(itemRequest.getLicenseKey());
-            orderItem.setStatus("0"); // Active status
+            orderItem.setStatus("0"); // Active
             orderItem.setCreatedBy(truncatedUsername);
             orderItem.setUpdatedBy(truncatedUsername);
-            orderItem.setOrder(order);
+            orderItem.setCreated(LocalDateTime.now());
+            orderItem.setUpdated(LocalDateTime.now());
             orderItems.add(orderItem);
         }
         
-        order.setOrderItems(orderItems);
+        // Add items to the order
+        for (OrderItem item : orderItems) {
+            savedOrder.getOrderItems().add(item);
+            item.setOrder(savedOrder);
+        }
         
-        Order savedOrder = orderRepository.save(order);
+        // Save again with items
+        savedOrder = orderRepository.save(savedOrder);
         
         return mapToDTO(savedOrder);
     }
     
+    // Rest of the methods remain the same...
     @Override
     @Transactional
     public OrderResponse updateOrder(Integer tenantId, Long orderId, String username, OrderUpdateRequest updateRequest) {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         
-        // Only allow updating the status
         if (updateRequest.getStatus() != null) {
-            // Validate status is a valid OrderStatus
             try {
                 OrderStatus.fromDisplayName(updateRequest.getStatus());
                 order.setStatus(updateRequest.getStatus());
@@ -150,7 +157,6 @@ public class OrderServiceImpl implements OrderService {
             }
         }
         
-        // Ensure username is truncated to 2 characters for DB constraints
         String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());
@@ -190,7 +196,6 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         
-        // Check if order can be completed
         if (OrderStatus.CANCELLED.getDisplayName().equals(order.getStatus()) || 
             OrderStatus.REFUNDED.getDisplayName().equals(order.getStatus())) {
             throw new BusinessException("Cannot complete order that is cancelled or refunded");
@@ -198,7 +203,6 @@ public class OrderServiceImpl implements OrderService {
         
         order.setStatus(OrderStatus.COMPLETED.getDisplayName());
         
-        // Ensure username is truncated to 2 characters for DB constraints
         String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());
@@ -214,7 +218,6 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         
-        // Check if order can be cancelled
         if (OrderStatus.COMPLETED.getDisplayName().equals(order.getStatus()) || 
             OrderStatus.REFUNDED.getDisplayName().equals(order.getStatus()) ||
             OrderStatus.PARTIALLY_REFUNDED.getDisplayName().equals(order.getStatus())) {
@@ -223,7 +226,6 @@ public class OrderServiceImpl implements OrderService {
         
         order.setStatus(OrderStatus.CANCELLED.getDisplayName());
         
-        // Ensure username is truncated to 2 characters for DB constraints
         String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());
@@ -239,14 +241,12 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         
-        // Check if order can be refunded
         if (!OrderStatus.COMPLETED.getDisplayName().equals(order.getStatus())) {
             throw new BusinessException("Only completed orders can be refunded");
         }
         
         order.setStatus(OrderStatus.REFUNDED.getDisplayName());
         
-        // Ensure username is truncated to 2 characters for DB constraints
         String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());

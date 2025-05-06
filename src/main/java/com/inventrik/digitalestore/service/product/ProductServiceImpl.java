@@ -1,6 +1,5 @@
 package com.inventrik.digitalestore.service.product;
 
-import com.inventrik.digitalestore.domain.category.Category;
 import com.inventrik.digitalestore.domain.product.Product;
 import com.inventrik.digitalestore.dto.request.ProductRequest;
 import com.inventrik.digitalestore.dto.request.ProductUpdateRequest;
@@ -56,7 +55,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductResponse createProduct(Integer tenantId, String username, ProductRequest productRequest) {
-        // Generate a new product ID (in production, use a better ID generation strategy)
+        // Generate a new product ID
         Long newProductId = System.currentTimeMillis();
         
         Product product = new Product();
@@ -69,14 +68,17 @@ public class ProductServiceImpl implements ProductService {
         
         // Set category if provided
         if (productRequest.getCategoryId() != null) {
-            Category category = categoryRepository.findByTenantIdAndCategoryId(tenantId, productRequest.getCategoryId())
+            // First verify the category exists
+            categoryRepository.findByTenantIdAndCategoryId(tenantId, productRequest.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + productRequest.getCategoryId()));
-            product.setCategory(category);
+            
+            // Set the category ID directly
+            product.setCategoryId(productRequest.getCategoryId());
         }
         
         product.setStatus("0"); // Active status
-        product.setCreatedBy(username);
-        product.setUpdatedBy(username);
+        product.setCreatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        product.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
         product.setCreated(LocalDateTime.now());
         product.setUpdated(LocalDateTime.now());
         
@@ -104,15 +106,18 @@ public class ProductServiceImpl implements ProductService {
             product.setDefaultCurrency(updateRequest.getDefaultCurrency());
         }
         if (updateRequest.getCategoryId() != null) {
-            Category category = categoryRepository.findByTenantIdAndCategoryId(tenantId, updateRequest.getCategoryId())
+            // First verify the category exists
+            categoryRepository.findByTenantIdAndCategoryId(tenantId, updateRequest.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + updateRequest.getCategoryId()));
-            product.setCategory(category);
+            
+            // Set the category ID directly
+            product.setCategoryId(updateRequest.getCategoryId());
         }
         if (updateRequest.getStatus() != null) {
             product.setStatus(updateRequest.getStatus());
         }
         
-        product.setUpdatedBy(username);
+        product.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
         product.setUpdated(LocalDateTime.now());
         
         Product updatedProduct = productRepository.save(product);
@@ -123,7 +128,6 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void deleteProduct(Integer tenantId, Long productId) {
-        // Check if product exists
         if (!productRepository.findByTenantIdAndProductId(tenantId, productId).isPresent()) {
             throw new ResourceNotFoundException("Product not found with id: " + productId);
         }

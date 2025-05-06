@@ -24,6 +24,12 @@ public class OrderItem {
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
     
+    @Column(name = "order_id", nullable = false)
+    private Long orderId;
+    
+    @Column(name = "product_id", nullable = false)
+    private Long productId;
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
         @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
@@ -32,13 +38,10 @@ public class OrderItem {
     @ToString.Exclude
     private Order order;
     
-    @Column(name = "order_id", nullable = false)
-    private Long orderId;
-    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
         @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
-        @JoinColumn(name = "product_id", referencedColumnName = "product_id")
+        @JoinColumn(name = "product_id", referencedColumnName = "product_id", insertable = false, updatable = false)
     })
     @ToString.Exclude
     private Product product;
@@ -73,15 +76,5 @@ public class OrderItem {
     @PreUpdate
     protected void onUpdate() {
         updated = LocalDateTime.now();
-    }
-    
-    // Getter for backward compatibility
-    public Long getProductId() {
-        return product != null ? product.getProductId() : null;
-    }
-    
-    // Setter for backward compatibility
-    public void setProductId(Long productId) {
-        // Implementation handled in service layer
     }
 }
