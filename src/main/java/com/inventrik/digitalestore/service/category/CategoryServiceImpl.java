@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,7 +51,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public CategoryResponse createCategory(Integer tenantId, String username, CategoryRequest categoryRequest) {
-        // Generate a new category ID (in production, use a better ID generation strategy)
+        // Generate a new category ID
         Long newCategoryId = System.currentTimeMillis();
         
         Category category = new Category();
@@ -59,6 +60,7 @@ public class CategoryServiceImpl implements CategoryService {
         category.setCategoryName(categoryRequest.getCategoryName());
         category.setDescription(categoryRequest.getDescription());
         category.setStatus("0"); // Active status
+        category.setProducts(new ArrayList<>()); // Initialize empty products list
         
         // Ensure username is truncated to 2 characters as per DB schema
         category.setCreatedBy(username.length() > 2 ? username.substring(0, 2) : username);

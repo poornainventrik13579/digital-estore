@@ -3,6 +3,8 @@ package com.inventrik.digitalestore.service.order;
 import com.inventrik.digitalestore.domain.order.Order;
 import com.inventrik.digitalestore.domain.order.OrderItem;
 import com.inventrik.digitalestore.domain.order.OrderStatus;
+import com.inventrik.digitalestore.domain.product.Product;
+import com.inventrik.digitalestore.domain.user.User;
 import com.inventrik.digitalestore.dto.request.OrderItemRequest;
 import com.inventrik.digitalestore.dto.request.OrderRequest;
 import com.inventrik.digitalestore.dto.request.OrderUpdateRequest;
@@ -11,6 +13,8 @@ import com.inventrik.digitalestore.dto.response.OrderResponse;
 import com.inventrik.digitalestore.exception.BusinessException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.OrderRepository;
+import com.inventrik.digitalestore.repository.ProductRepository;
+import com.inventrik.digitalestore.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +29,8 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements OrderService {
     
     private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
     
     // Utility method to convert Order entity to OrderResponse DTO
     private OrderResponse mapToDTO(Order order) {
@@ -81,10 +87,14 @@ public class OrderServiceImpl implements OrderService {
         // Generate a new order ID (in production, use a better ID generation strategy)
         Long newOrderId = System.currentTimeMillis();
         
+        // Find the user entity
+        User user = userRepository.findByTenantIdAndUserId(tenantId, orderRequest.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + orderRequest.getUserId()));
+        
         Order order = new Order();
         order.setTenantId(tenantId);
         order.setOrderId(newOrderId);
-        order.setUserId(orderRequest.getUserId());
+        order.setUser(user);
         order.setOrderDate(LocalDateTime.now());
         order.setCurrency(orderRequest.getCurrency());
         order.setTotalAmount(orderRequest.getTotalAmount());
@@ -98,11 +108,15 @@ public class OrderServiceImpl implements OrderService {
         // Set order items
         List<OrderItem> orderItems = new ArrayList<>();
         for (OrderItemRequest itemRequest : orderRequest.getOrderItems()) {
+            // Find the product entity
+            Product product = productRepository.findByTenantIdAndProductId(tenantId, itemRequest.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
+            
             OrderItem orderItem = new OrderItem();
             orderItem.setTenantId(tenantId);
             orderItem.setOrderId(newOrderId);
             orderItem.setOrderItemId(System.currentTimeMillis() + orderItems.size()); // Simple unique ID generation
-            orderItem.setProductId(itemRequest.getProductId());
+            orderItem.setProduct(product);
             orderItem.setPriceAtPurchase(itemRequest.getPriceAtPurchase());
             orderItem.setLicenseKey(itemRequest.getLicenseKey());
             orderItem.setStatus("0"); // Active status

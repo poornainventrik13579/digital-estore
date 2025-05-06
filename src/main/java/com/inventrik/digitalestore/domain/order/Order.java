@@ -1,5 +1,6 @@
 package com.inventrik.digitalestore.domain.order;
 
+import com.inventrik.digitalestore.domain.user.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,8 +25,12 @@ public class Order {
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
     
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumns({
+        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
+        @JoinColumn(name = "user_id", referencedColumnName = "user_id")
+    })
+    private User user;
     
     @Column(name = "order_date", nullable = false)
     private LocalDateTime orderDate;
@@ -79,5 +84,15 @@ public class Order {
     public void removeOrderItem(OrderItem orderItem) {
         orderItems.remove(orderItem);
         orderItem.setOrder(null);
+    }
+    
+    // Getter for backward compatibility
+    public Long getUserId() {
+        return user != null ? user.getUserId() : null;
+    }
+    
+    // Setter for backward compatibility
+    public void setUserId(Long userId) {
+        // Implementation handled in service layer
     }
 }

@@ -1,11 +1,14 @@
 package com.inventrik.digitalestore.domain.category;
 
+import com.inventrik.digitalestore.domain.product.Product;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "Categories")
@@ -42,6 +45,9 @@ public class Category {
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
     
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+    private List<Product> products = new ArrayList<>();
+    
     @PrePersist
     protected void onCreate() {
         created = LocalDateTime.now();
@@ -51,5 +57,16 @@ public class Category {
     @PreUpdate
     protected void onUpdate() {
         updated = LocalDateTime.now();
+    }
+    
+    // Helper methods for managing bidirectional relationship
+    public void addProduct(Product product) {
+        products.add(product);
+        product.setCategory(this);
+    }
+    
+    public void removeProduct(Product product) {
+        products.remove(product);
+        product.setCategory(null);
     }
 }

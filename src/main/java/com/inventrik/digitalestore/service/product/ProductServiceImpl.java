@@ -1,10 +1,12 @@
 package com.inventrik.digitalestore.service.product;
 
+import com.inventrik.digitalestore.domain.category.Category;
 import com.inventrik.digitalestore.domain.product.Product;
 import com.inventrik.digitalestore.dto.request.ProductRequest;
 import com.inventrik.digitalestore.dto.request.ProductUpdateRequest;
 import com.inventrik.digitalestore.dto.response.ProductResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
+import com.inventrik.digitalestore.repository.CategoryRepository;
 import com.inventrik.digitalestore.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
     
     // Utility method to convert Entity to DTO
     private ProductResponse mapToDTO(Product product) {
@@ -63,7 +66,14 @@ public class ProductServiceImpl implements ProductService {
         product.setDescription(productRequest.getDescription());
         product.setDefaultPrice(productRequest.getDefaultPrice());
         product.setDefaultCurrency(productRequest.getDefaultCurrency());
-        product.setCategoryId(productRequest.getCategoryId());
+        
+        // Set category if provided
+        if (productRequest.getCategoryId() != null) {
+            Category category = categoryRepository.findByTenantIdAndCategoryId(tenantId, productRequest.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + productRequest.getCategoryId()));
+            product.setCategory(category);
+        }
+        
         product.setStatus("0"); // Active status
         product.setCreatedBy(username);
         product.setUpdatedBy(username);
@@ -94,7 +104,9 @@ public class ProductServiceImpl implements ProductService {
             product.setDefaultCurrency(updateRequest.getDefaultCurrency());
         }
         if (updateRequest.getCategoryId() != null) {
-            product.setCategoryId(updateRequest.getCategoryId());
+            Category category = categoryRepository.findByTenantIdAndCategoryId(tenantId, updateRequest.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + updateRequest.getCategoryId()));
+            product.setCategory(category);
         }
         if (updateRequest.getStatus() != null) {
             product.setStatus(updateRequest.getStatus());

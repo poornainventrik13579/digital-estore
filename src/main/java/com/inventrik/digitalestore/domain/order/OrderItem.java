@@ -1,5 +1,6 @@
 package com.inventrik.digitalestore.domain.order;
 
+import com.inventrik.digitalestore.domain.product.Product;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,8 +35,13 @@ public class OrderItem {
     @Column(name = "order_id", nullable = false)
     private Long orderId;
     
-    @Column(name = "product_id", nullable = false)
-    private Long productId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumns({
+        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
+        @JoinColumn(name = "product_id", referencedColumnName = "product_id")
+    })
+    @ToString.Exclude
+    private Product product;
     
     @Column(name = "price_at_purchase", nullable = false, precision = 10, scale = 2)
     private BigDecimal priceAtPurchase;
@@ -67,5 +73,15 @@ public class OrderItem {
     @PreUpdate
     protected void onUpdate() {
         updated = LocalDateTime.now();
+    }
+    
+    // Getter for backward compatibility
+    public Long getProductId() {
+        return product != null ? product.getProductId() : null;
+    }
+    
+    // Setter for backward compatibility
+    public void setProductId(Long productId) {
+        // Implementation handled in service layer
     }
 }
