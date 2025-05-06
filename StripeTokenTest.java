@@ -48,12 +48,12 @@ public class StripeTokenTest {
             }
             
             System.out.println("Warning: No API key found");
-            return "sk_test_51PI0NQPuQM8qgxPsmQNPHUKTCl1yJuxeLI5PB3zVtHSuASgWoB43Qwf6YTwCg9L9tWE7bDSOVyBe0zCmg1uwPTG400RnSGdwp9";
+            return "YOUR_STRIPE_TEST_KEY";
         } catch (IOException e) {
             System.out.println("Could not load properties file: " + e.getMessage());
             System.out.println("Using environment variable instead");
             String apiKey = System.getenv("STRIPE_API_KEY");
-            return apiKey != null ? apiKey : "sk_test_51PI0NQPuQM8qgxPsmQNPHUKTCl1yJuxeLI5PB3zVtHSuASgWoB43Qwf6YTwCg9L9tWE7bDSOVyBe0zCmg1uwPTG400RnSGdwp9";
+            return apiKey != null ? apiKey : "YOUR_STRIPE_TEST_KEY";
         }
     }
     
