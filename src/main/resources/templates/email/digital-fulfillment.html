@@ -100,7 +100,7 @@
                         <div class="license-key" th:text="${item.licenseKey}">XXXX-YYYY-ZZZZ-AAAA</div>
                     </p>
                     <p style="text-align: center;">
-                        <a th:href="${@environment.getProperty('app.base-url') + '/download/' + item.orderItemId}" class="btn">Download Now</a>
+                        <a th:href="${baseUrl + '/download/' + item.orderItemId}" class="btn">Download Now</a>
                     </p>
                 </div>
             </div>
@@ -108,7 +108,7 @@
             <p>You can also access all your purchases anytime by logging into your account:</p>
             
             <p style="text-align: center; margin: 20px 0;">
-                <a th:href="${@environment.getProperty('app.base-url') + '/my-account/downloads'}" class="btn" style="background-color: #3498db;">View My Downloads</a>
+                <a th:href="${baseUrl + '/my-account/downloads'}" class="btn">View My Downloads</a>
             </p>
             
             <div class="tech-requirements">
