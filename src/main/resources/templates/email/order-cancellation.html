@@ -1,0 +1,94 @@
+<!-- src/main/resources/templates/email/order-cancellation.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Cancellation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+        }
+        .header {
+            background-color: #e74c3c;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+        }
+        .order-details {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Cancellation</h1>
+        </div>
+        <div class="content">
+            <p>Dear <span th:text="${user.firstName != null ? user.firstName : ''} + ' ' + ${user.lastName != null ? user.lastName : 'Customer'}">Customer</span>,</p>
+            
+            <p>We're writing to confirm that your order has been cancelled as requested.</p>
+            
+            <div class="order-details">
+                <h3>Order Information</h3>
+                <p><strong>Order Number:</strong> <span th:text="${order.orderId}">12345</span></p>
+                <p><strong>Order Date:</strong> <span th:text="${#temporals.format(order.orderDate, 'dd-MM-yyyy HH:mm')}">01-01-2023 12:00</span></p>
+                <p><strong>Cancellation Date:</strong> <span th:text="${#temporals.format(order.updated, 'dd-MM-yyyy HH:mm')}">01-01-2023 14:30</span></p>
+            </div>
+            
+            <p>If you've been charged for this order, a refund will be processed within the next 5-7 business days, depending on your payment method and financial institution.</p>
+            
+            <p>If you cancelled this order by mistake or would like to place a new order, please visit our website or contact our customer service team.</p>
+            
+            <p style="text-align: center; margin: 30px 0;">
+                <a href="https://yourdomain.com/shop" class="btn">Continue Shopping</a>
+            </p>
+            
+            <p>We apologize for any inconvenience and thank you for your understanding.</p>
+            
+            <p>
+                Best regards,<br>
+                The Digital E-Store Team
+            </p>
+        </div>
+        <div class="footer">
+            <p>© 2025 Digital E-Store. All rights reserved.</p>
+            <p>This email was sent to <span th:text="${user.email}">customer@example.com</span></p>
+            <p>
+                <small>Please do not reply to this email. If you need assistance, please contact our customer support.</small>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

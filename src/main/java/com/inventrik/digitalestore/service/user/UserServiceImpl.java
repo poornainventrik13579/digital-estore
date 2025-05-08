@@ -7,6 +7,8 @@ import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.exception.BusinessException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.UserRepository;
+import com.inventrik.digitalestore.service.notification.EmailNotificationService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,8 @@ public class UserServiceImpl implements UserService {
     
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    
+    private final EmailNotificationService emailNotificationService;
+
     // Utility method to convert Entity to DTO
     private UserResponse mapToDTO(User user) {
         return new UserResponse(
@@ -119,6 +122,7 @@ public class UserServiceImpl implements UserService {
         user.setUpdated(LocalDateTime.now());
         
         User savedUser = userRepository.save(user);
+        emailNotificationService.sendWelcomeEmail(savedUser);
         
         return mapToDTO(savedUser);
     }

@@ -8,12 +8,14 @@ import com.inventrik.digitalestore.dto.request.OrderRequest;
 import com.inventrik.digitalestore.dto.request.OrderUpdateRequest;
 import com.inventrik.digitalestore.dto.response.OrderItemResponse;
 import com.inventrik.digitalestore.dto.response.OrderResponse;
+import com.inventrik.digitalestore.event.OrderStatusChangeEvent;
 import com.inventrik.digitalestore.exception.BusinessException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.OrderRepository;
 import com.inventrik.digitalestore.repository.ProductRepository;
 import com.inventrik.digitalestore.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final ApplicationEventPublisher eventPublisher;
     
     // Utility method to convert Order entity to OrderResponse DTO
     private OrderResponse mapToDTO(Order order) {
@@ -138,15 +141,19 @@ public class OrderServiceImpl implements OrderService {
         // Save again with items
         savedOrder = orderRepository.save(savedOrder);
         
+        // Publish order created event (optional)
+        eventPublisher.publishEvent(new OrderStatusChangeEvent(savedOrder, null, savedOrder.getStatus()));
+        
         return mapToDTO(savedOrder);
     }
     
-    // Rest of the methods remain the same...
     @Override
     @Transactional
     public OrderResponse updateOrder(Integer tenantId, Long orderId, String username, OrderUpdateRequest updateRequest) {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        
+        String oldStatus = order.getStatus();
         
         if (updateRequest.getStatus() != null) {
             try {
@@ -162,6 +169,11 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdated(LocalDateTime.now());
         
         Order updatedOrder = orderRepository.save(order);
+        
+        // If status has changed, publish an event
+        if (!oldStatus.equals(updatedOrder.getStatus())) {
+            eventPublisher.publishEvent(new OrderStatusChangeEvent(updatedOrder, oldStatus, updatedOrder.getStatus()));
+        }
         
         return mapToDTO(updatedOrder);
     }
@@ -201,6 +213,7 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("Cannot complete order that is cancelled or refunded");
         }
         
+        String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.COMPLETED.getDisplayName());
         
         String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
@@ -208,6 +221,9 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdated(LocalDateTime.now());
         
         Order updatedOrder = orderRepository.save(order);
+        
+        // Publish status change event
+        eventPublisher.publishEvent(new OrderStatusChangeEvent(updatedOrder, oldStatus, updatedOrder.getStatus()));
         
         return mapToDTO(updatedOrder);
     }
@@ -224,6 +240,7 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("Cannot cancel order that is completed or refunded");
         }
         
+        String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.CANCELLED.getDisplayName());
         
         String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
@@ -231,6 +248,9 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdated(LocalDateTime.now());
         
         Order updatedOrder = orderRepository.save(order);
+        
+        // Publish status change event
+        eventPublisher.publishEvent(new OrderStatusChangeEvent(updatedOrder, oldStatus, updatedOrder.getStatus()));
         
         return mapToDTO(updatedOrder);
     }
@@ -245,6 +265,7 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("Only completed orders can be refunded");
         }
         
+        String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.REFUNDED.getDisplayName());
         
         String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
@@ -252,6 +273,9 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdated(LocalDateTime.now());
         
         Order updatedOrder = orderRepository.save(order);
+        
+        // Publish status change event
+        eventPublisher.publishEvent(new OrderStatusChangeEvent(updatedOrder, oldStatus, updatedOrder.getStatus()));
         
         return mapToDTO(updatedOrder);
     }

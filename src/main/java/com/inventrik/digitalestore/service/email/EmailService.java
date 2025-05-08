@@ -1,3 +1,4 @@
+// Update src/main/java/com/inventrik/digitalestore/service/email/EmailService.java
 package com.inventrik.digitalestore.service.email;
 
 import com.inventrik.digitalestore.domain.order.Order;
@@ -10,4 +11,6 @@ public interface EmailService {
     void sendRefundNotification(Order order, Payment payment, User user);
     void sendAccountCreationConfirmation(User user);
     void sendPasswordResetLink(User user, String resetToken);
+    // Add new method for digital product access
+    void sendDigitalProductAccessEmail(Order order, User user);
 }
