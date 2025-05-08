@@ -34,6 +34,9 @@ public class EmailServiceImpl implements EmailService {
     
     @Value("${email.sender-name}")
     private String senderName;
+    
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
 
     @Override
     public void sendOrderConfirmationWithInvoice(Order order, User user, byte[] invoicePdf) {
@@ -155,11 +158,38 @@ public class EmailServiceImpl implements EmailService {
         }
     }
     
+    @Override
+    public void sendDigitalProductAccessEmail(Order order, User user) {
+        try {
+            // Prepare email context
+            Map<String, Object> templateModel = new HashMap<>();
+            templateModel.put("order", order);
+            templateModel.put("user", user);
+            templateModel.put("orderItems", order.getOrderItems());
+            
+            // Send email
+            sendEmail(
+                user.getEmail(),
+                "Your Digital Purchase is Ready - Order #" + order.getOrderId(),
+                "email/digital-fulfillment",
+                templateModel
+            );
+            
+            log.info("Digital product access email sent to {} for order {}", user.getEmail(), order.getOrderId());
+        } catch (Exception e) {
+            log.error("Failed to send digital product access email: {}", e.getMessage(), e);
+            throw new EmailSendException("Failed to send digital product access email", e);
+        }
+    }
+    
     /**
      * Helper method to send a simple email
      */
     private void sendEmail(String to, String subject, String templateName, Map<String, Object> templateModel) 
             throws MessagingException, UnsupportedEncodingException {
+        
+        // Add baseUrl to template model
+        templateModel.put("baseUrl", baseUrl);
         
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -188,6 +218,9 @@ public class EmailServiceImpl implements EmailService {
             String attachmentFilename,
             byte[] attachmentData) throws MessagingException, UnsupportedEncodingException {
         
+        // Add baseUrl to template model
+        templateModel.put("baseUrl", baseUrl);
+        
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         
@@ -205,28 +238,5 @@ public class EmailServiceImpl implements EmailService {
         helper.addAttachment(attachmentFilename, new ByteArrayResource(attachmentData));
         
         emailSender.send(message);
-    }
-    @Override
-    public void sendDigitalProductAccessEmail(Order order, User user) {
-        try {
-            // Prepare email context
-            Map<String, Object> templateModel = new HashMap<>();
-            templateModel.put("order", order);
-            templateModel.put("user", user);
-            templateModel.put("orderItems", order.getOrderItems());
-            
-            // Send email
-            sendEmail(
-                user.getEmail(),
-                "Your Digital Purchase is Ready - Order #" + order.getOrderId(),
-                "email/digital-fulfillment",
-                templateModel
-            );
-            
-            log.info("Digital product access email sent to {} for order {}", user.getEmail(), order.getOrderId());
-        } catch (Exception e) {
-            log.error("Failed to send digital product access email: {}", e.getMessage(), e);
-            throw new EmailSendException("Failed to send digital product access email", e);
-        }
     }
 }

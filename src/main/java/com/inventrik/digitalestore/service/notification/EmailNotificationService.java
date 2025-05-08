@@ -82,6 +82,7 @@ public class EmailNotificationService {
         // Create a context for the digital-fulfillment.html template
         // with order and user information
         // This is a placeholder - the actual implementation would be in EmailServiceImpl
+        emailService.sendDigitalProductAccessEmail(order, user);
     }
     
     /**

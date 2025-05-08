@@ -1,4 +1,4 @@
-<!-- src/main/resources/templates/email/order-cancellation.html -->
+<!-- order-cancellation.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -72,7 +72,7 @@
             <p>If you cancelled this order by mistake or would like to place a new order, please visit our website or contact our customer service team.</p>
             
             <p style="text-align: center; margin: 30px 0;">
-                <a href="https://yourdomain.com/shop" class="btn">Continue Shopping</a>
+                <a th:href="${@environment.getProperty('app.base-url') + '/shop'}" class="btn">Continue Shopping</a>
             </p>
             
             <p>We apologize for any inconvenience and thank you for your understanding.</p>

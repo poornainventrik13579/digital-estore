@@ -23,6 +23,7 @@ import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeObject;
 import com.stripe.net.Webhook;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -354,6 +355,17 @@ public class StripePaymentService implements PaymentService {
                 
                 Payment updatedPayment = paymentRepository.save(payment);
                 
+                // Send refund notification email
+                userRepository.findByTenantIdAndUserId(tenantId, order.getUserId()).ifPresent(user -> {
+                    try {
+                        emailService.sendRefundNotification(order, updatedPayment, user);
+                        log.info("Refund notification email sent for payment {}", paymentId);
+                    } catch (Exception e) {
+                        log.error("Failed to send refund notification email: {}", e.getMessage(), e);
+                        // Don't throw exception here to avoid disrupting the refund process
+                    }
+                });
+                
                 // Log payment refund
                 paymentEventLogger.logPaymentRefund(updatedPayment, username);
                 
@@ -571,7 +583,7 @@ public class StripePaymentService implements PaymentService {
                     "webhook"
                 );
                 
-                // Update the order status
+                // Update the order status and send email notification
                 orderRepository.findByTenantIdAndOrderId(payment.getTenantId(), payment.getOrderId()).ifPresent(order -> {
                     if (PaymentStatus.REFUNDED.getDisplayName().equals(payment.getStatus())) {
                         order.setStatus("Refunded");
@@ -580,7 +592,17 @@ public class StripePaymentService implements PaymentService {
                     }
                     order.setUpdated(LocalDateTime.now());
                     order.setUpdatedBy("wh"); // webhook
-                    orderRepository.save(order);
+                    Order savedOrder = orderRepository.save(order);
+                    
+                    // Send refund notification email
+                    userRepository.findByTenantIdAndUserId(payment.getTenantId(), order.getUserId()).ifPresent(user -> {
+                        try {
+                            emailService.sendRefundNotification(savedOrder, updatedPayment, user);
+                            log.info("Refund notification email sent via webhook for order {}", savedOrder.getOrderId());
+                        } catch (Exception e) {
+                            log.error("Failed to send refund notification email: {}", e.getMessage(), e);
+                        }
+                    });
                 });
             });
         } catch (StripeException e) {
