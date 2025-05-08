@@ -11,6 +11,9 @@ import com.inventrik.digitalestore.exception.payment.PaymentProcessingException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.OrderRepository;
 import com.inventrik.digitalestore.repository.PaymentRepository;
+import com.inventrik.digitalestore.repository.UserRepository;
+import com.inventrik.digitalestore.service.email.EmailService;
+import com.inventrik.digitalestore.service.invoice.InvoiceService;
 import com.inventrik.digitalestore.service.logging.PaymentEventLogger;
 import com.inventrik.digitalestore.service.transaction.TransactionCoordinatorService;
 import com.stripe.exception.SignatureVerificationException;
@@ -43,6 +46,10 @@ public class StripePaymentService implements PaymentService {
     private final PaymentEventLogger paymentEventLogger;
     private final IdempotencyKeyService idempotencyKeyService;
     
+    private final EmailService emailService;
+    private final InvoiceService invoiceService;
+    private final UserRepository userRepository;
+
     private PaymentResponse mapToDTO(Payment payment) {
         return new PaymentResponse(
             payment.getPaymentId(),
@@ -205,16 +212,27 @@ public class StripePaymentService implements PaymentService {
                     order.setStatus("Processing");
                     order.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
                     order.setUpdated(LocalDateTime.now());
-                    orderRepository.save(order);
+                    Order savedOrder = orderRepository.save(order);
+                    
+                    // Generate invoice and send email
+                    userRepository.findByTenantIdAndUserId(tenantId, savedOrder.getUserId()).ifPresent(user -> {
+                        try {
+                            // Generate invoice PDF
+                            byte[] invoicePdf = invoiceService.generateInvoice(savedOrder, user);
+                            
+                            // Store invoice for future reference
+                            invoiceService.storeInvoice(savedOrder, invoicePdf);
+                            
+                            // Send confirmation email with invoice attachment
+                            emailService.sendOrderConfirmationWithInvoice(savedOrder, user, invoicePdf);
+                        } catch (Exception e) {
+                            log.error("Failed to generate invoice or send email for order {}: {}", 
+                                    savedOrder.getOrderId(), e.getMessage(), e);
+                        }
+                    });
                     
                     // Log successful payment confirmation
                     paymentEventLogger.logPaymentConfirmation(payment, transactionId, username);
-                } else if ("requires_action".equals(paymentIntent.getStatus()) || 
-                           "requires_capture".equals(paymentIntent.getStatus())) {
-                    payment.setStatus(PaymentStatus.PROCESSING.getDisplayName());
-                    
-                    // Log payment processing
-                    paymentEventLogger.logPaymentStatusChange(payment, oldStatus, payment.getStatus(), username);
                 } else {
                     // Handle other statuses
                     payment.setStatus(PaymentStatus.PROCESSING.getDisplayName());
@@ -470,7 +488,26 @@ public class StripePaymentService implements PaymentService {
                     order.setStatus("Processing");
                     order.setUpdated(LocalDateTime.now());
                     order.setUpdatedBy("wh"); // webhook
-                    orderRepository.save(order);
+                    Order savedOrder = orderRepository.save(order);
+                    
+                    // Send order confirmation email with invoice
+                    userRepository.findByTenantIdAndUserId(order.getTenantId(), order.getUserId()).ifPresent(user -> {
+                        try {
+                            // Generate invoice PDF
+                            byte[] invoicePdf = invoiceService.generateInvoice(savedOrder, user);
+                            
+                            // Store invoice for future reference
+                            invoiceService.storeInvoice(savedOrder, invoicePdf);
+                            
+                            // Send confirmation email with invoice attachment
+                            emailService.sendOrderConfirmationWithInvoice(savedOrder, user, invoicePdf);
+                            
+                            log.info("Order confirmation email sent for order {}", savedOrder.getOrderId());
+                        } catch (Exception e) {
+                            log.error("Failed to generate invoice or send email for order {}: {}", 
+                                    savedOrder.getOrderId(), e.getMessage(), e);
+                        }
+                    });
                 }
             });
         });
