@@ -43,7 +43,6 @@ public class OrderItem {
         @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
         @JoinColumn(name = "product_id", referencedColumnName = "product_id", insertable = false, updatable = false)
     })
-    @ToString.Exclude
     private Product product;
     
     @Column(name = "price_at_purchase", nullable = false, precision = 10, scale = 2)
