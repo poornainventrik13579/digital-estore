@@ -24,6 +24,8 @@ public class ResourceServerConfig {
                                 "/swagger-resources/**", "/webjars/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/webhooks/stripe").permitAll()
+                // Add this line to permit access to common static resources
+                .requestMatchers("/", "/favicon.ico", "/css/**", "/js/**", "/images/**").permitAll()
                 // Protected endpoints
                 .requestMatchers("/api/v1/tenants/*/products/**").hasAuthority("SCOPE_read")
                 .requestMatchers("/api/v1/tenants/*/users/**").hasAuthority("SCOPE_read") 
