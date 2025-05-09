@@ -239,4 +239,28 @@ public class EmailServiceImpl implements EmailService {
         
         emailSender.send(message);
     }
+    @Override
+    public void sendPaymentFailureNotification(Order order, Payment payment, User user, String failureReason) {
+        try {
+            // Prepare email context
+            Map<String, Object> templateModel = new HashMap<>();
+            templateModel.put("order", order);
+            templateModel.put("payment", payment);
+            templateModel.put("user", user);
+            templateModel.put("failureReason", failureReason);
+            
+            // Send email
+            sendEmail(
+                user.getEmail(),
+                "Payment Failed - Order #" + order.getOrderId(),
+                "email/payment-failure",
+                templateModel
+            );
+            
+            log.info("Payment failure email sent to {} for order {}", user.getEmail(), order.getOrderId());
+        } catch (Exception e) {
+            log.error("Failed to send payment failure email for order {}: {}", order.getOrderId(), e.getMessage(), e);
+            throw new EmailSendException("Failed to send payment failure email", e);
+        }
+    }
 }

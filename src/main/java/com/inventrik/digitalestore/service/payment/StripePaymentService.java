@@ -2,6 +2,7 @@ package com.inventrik.digitalestore.service.payment;
 
 import com.inventrik.digitalestore.config.StripeConfig;
 import com.inventrik.digitalestore.domain.order.Order;
+import com.inventrik.digitalestore.domain.order.OrderStatus;
 import com.inventrik.digitalestore.domain.payment.Payment;
 import com.inventrik.digitalestore.domain.payment.PaymentStatus;
 import com.inventrik.digitalestore.dto.request.PaymentRequest;
@@ -215,7 +216,10 @@ public class StripePaymentService implements PaymentService {
                     order.setUpdated(LocalDateTime.now());
                     Order savedOrder = orderRepository.save(order);
                     
-                    // Generate invoice and send email
+                    // Log successful payment confirmation
+                    paymentEventLogger.logPaymentConfirmation(payment, transactionId, username);
+                    
+                    // Send confirmation email with invoice
                     userRepository.findByTenantIdAndUserId(tenantId, savedOrder.getUserId()).ifPresent(user -> {
                         try {
                             // Generate invoice PDF
@@ -226,14 +230,13 @@ public class StripePaymentService implements PaymentService {
                             
                             // Send confirmation email with invoice attachment
                             emailService.sendOrderConfirmationWithInvoice(savedOrder, user, invoicePdf);
+                            
+                            log.info("Order confirmation email sent for order {}", savedOrder.getOrderId());
                         } catch (Exception e) {
                             log.error("Failed to generate invoice or send email for order {}: {}", 
                                     savedOrder.getOrderId(), e.getMessage(), e);
                         }
                     });
-                    
-                    // Log successful payment confirmation
-                    paymentEventLogger.logPaymentConfirmation(payment, transactionId, username);
                 } else {
                     // Handle other statuses
                     payment.setStatus(PaymentStatus.PROCESSING.getDisplayName());
@@ -259,7 +262,7 @@ public class StripePaymentService implements PaymentService {
             }
         });
     }
-    
+        
     @Override
     public PaymentResponse cancelPayment(Integer tenantId, Long paymentId, String username) {
         return transactionCoordinator.executeInTransaction(() -> {
@@ -271,6 +274,8 @@ public class StripePaymentService implements PaymentService {
                     PaymentStatus.REFUNDED.getDisplayName().equals(payment.getStatus())) {
                     throw new PaymentProcessingException("Cannot cancel payment that is already completed or refunded", false);
                 }
+                
+                String oldStatus = payment.getStatus();
                 
                 try {
                     retryService.executeWithRetry(() -> {
@@ -303,6 +308,24 @@ public class StripePaymentService implements PaymentService {
                 
                 // Log payment cancellation
                 paymentEventLogger.logPaymentCancellation(updatedPayment, username);
+                
+                // Update order status and send cancellation email
+                orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId()).ifPresent(order -> {
+                    order.setStatus(OrderStatus.CANCELLED.getDisplayName());
+                    order.setUpdatedBy(truncatedUsername);
+                    order.setUpdated(LocalDateTime.now());
+                    Order savedOrder = orderRepository.save(order);
+                    
+                    // Send cancellation notification
+                    userRepository.findByTenantIdAndUserId(tenantId, order.getUserId()).ifPresent(user -> {
+                        try {
+                            emailService.sendCancellationNotification(savedOrder, user);
+                            log.info("Order cancellation email sent for order {}", savedOrder.getOrderId());
+                        } catch (Exception e) {
+                            log.error("Failed to send cancellation email: {}", e.getMessage(), e);
+                        }
+                    });
+                });
                 
                 return mapToDTO(updatedPayment);
             } catch (Exception e) {
@@ -502,8 +525,8 @@ public class StripePaymentService implements PaymentService {
                     order.setUpdatedBy("wh"); // webhook
                     Order savedOrder = orderRepository.save(order);
                     
-                    // Send order confirmation email with invoice
-                    userRepository.findByTenantIdAndUserId(order.getTenantId(), order.getUserId()).ifPresent(user -> {
+                    // Send confirmation email with invoice
+                    userRepository.findByTenantIdAndUserId(payment.getTenantId(), order.getUserId()).ifPresent(user -> {
                         try {
                             // Generate invoice PDF
                             byte[] invoicePdf = invoiceService.generateInvoice(savedOrder, user);
@@ -514,7 +537,7 @@ public class StripePaymentService implements PaymentService {
                             // Send confirmation email with invoice attachment
                             emailService.sendOrderConfirmationWithInvoice(savedOrder, user, invoicePdf);
                             
-                            log.info("Order confirmation email sent for order {}", savedOrder.getOrderId());
+                            log.info("Order confirmation email sent via webhook for order {}", savedOrder.getOrderId());
                         } catch (Exception e) {
                             log.error("Failed to generate invoice or send email for order {}: {}", 
                                     savedOrder.getOrderId(), e.getMessage(), e);
@@ -528,7 +551,7 @@ public class StripePaymentService implements PaymentService {
     private void handleFailedPayment(PaymentIntent paymentIntent) {
         // Find the payment by transaction ID
         paymentRepository.findByTransactionId(paymentIntent.getId()).ifPresent(payment -> {
-            // String oldStatus = payment.getStatus();
+            String oldStatus = payment.getStatus();
             payment.setStatus(PaymentStatus.FAILED.getDisplayName());
             payment.setUpdated(LocalDateTime.now());
             
@@ -540,8 +563,11 @@ public class StripePaymentService implements PaymentService {
                 failureMessage = paymentIntent.getLastPaymentError().getMessage();
             }
             
+            // Create a final copy for use in lambda
+            final String finalFailureMessage = failureMessage;
+            
             // Log the payment failure
-            paymentEventLogger.logPaymentFailure(updatedPayment, failureMessage, "webhook");
+            paymentEventLogger.logPaymentFailure(updatedPayment, finalFailureMessage, "webhook");
             
             // Update the order status if necessary
             orderRepository.findByTenantIdAndOrderId(payment.getTenantId(), payment.getOrderId()).ifPresent(order -> {
@@ -550,7 +576,17 @@ public class StripePaymentService implements PaymentService {
                     order.setStatus("Payment Failed");
                     order.setUpdated(LocalDateTime.now());
                     order.setUpdatedBy("wh"); // webhook
-                    orderRepository.save(order);
+                    Order savedOrder = orderRepository.save(order);
+                    
+                    // Send payment failure notification
+                    userRepository.findByTenantIdAndUserId(payment.getTenantId(), order.getUserId()).ifPresent(user -> {
+                        try {
+                            emailService.sendPaymentFailureNotification(savedOrder, updatedPayment, user, finalFailureMessage);
+                            log.info("Payment failure email sent via webhook for order {}", savedOrder.getOrderId());
+                        } catch (Exception e) {
+                            log.error("Failed to send payment failure email: {}", e.getMessage(), e);
+                        }
+                    });
                 }
             });
         });
@@ -609,4 +645,6 @@ public class StripePaymentService implements PaymentService {
             log.error("Error retrieving payment intent for refunded charge: {}", e.getMessage(), e);
         }
     }
+
+
 }

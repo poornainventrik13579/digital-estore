@@ -11,6 +11,7 @@ public interface EmailService {
     void sendRefundNotification(Order order, Payment payment, User user);
     void sendAccountCreationConfirmation(User user);
     void sendPasswordResetLink(User user, String resetToken);
-    // Add new method for digital product access
     void sendDigitalProductAccessEmail(Order order, User user);
+    void sendPaymentFailureNotification(Order order, Payment payment, User user, String failureReason);
+
 }
