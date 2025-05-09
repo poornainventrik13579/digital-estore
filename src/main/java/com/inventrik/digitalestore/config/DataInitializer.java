@@ -16,47 +16,34 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner initData(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
-            System.out.println("***** DATA INITIALIZER IS RUNNING *****");
+            System.out.println("***** RESETTING ADMIN USER *****");
             
-            // Check if admin user exists
-            boolean adminExists = userRepository.existsByUsername("admin");
-            System.out.println("Admin user exists: " + adminExists);
+            // Find admin or create if doesn't exist
+            User admin = userRepository.findByUsername("admin")
+                    .orElseGet(() -> {
+                        User newAdmin = new User();
+                        newAdmin.setTenantId(1);
+                        newAdmin.setUserId(1L);
+                        newAdmin.setUsername("admin");
+                        newAdmin.setFirstName("Admin");
+                        newAdmin.setLastName("User");
+                        newAdmin.setEmail("admin@example.com");
+                        newAdmin.setPhone("1234567890");
+                        newAdmin.setOtp("123456");
+                        newAdmin.setStatus("0"); // Active
+                        newAdmin.setCreatedBy("sy");
+                        newAdmin.setUpdatedBy("sy");
+                        newAdmin.setCreated(LocalDateTime.now());
+                        newAdmin.setUpdated(LocalDateTime.now());
+                        newAdmin.setOrders(new ArrayList<>());
+                        return newAdmin;
+                    });
+                    
+            // ALWAYS update password to ensure it's correct
+            admin.setPasswordHash(passwordEncoder.encode("admin"));
+            userRepository.save(admin);
             
-            if (!adminExists) {
-                // Create admin user
-                User admin = new User();
-                admin.setTenantId(1);
-                admin.setUserId(1L);
-                admin.setUsername("admin");
-                admin.setFirstName("Admin");
-                admin.setLastName("User");
-                admin.setEmail("admin@example.com");
-                admin.setPhone("1234567890");
-                admin.setOtp("123456");
-                
-                // Encode the password and print it for debugging
-                String encodedPassword = passwordEncoder.encode("admin");
-                System.out.println("Encoded password: " + encodedPassword);
-                admin.setPasswordHash(encodedPassword);
-                
-                admin.setStatus("0"); // Active
-                admin.setCreatedBy("sy");
-                admin.setUpdatedBy("sy");
-                admin.setCreated(LocalDateTime.now());
-                admin.setUpdated(LocalDateTime.now());
-                admin.setOrders(new ArrayList<>()); // Initialize empty orders list
-                
-                userRepository.save(admin);
-                
-                System.out.println("Admin user created successfully");
-            } else {
-                // Print current admin user details for debugging
-                User admin = userRepository.findByUsername("admin").orElse(null);
-                if (admin != null) {
-                    System.out.println("Existing admin user: " + admin.getUsername());
-                    System.out.println("Current password hash: " + admin.getPasswordHash());
-                }
-            }
+            System.out.println("Admin user reset successfully with password: admin");
         };
     }
 }

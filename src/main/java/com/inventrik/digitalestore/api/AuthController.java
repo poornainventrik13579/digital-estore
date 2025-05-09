@@ -2,6 +2,10 @@ package com.inventrik.digitalestore.api;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,7 +29,30 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
-
+    @PostMapping("/direct-login")
+    public ResponseEntity<?> directLogin(@RequestBody LoginRequest loginRequest) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(),
+                            loginRequest.getPassword()
+                    )
+            );
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Login successful",
+                "username", authentication.getName(),
+                "authorities", authentication.getAuthorities()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of(
+                        "success", false,
+                        "message", "Login failed: " + e.getMessage()
+                    ));
+        }
+    }
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
