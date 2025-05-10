@@ -1,0 +1,140 @@
+<!-- digital-fulfillment.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Digital Purchase is Ready</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+        }
+        .header {
+            background-color: #8e44ad;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .footer {
+            background-color: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+        }
+        .download-section {
+            margin: 25px 0;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #8e44ad;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .product-details {
+            margin: 20px 0;
+        }
+        .product-row {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .product-row:last-child {
+            border-bottom: none;
+        }
+        .license-key {
+            font-family: monospace;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            letter-spacing: 1px;
+            margin: 10px 0;
+        }
+        .tech-requirements {
+            margin: 25px 0;
+            padding: 15px;
+            background-color: #e8f4fc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Your Digital Purchase is Ready</h1>
+        </div>
+        <div class="content">
+            <p>Dear <span th:text="${user.firstName != null ? user.firstName : ''} + ' ' + ${user.lastName != null ? user.lastName : 'Customer'}">Customer</span>,</p>
+            
+            <p>Thank you for your purchase! Your digital products are now ready to download.</p>
+            
+            <div class="product-details">
+                <h3>Your Purchase Details:</h3>
+                <p><strong>Order Number:</strong> <span th:text="${order.orderId}">12345</span></p>
+                <p><strong>Order Date:</strong> <span th:text="${#temporals.format(order.orderDate, 'dd-MM-yyyy HH:mm')}">01-01-2023 12:00</span></p>
+                
+                <div th:each="item : ${order.orderItems}" class="product-row">
+                    <h4 th:text="${'Product ID: ' + item.productId}">Product Name</h4>
+                    <p th:if="${item.licenseKey != null && !item.licenseKey.isEmpty()}">
+                        <strong>License Key:</strong>
+                        <div class="license-key" th:text="${item.licenseKey}">XXXX-YYYY-ZZZZ-AAAA</div>
+                    </p>
+                    <p style="text-align: center;">
+                        <a th:href="${baseUrl + '/download/' + item.orderItemId}" class="btn">Download Now</a>
+                    </p>
+                </div>
+            </div>
+            
+            <p>You can also access all your purchases anytime by logging into your account:</p>
+            
+            <p style="text-align: center; margin: 20px 0;">
+                <a th:href="${baseUrl + '/my-account/downloads'}" class="btn">View My Downloads</a>
+            </p>
+            
+            <div class="tech-requirements">
+                <h3>Technical Requirements:</h3>
+                <ul>
+                    <li>All downloads are available for 30 days from purchase date</li>
+                    <li>License keys are permanent and can be retrieved from your account anytime</li>
+                    <li>For software downloads, please check product pages for system requirements</li>
+                    <li>Digital files are provided in industry-standard formats (PDF, MP3, MP4, etc.)</li>
+                </ul>
+            </div>
+            
+            <p>If you encounter any issues with your downloads or need technical assistance, please contact our support team at support@yourdomain.com.</p>
+            
+            <p>
+                Best regards,<br>
+                The Digital E-Store Team
+            </p>
+        </div>
+        <div class="footer">
+            <p>© 2025 Digital E-Store. All rights reserved.</p>
+            <p>This email was sent to <span th:text="${user.email}">customer@example.com</span></p>
+            <p>
+                <small>Please do not reply to this email. If you need assistance, please contact our customer support.</small>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

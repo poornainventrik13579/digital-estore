@@ -1,0 +1,43 @@
+package com.inventrik.digitalestore.dto.request;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderRequest {
+    
+    @Schema(description = "User ID", example = "123456789", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "User ID is required")
+    private Long userId;
+    
+    @Schema(description = "Currency code", example = "USD", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Size(min = 3, max = 3, message = "Currency code must be exactly 3 characters")
+    private String currency;
+    
+    @Schema(description = "Total amount", example = "99.99", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "Total amount is required")
+    @DecimalMin(value = "0.01", inclusive = true, message = "Total amount must be greater than zero")
+    private BigDecimal totalAmount;
+    
+    @Schema(description = "Exchange rate", example = "1.0", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "Exchange rate is required")
+    @DecimalMin(value = "0.01", inclusive = true, message = "Exchange rate must be greater than zero")
+    private BigDecimal exchangeRate;
+    
+    @Schema(description = "List of order items", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotEmpty(message = "Order must contain at least one item")
+    @Valid
+    private List<OrderItemRequest> orderItems;
+}
