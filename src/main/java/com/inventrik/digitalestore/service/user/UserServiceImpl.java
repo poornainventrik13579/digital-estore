@@ -68,6 +68,28 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
+    public boolean isCurrentUser(Integer tenantId, Long userId, String username) {
+        try {
+            User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+            return user.getUsername().equals(username);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean isUserWithEmail(String email, String username) {
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+            return user.getUsername().equals(username);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    @Override
     @Transactional
     public UserResponse createUser(Integer tenantId, String createdBy, UserRequest userRequest) {
         // Check for duplicate username, email, phone
