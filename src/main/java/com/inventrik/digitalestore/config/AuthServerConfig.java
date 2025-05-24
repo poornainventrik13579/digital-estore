@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.UUID;
 
 import org.springframework.context.annotation.Bean;
@@ -32,6 +33,9 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -60,7 +64,8 @@ public class AuthServerConfig {
         http
             .exceptionHandling(exceptions -> 
                 exceptions.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")))
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+            .cors(cors -> cors.configurationSource(authServerCorsConfigurationSource()));
             
         return http.build();
     }
@@ -74,7 +79,8 @@ public class AuthServerConfig {
                 .requestMatchers("/login", "/error").permitAll()
                 .anyRequest().authenticated()
             )
-            .formLogin(Customizer.withDefaults());
+            .formLogin(Customizer.withDefaults())
+            .cors(Customizer.withDefaults());  // Enable CORS
             
         return http.build();
     }
@@ -112,6 +118,7 @@ public class AuthServerConfig {
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .authorizationGrantType(AuthorizationGrantType.PASSWORD)  // Add password grant type for Swagger
                 // Add this line for Swagger UI redirect
                 .redirectUri("http://localhost:8080/swagger-ui/oauth2-redirect.html")
                 .redirectUri("http://localhost:8080/login/oauth2/code/web-client")
@@ -159,5 +166,18 @@ public class AuthServerConfig {
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder().build();
+    }
+    
+    @Bean
+    public CorsConfigurationSource authServerCorsConfigurationSource() { // Renamed from corsConfigurationSource
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(Arrays.asList("http://localhost:8080"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "x-requested-with"));
+        config.setAllowCredentials(true);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }
