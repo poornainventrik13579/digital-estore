@@ -1,5 +1,7 @@
 package com.inventrik.digitalestore.domain.product;
 
+import com.inventrik.digitalestore.domain.category.Category;
+import com.inventrik.digitalestore.domain.order.OrderItem;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,6 +9,8 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "Products")
@@ -22,6 +26,9 @@ public class Product {
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
     
+    @Column(name = "category_id")
+    private Long categoryId;
+    
     @Column(name = "product_name", nullable = false, length = 100)
     private String productName;
     
@@ -34,8 +41,12 @@ public class Product {
     @Column(name = "default_currency", nullable = false, length = 3)
     private String defaultCurrency;
     
-    @Column(name = "category_id")
-    private Long categoryId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumns({
+        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
+        @JoinColumn(name = "category_id", referencedColumnName = "category_id", insertable = false, updatable = false)
+    })
+    private Category category;
     
     @Column(name = "status", nullable = false, length = 2)
     private String status;
@@ -52,6 +63,9 @@ public class Product {
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
     
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    private List<OrderItem> orderItems = new ArrayList<>();
+    
     @PrePersist
     protected void onCreate() {
         created = LocalDateTime.now();
@@ -61,5 +75,15 @@ public class Product {
     @PreUpdate
     protected void onUpdate() {
         updated = LocalDateTime.now();
+    }
+    
+    // Getter for backward compatibility
+    public Long getCategoryId() {
+        return categoryId;
+    }
+    
+    // Setter for backward compatibility
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
     }
 }
