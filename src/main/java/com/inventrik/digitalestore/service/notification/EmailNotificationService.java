@@ -3,7 +3,7 @@ package com.inventrik.digitalestore.service.notification;
 
 import com.inventrik.digitalestore.domain.order.Order;
 import com.inventrik.digitalestore.domain.order.OrderStatus;
-import com.inventrik.digitalestore.domain.payment.Payment;
+// import com.inventrik.digitalestore.domain.payment.Payment;
 import com.inventrik.digitalestore.domain.user.User;
 import com.inventrik.digitalestore.repository.OrderRepository;
 import com.inventrik.digitalestore.repository.UserRepository;
@@ -20,9 +20,9 @@ import org.springframework.stereotype.Service;
 public class EmailNotificationService {
 
     private final EmailService emailService;
-    private final InvoiceService invoiceService;
+    // private final InvoiceService invoiceService;
     private final UserRepository userRepository;
-    private final OrderRepository orderRepository;
+    // private final OrderRepository orderRepository;
     
     /**
      * Send notifications for order status changes

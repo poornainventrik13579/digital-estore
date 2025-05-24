@@ -239,6 +239,7 @@ public class EmailServiceImpl implements EmailService {
         
         emailSender.send(message);
     }
+    
     @Override
     public void sendPaymentFailureNotification(Order order, Payment payment, User user, String failureReason) {
         try {

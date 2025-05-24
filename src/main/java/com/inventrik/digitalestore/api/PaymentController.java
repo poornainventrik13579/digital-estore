@@ -4,10 +4,10 @@ import com.inventrik.digitalestore.dto.request.PaymentRequest;
 import com.inventrik.digitalestore.dto.response.PaymentResponse;
 import com.inventrik.digitalestore.service.payment.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +25,7 @@ public class PaymentController {
     
     @GetMapping
     @Operation(summary = "Get all payments")
-    public ResponseEntity<List<PaymentResponse>> getAllPayments(
-            @PathVariable Integer tenantId) {
+    public ResponseEntity<List<PaymentResponse>> getAllPayments(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(paymentService.getAllPayments(tenantId));
     }
     
@@ -38,16 +37,14 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.getPayment(tenantId, paymentId));
     }
     
-    @PostMapping
+    @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     @Operation(summary = "Create a new payment")
     public ResponseEntity<PaymentResponse> createPayment(
             @PathVariable Integer tenantId,
-            @Valid @RequestBody PaymentRequest paymentRequest,
+            @Valid @ModelAttribute PaymentRequest paymentRequest,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
-        
         PaymentResponse createdPayment = paymentService.createPayment(tenantId, username, paymentRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPayment);
     }
@@ -60,9 +57,7 @@ public class PaymentController {
             @RequestParam String transactionId,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
-        
         PaymentResponse confirmedPayment = paymentService.confirmPayment(tenantId, paymentId, transactionId, username);
         return ResponseEntity.ok(confirmedPayment);
     }
@@ -74,9 +69,7 @@ public class PaymentController {
             @PathVariable Long paymentId,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
-        
         PaymentResponse cancelledPayment = paymentService.cancelPayment(tenantId, paymentId, username);
         return ResponseEntity.ok(cancelledPayment);
     }
@@ -88,9 +81,7 @@ public class PaymentController {
             @PathVariable Long paymentId,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
-        
         PaymentResponse refundedPayment = paymentService.refundPayment(tenantId, paymentId, username);
         return ResponseEntity.ok(refundedPayment);
     }
@@ -104,17 +95,9 @@ public class PaymentController {
     }
     
     @GetMapping("/status/{status}")
-    @Operation(
-        summary = "Get payments by status",
-        description = "Retrieves payments filtered by status. Valid status values: " +
-                      "Pending, Processing, Successful, Failed, Refunded, Partially Refunded"
-    )
+    @Operation(summary = "Get payments by status")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByStatus(
             @PathVariable Integer tenantId,
-            @Parameter(
-                description = "Payment status", 
-                required = true
-            ) 
             @PathVariable String status) {
         return ResponseEntity.ok(paymentService.getPaymentsByStatus(tenantId, status));
     }

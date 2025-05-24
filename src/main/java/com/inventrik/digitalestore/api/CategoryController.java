@@ -26,8 +26,7 @@ public class CategoryController {
     
     @GetMapping
     @Operation(summary = "Get all categories")
-    public ResponseEntity<List<CategoryResponse>> getAllCategories(
-            @PathVariable Integer tenantId) {
+    public ResponseEntity<List<CategoryResponse>> getAllCategories(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(categoryService.getAllCategories(tenantId));
     }
     
@@ -46,9 +45,7 @@ public class CategoryController {
             @Valid @ModelAttribute CategoryRequest categoryRequest,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
-        
         CategoryResponse createdCategory = categoryService.createCategory(tenantId, username, categoryRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
     }
@@ -61,9 +58,7 @@ public class CategoryController {
             @Valid @ModelAttribute CategoryUpdateRequest updateRequest,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
-        
         CategoryResponse updatedCategory = categoryService.updateCategory(tenantId, categoryId, username, updateRequest);
         return ResponseEntity.ok(updatedCategory);
     }
@@ -79,8 +74,7 @@ public class CategoryController {
     
     @GetMapping("/active")
     @Operation(summary = "Get active categories")
-    public ResponseEntity<List<CategoryResponse>> getActiveCategories(
-            @PathVariable Integer tenantId) {
+    public ResponseEntity<List<CategoryResponse>> getActiveCategories(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(categoryService.getActiveCategories(tenantId));
     }
 }

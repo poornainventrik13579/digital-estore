@@ -8,5 +8,30 @@
     "name": "jwt.secret",
     "type": "java.lang.String",
     "description": "A description for 'jwt.secret'"
+  },
+  {
+    "name": "springdoc.swagger-ui.oauth2.use-basic-authentication-with-access-code-grant",
+    "type": "java.lang.String",
+    "description": "A description for 'springdoc.swagger-ui.oauth2.use-basic-authentication-with-access-code-grant'"
+  },
+  {
+    "name": "springdoc.swagger-ui.oauth2.client-secret",
+    "type": "java.lang.String",
+    "description": "A description for 'springdoc.swagger-ui.oauth2.client-secret'"
+  },
+  {
+    "name": "springdoc.swagger-ui.oauth2.client-id",
+    "type": "java.lang.String",
+    "description": "A description for 'springdoc.swagger-ui.oauth2.client-id'"
+  },
+  {
+    "name": "spring.security.oauth2.authorization-server.enabled",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.security.oauth2.authorization-server.enabled'"
+  },
+  {
+    "name": "oauth2.issuer",
+    "type": "java.lang.String",
+    "description": "A description for 'oauth2.issuer'"
   }
 ]}

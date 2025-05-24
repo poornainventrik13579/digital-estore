@@ -83,6 +83,7 @@ public class StripePaymentService implements PaymentService {
         return mapToDTO(payment);
     }
     
+
     @Override
     public PaymentResponse createPayment(Integer tenantId, String username, PaymentRequest paymentRequest) {
         // Generate a unique idempotency key for this request
@@ -108,6 +109,12 @@ public class StripePaymentService implements PaymentService {
                         params.put("confirmation_method", "manual");
                         params.put("capture_method", "automatic");
                         
+                        // Add automatic payment methods configuration to prevent redirect issues
+                        Map<String, Object> automaticPaymentMethods = new HashMap<>();
+                        automaticPaymentMethods.put("enabled", true);
+                        automaticPaymentMethods.put("allow_redirects", "never");
+                        params.put("automatic_payment_methods", automaticPaymentMethods);
+                        
                         // Add metadata
                         Map<String, String> metadata = new HashMap<>();
                         metadata.put("orderId", paymentRequest.getOrderId().toString());
@@ -115,12 +122,7 @@ public class StripePaymentService implements PaymentService {
                         metadata.put("paymentId", newPaymentId.toString());
                         params.put("metadata", metadata);
                         
-                        // Add payment method if provided
-                        if (paymentRequest.getPaymentToken() != null && !paymentRequest.getPaymentToken().isEmpty()) {
-                            params.put("payment_method", paymentRequest.getPaymentToken());
-                        }
-                        
-                        // Create the payment intent using the simplified approach
+                        // Create the payment intent
                         return PaymentIntent.create(params);
                     } catch (StripeException e) {
                         throw new PaymentProcessingException("Failed to create payment with Stripe: " + e.getMessage(), e, true);
@@ -165,104 +167,111 @@ public class StripePaymentService implements PaymentService {
             }
         });
     }
-    
+        
     @Override
     public PaymentResponse confirmPayment(Integer tenantId, Long paymentId, String transactionId, String username) {
-        return transactionCoordinator.executeInStrictTransaction(() -> {
-            try {
-                Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
-                        .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
-                
-                if (!PaymentStatus.PENDING.getDisplayName().equals(payment.getStatus()) && 
-                    !PaymentStatus.PROCESSING.getDisplayName().equals(payment.getStatus())) {
-                    throw new PaymentProcessingException("Cannot confirm payment that is not in pending or processing state", false);
-                }
-                
-                String oldStatus = payment.getStatus();
-                
-                retryService.executeWithRetry(() -> {
-                    try {
-                        PaymentIntent paymentIntent = PaymentIntent.retrieve(payment.getTransactionId());
-                        
-                        if ("requires_confirmation".equals(paymentIntent.getStatus())) {
-                            Map<String, Object> params = new HashMap<>();
-                            paymentIntent.confirm(params);
-                        }
-                        
-                        return paymentIntent;
-                    } catch (StripeException e) {
-                        throw new PaymentProcessingException("Failed to confirm payment with Stripe: " + e.getMessage(), e, true);
-                    }
-                });
-                
-                // Re-fetch the payment intent to get the latest status
-                PaymentIntent paymentIntent = retryService.executeWithRetry(() -> {
-                    try {
-                        return PaymentIntent.retrieve(payment.getTransactionId());
-                    } catch (StripeException e) {
-                        throw new PaymentProcessingException("Failed to retrieve payment intent: " + e.getMessage(), e, true);
-                    }
-                });
-                
-                if ("succeeded".equals(paymentIntent.getStatus())) {
-                    payment.setStatus(PaymentStatus.SUCCESSFUL.getDisplayName());
-                    
-                    // Update the order status if necessary
-                    Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
-                            .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + payment.getOrderId()));
-                    
-                    order.setStatus("Processing");
-                    order.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
-                    order.setUpdated(LocalDateTime.now());
-                    Order savedOrder = orderRepository.save(order);
-                    
-                    // Log successful payment confirmation
-                    paymentEventLogger.logPaymentConfirmation(payment, transactionId, username);
-                    
-                    // Send confirmation email with invoice
-                    userRepository.findByTenantIdAndUserId(tenantId, savedOrder.getUserId()).ifPresent(user -> {
-                        try {
-                            // Generate invoice PDF
-                            byte[] invoicePdf = invoiceService.generateInvoice(savedOrder, user);
-                            
-                            // Store invoice for future reference
-                            invoiceService.storeInvoice(savedOrder, invoicePdf);
-                            
-                            // Send confirmation email with invoice attachment
-                            emailService.sendOrderConfirmationWithInvoice(savedOrder, user, invoicePdf);
-                            
-                            log.info("Order confirmation email sent for order {}", savedOrder.getOrderId());
-                        } catch (Exception e) {
-                            log.error("Failed to generate invoice or send email for order {}: {}", 
-                                    savedOrder.getOrderId(), e.getMessage(), e);
-                        }
-                    });
-                } else {
-                    // Handle other statuses
-                    payment.setStatus(PaymentStatus.PROCESSING.getDisplayName());
-                    
-                    // Log payment status change
-                    paymentEventLogger.logPaymentStatusChange(payment, oldStatus, payment.getStatus(), username);
-                }
-                
-                // Ensure username is truncated to 2 characters as per DB schema
-                String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
-                payment.setUpdatedBy(truncatedUsername);
-                payment.setUpdated(LocalDateTime.now());
-                
-                Payment updatedPayment = paymentRepository.save(payment);
-                
-                return mapToDTO(updatedPayment);
-            } catch (Exception e) {
-                if (e instanceof PaymentProcessingException || e instanceof ResourceNotFoundException ||
-                    e instanceof PaymentNotFoundException) {
-                    throw e;
-                }
-                throw new PaymentProcessingException("Failed to confirm payment: " + e.getMessage(), e, false);
+    return transactionCoordinator.executeInStrictTransaction(() -> {
+        try {
+            Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
+                    .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
+            
+            if (!PaymentStatus.PENDING.getDisplayName().equals(payment.getStatus()) && 
+                !PaymentStatus.PROCESSING.getDisplayName().equals(payment.getStatus())) {
+                throw new PaymentProcessingException("Cannot confirm payment that is not in pending or processing state", false);
             }
-        });
-    }
-        
+            
+            String oldStatus = payment.getStatus();
+            
+            // Create a test payment method and confirm the PaymentIntent
+            retryService.executeWithRetry(() -> {
+                try {
+                    PaymentIntent paymentIntent = PaymentIntent.retrieve(payment.getTransactionId());
+                    
+                    if ("requires_confirmation".equals(paymentIntent.getStatus()) || 
+                        "requires_payment_method".equals(paymentIntent.getStatus())) {
+                        
+                        // Use Stripe test payment method token
+                        Map<String, Object> confirmParams = new HashMap<>();
+                        confirmParams.put("payment_method", "pm_card_visa"); // Stripe test token
+                        confirmParams.put("return_url", "http://localhost:8080/payment/success");
+                        
+                        paymentIntent.confirm(confirmParams);
+                    }
+                    
+                    return paymentIntent;
+                } catch (StripeException e) {
+                    throw new PaymentProcessingException("Failed to confirm payment with Stripe: " + e.getMessage(), e, true);
+                }
+            });
+            
+            // Re-fetch the payment intent to get the latest status
+            PaymentIntent paymentIntent = retryService.executeWithRetry(() -> {
+                try {
+                    return PaymentIntent.retrieve(payment.getTransactionId());
+                } catch (StripeException e) {
+                    throw new PaymentProcessingException("Failed to retrieve payment intent: " + e.getMessage(), e, true);
+                }
+            });
+            
+            if ("succeeded".equals(paymentIntent.getStatus())) {
+                payment.setStatus(PaymentStatus.SUCCESSFUL.getDisplayName());
+                
+                // Update the order status if necessary
+                Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + payment.getOrderId()));
+                
+                order.setStatus("Processing");
+                order.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+                order.setUpdated(LocalDateTime.now());
+                Order savedOrder = orderRepository.save(order);
+                
+                // Log successful payment confirmation
+                paymentEventLogger.logPaymentConfirmation(payment, transactionId, username);
+                
+                // Send confirmation email with invoice
+                userRepository.findByTenantIdAndUserId(tenantId, savedOrder.getUserId()).ifPresent(user -> {
+                    try {
+                        // Generate invoice PDF
+                        byte[] invoicePdf = invoiceService.generateInvoice(savedOrder, user);
+                        
+                        // Store invoice for future reference
+                        invoiceService.storeInvoice(savedOrder, invoicePdf);
+                        
+                        // Send confirmation email with invoice attachment
+                        emailService.sendOrderConfirmationWithInvoice(savedOrder, user, invoicePdf);
+                        
+                        log.info("Order confirmation email sent for order {}", savedOrder.getOrderId());
+                    } catch (Exception e) {
+                        log.error("Failed to generate invoice or send email for order {}: {}", 
+                                savedOrder.getOrderId(), e.getMessage(), e);
+                    }
+                });
+            } else {
+                // Handle other statuses
+                payment.setStatus(PaymentStatus.PROCESSING.getDisplayName());
+                
+                // Log payment status change
+                paymentEventLogger.logPaymentStatusChange(payment, oldStatus, payment.getStatus(), username);
+            }
+            
+            // Ensure username is truncated to 2 characters as per DB schema
+            String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+            payment.setUpdatedBy(truncatedUsername);
+            payment.setUpdated(LocalDateTime.now());
+            
+            Payment updatedPayment = paymentRepository.save(payment);
+            
+            return mapToDTO(updatedPayment);
+        } catch (Exception e) {
+            if (e instanceof PaymentProcessingException || e instanceof ResourceNotFoundException ||
+                e instanceof PaymentNotFoundException) {
+                throw e;
+            }
+            throw new PaymentProcessingException("Failed to confirm payment: " + e.getMessage(), e, false);
+        }
+    });
+}     
+    
     @Override
     public PaymentResponse cancelPayment(Integer tenantId, Long paymentId, String username) {
         return transactionCoordinator.executeInTransaction(() -> {

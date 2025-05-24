@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +26,7 @@ public class ProductController {
     
     @GetMapping
     @Operation(summary = "Get all products")
-    public ResponseEntity<List<ProductResponse>> getAllProducts(
-            @PathVariable Integer tenantId) {
+    public ResponseEntity<List<ProductResponse>> getAllProducts(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(productService.getAllProducts(tenantId));
     }
     
@@ -38,31 +38,27 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProduct(tenantId, productId));
     }
     
-    @PostMapping
+    @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     @Operation(summary = "Create a new product")
     public ResponseEntity<ProductResponse> createProduct(
             @PathVariable Integer tenantId,
-            @Valid @RequestBody ProductRequest productRequest,
+            @Valid @ModelAttribute ProductRequest productRequest,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
-        
         ProductResponse createdProduct = productService.createProduct(tenantId, username, productRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
     }
     
-    @PutMapping("/{productId}")
+    @PutMapping(path = "/{productId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     @Operation(summary = "Update a product")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Integer tenantId,
             @PathVariable Long productId,
-            @Valid @RequestBody ProductUpdateRequest updateRequest,
+            @Valid @ModelAttribute ProductUpdateRequest updateRequest,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
-        
         ProductResponse updatedProduct = productService.updateProduct(tenantId, productId, username, updateRequest);
         return ResponseEntity.ok(updatedProduct);
     }
@@ -86,8 +82,7 @@ public class ProductController {
     
     @GetMapping("/active")
     @Operation(summary = "Get active products")
-    public ResponseEntity<List<ProductResponse>> getActiveProducts(
-            @PathVariable Integer tenantId) {
+    public ResponseEntity<List<ProductResponse>> getActiveProducts(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(productService.getActiveProducts(tenantId));
     }
 }

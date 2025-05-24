@@ -6,16 +6,16 @@ import lombok.RequiredArgsConstructor;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 import com.inventrik.digitalestore.dto.request.LoginRequest;
 import com.inventrik.digitalestore.dto.request.SignupRequest;
@@ -29,8 +29,9 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
-    @PostMapping("/direct-login")
-    public ResponseEntity<?> directLogin(@RequestBody LoginRequest loginRequest) {
+    
+    @PostMapping(value = "/direct-login", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<?> directLogin(@Valid @ModelAttribute LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -53,8 +54,9 @@ public class AuthController {
                     ));
         }
     }
-    @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    
+    @PostMapping(value = "/login", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<?> authenticateUser(@Valid @ModelAttribute LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getUsername(),
@@ -63,16 +65,11 @@ public class AuthController {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        
-        // OAuth2 login should be done through the authorization server endpoints
-        // This endpoint is just for compatibility and direct authentication
-        
         return ResponseEntity.ok().body("User logged in successfully");
     }
     
-    @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signupRequest) {
-        // Convert SignupRequest to UserRequest
+    @PostMapping(value = "/signup", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<?> registerUser(@Valid @ModelAttribute SignupRequest signupRequest) {
         UserRequest userRequest = new UserRequest();
         userRequest.setUsername(signupRequest.getUsername());
         userRequest.setEmail(signupRequest.getEmail());
@@ -81,9 +78,7 @@ public class AuthController {
         userRequest.setLastName(signupRequest.getLastName());
         userRequest.setPhone(signupRequest.getPhone());
         
-        // Create a new user
         userService.createUser(signupRequest.getTenantId(), "system", userRequest);
-        
         return ResponseEntity.ok().body("User registered successfully");
     }
 }
