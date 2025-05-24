@@ -69,6 +69,7 @@ public class AuthServerConfig {
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
+            .securityMatcher("/login", "/error", "/logout")
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/login", "/error").permitAll()
                 .anyRequest().authenticated()
@@ -111,6 +112,8 @@ public class AuthServerConfig {
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                // Add this line for Swagger UI redirect
+                .redirectUri("http://localhost:8080/swagger-ui/oauth2-redirect.html")
                 .redirectUri("http://localhost:8080/login/oauth2/code/web-client")
                 .scope(OidcScopes.OPENID)
                 .scope("read")

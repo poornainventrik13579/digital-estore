@@ -8,6 +8,9 @@ import io.swagger.v3.oas.models.security.OAuthFlow;
 import io.swagger.v3.oas.models.security.OAuthFlows;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,6 +42,9 @@ public class OpenApiConfig {
                                                 .tokenUrl(issuerUri + "/oauth2/token")
                                                 .scopes(new io.swagger.v3.oas.models.security.Scopes()
                                                         .addString("read", "read access")
-                                                        .addString("write", "write access"))))));
-    }
+                                                        .addString("write", "write access"))
+                                                // Add this line to specify the client ID
+                                                .extensions(Map.of("x-tokenName", "access_token", 
+                                                                "x-clientId", "web-client"))))));
+        }
 }
