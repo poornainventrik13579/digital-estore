@@ -41,9 +41,22 @@ public class UserController {
         return ResponseEntity.ok(userService.getUser(tenantId, userId));
     }
     
+    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @Operation(summary = "Create a new user (JSON)")
+    public ResponseEntity<UserResponse> createUserJson(
+            @PathVariable Integer tenantId,
+            @Valid @RequestBody UserRequest userRequest,
+            Authentication authentication) {
+        
+        String username = authentication.getName();
+        UserResponse createdUser = userService.createUser(tenantId, username, userRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+    }
+    
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "Create a new user")
+    @Operation(summary = "Create a new user (Form)")
     public ResponseEntity<UserResponse> createUser(
             @PathVariable Integer tenantId,
             @Valid @ModelAttribute UserRequest userRequest,
@@ -54,9 +67,23 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
     
+    @PutMapping(path = "/{userId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @PreAuthorize("hasRole('ROLE_ADMIN') or @userService.isCurrentUser(#tenantId, #userId, authentication.name)")
+    @Operation(summary = "Update a user (JSON)")
+    public ResponseEntity<UserResponse> updateUserJson(
+            @PathVariable Integer tenantId,
+            @PathVariable Long userId,
+            @Valid @RequestBody UserUpdateRequest updateRequest,
+            Authentication authentication) {
+        
+        String username = authentication.getName();
+        UserResponse updatedUser = userService.updateUser(tenantId, userId, username, updateRequest);
+        return ResponseEntity.ok(updatedUser);
+    }
+    
     @PutMapping(path = "/{userId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     @PreAuthorize("hasRole('ROLE_ADMIN') or @userService.isCurrentUser(#tenantId, #userId, authentication.name)")
-    @Operation(summary = "Update a user")
+    @Operation(summary = "Update a user (Form)")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable Integer tenantId,
             @PathVariable Long userId,

@@ -40,8 +40,20 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProduct(tenantId, productId));
     }
     
+    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @Operation(summary = "Create a new product (JSON)")
+    public ResponseEntity<ProductResponse> createProductJson(
+            @PathVariable Integer tenantId,
+            @Valid @RequestBody ProductRequest productRequest,
+            Authentication authentication) {
+        
+        String username = (authentication != null) ? authentication.getName() : "system";
+        ProductResponse createdProduct = productService.createProduct(tenantId, username, productRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
+    }
+    
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @Operation(summary = "Create a new product")
+    @Operation(summary = "Create a new product (Form)")
     public ResponseEntity<ProductResponse> createProduct(
             @PathVariable Integer tenantId,
             @Valid @ModelAttribute ProductRequest productRequest,
@@ -52,8 +64,21 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
     }
     
+    @PutMapping(path = "/{productId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @Operation(summary = "Update a product (JSON)")
+    public ResponseEntity<ProductResponse> updateProductJson(
+            @PathVariable Integer tenantId,
+            @PathVariable Long productId,
+            @Valid @RequestBody ProductUpdateRequest updateRequest,
+            Authentication authentication) {
+        
+        String username = (authentication != null) ? authentication.getName() : "system";
+        ProductResponse updatedProduct = productService.updateProduct(tenantId, productId, username, updateRequest);
+        return ResponseEntity.ok(updatedProduct);
+    }
+    
     @PutMapping(path = "/{productId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @Operation(summary = "Update a product")
+    @Operation(summary = "Update a product (Form)")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Integer tenantId,
             @PathVariable Long productId,

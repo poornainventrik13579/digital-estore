@@ -39,8 +39,20 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.getPayment(tenantId, paymentId));
     }
     
+    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @Operation(summary = "Create a new payment (JSON)")
+    public ResponseEntity<PaymentResponse> createPaymentJson(
+            @PathVariable Integer tenantId,
+            @Valid @RequestBody PaymentRequest paymentRequest,
+            Authentication authentication) {
+        
+        String username = (authentication != null) ? authentication.getName() : "system";
+        PaymentResponse createdPayment = paymentService.createPayment(tenantId, username, paymentRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdPayment);
+    }
+    
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @Operation(summary = "Create a new payment")
+    @Operation(summary = "Create a new payment (Form)")
     public ResponseEntity<PaymentResponse> createPayment(
             @PathVariable Integer tenantId,
             @Valid @ModelAttribute PaymentRequest paymentRequest,

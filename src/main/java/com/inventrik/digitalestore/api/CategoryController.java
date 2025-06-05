@@ -40,8 +40,20 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategory(tenantId, categoryId));
     }
     
+    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @Operation(summary = "Create a new category (JSON)")
+    public ResponseEntity<CategoryResponse> createCategoryJson(
+            @PathVariable Integer tenantId,
+            @Valid @RequestBody CategoryRequest categoryRequest,
+            Authentication authentication) {
+        
+        String username = (authentication != null) ? authentication.getName() : "system";
+        CategoryResponse createdCategory = categoryService.createCategory(tenantId, username, categoryRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
+    }
+    
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @Operation(summary = "Create a new category")
+    @Operation(summary = "Create a new category (Form)")
     public ResponseEntity<CategoryResponse> createCategory(
             @PathVariable Integer tenantId,
             @Valid @ModelAttribute CategoryRequest categoryRequest,
@@ -52,8 +64,21 @@ public class CategoryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
     }
     
+    @PutMapping(path = "/{categoryId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @Operation(summary = "Update a category (JSON)")
+    public ResponseEntity<CategoryResponse> updateCategoryJson(
+            @PathVariable Integer tenantId,
+            @PathVariable Long categoryId,
+            @Valid @RequestBody CategoryUpdateRequest updateRequest,
+            Authentication authentication) {
+        
+        String username = (authentication != null) ? authentication.getName() : "system";
+        CategoryResponse updatedCategory = categoryService.updateCategory(tenantId, categoryId, username, updateRequest);
+        return ResponseEntity.ok(updatedCategory);
+    }
+    
     @PutMapping(path = "/{categoryId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @Operation(summary = "Update a category")
+    @Operation(summary = "Update a category (Form)")
     public ResponseEntity<CategoryResponse> updateCategory(
             @PathVariable Integer tenantId,
             @PathVariable Long categoryId,
