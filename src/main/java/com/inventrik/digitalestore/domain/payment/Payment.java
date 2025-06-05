@@ -1,6 +1,5 @@
 package com.inventrik.digitalestore.domain.payment;
 
-import com.inventrik.digitalestore.domain.order.Order;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,12 +24,6 @@ public class Payment {
     
     @Column(name = "order_id", nullable = false)
     private Long orderId;
-    
-    @JoinColumns({
-        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id"),
-        @JoinColumn(name = "order_id", referencedColumnName = "order_id")
-    })
-    private Order order;
     
     @Column(name = "currency", length = 3)
     private String currency;

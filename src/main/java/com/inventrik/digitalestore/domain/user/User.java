@@ -1,14 +1,11 @@
 package com.inventrik.digitalestore.domain.user;
 
-import com.inventrik.digitalestore.domain.order.Order;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "Users")
@@ -88,9 +85,6 @@ public class User {
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
     
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> orders = new ArrayList<>();
-    
     @PrePersist
     protected void onCreate() {
         created = LocalDateTime.now();
@@ -100,16 +94,5 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updated = LocalDateTime.now();
-    }
-    
-    // Helper methods for managing bidirectional relationship
-    public void addOrder(Order order) {
-        orders.add(order);
-        order.setUser(this);
-    }
-    
-    public void removeOrder(Order order) {
-        orders.remove(order);
-        order.setUser(null);
     }
 }

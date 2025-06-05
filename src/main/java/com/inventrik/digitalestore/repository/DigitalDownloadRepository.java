@@ -27,7 +27,18 @@ public interface DigitalDownloadRepository extends JpaRepository<DigitalDownload
     // Find downloads by tenant and status
     List<DigitalDownload> findByTenantIdAndStatus(Integer tenantId, String status);
     
-    // Find downloads by user (through order items)
-    @Query("SELECT dd FROM DigitalDownload dd JOIN dd.orderItem oi JOIN oi.order o WHERE o.tenantId = :tenantId AND o.userId = :userId")
+    // Find downloads by user through proper join query
+    @Query("""
+        SELECT dd FROM DigitalDownload dd 
+        WHERE dd.tenantId = :tenantId 
+        AND dd.orderItemId IN (
+            SELECT oi.orderItemId FROM OrderItem oi 
+            WHERE oi.tenantId = :tenantId 
+            AND oi.orderId IN (
+                SELECT o.orderId FROM Order o 
+                WHERE o.tenantId = :tenantId AND o.userId = :userId
+            )
+        )
+        """)
     List<DigitalDownload> findByTenantIdAndUserId(@Param("tenantId") Integer tenantId, @Param("userId") Long userId);
 }

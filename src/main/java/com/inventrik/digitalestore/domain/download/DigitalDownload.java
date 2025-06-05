@@ -1,6 +1,5 @@
 package com.inventrik.digitalestore.domain.download;
 
-import com.inventrik.digitalestore.domain.order.OrderItem;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,10 +23,6 @@ public class DigitalDownload {
     
     @Column(name = "order_item_id", nullable = false)
     private Long orderItemId;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_item_id", referencedColumnName = "order_item_id", insertable = false, updatable = false)
-    private OrderItem orderItem;
     
     @Column(name = "download_date", nullable = false)
     private LocalDateTime downloadDate;

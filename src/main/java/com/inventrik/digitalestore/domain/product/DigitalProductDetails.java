@@ -21,13 +21,6 @@ public class DigitalProductDetails {
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
     
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumns({
-        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
-        @JoinColumn(name = "product_id", referencedColumnName = "product_id", insertable = false, updatable = false)
-    })
-    private Product product;
-    
     @Column(name = "file_url", nullable = false, length = 255)
     private String fileUrl;
     

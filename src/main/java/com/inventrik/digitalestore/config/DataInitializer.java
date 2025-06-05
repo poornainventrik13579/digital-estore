@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 
 @Configuration
 public class DataInitializer {
@@ -35,7 +34,6 @@ public class DataInitializer {
                         newAdmin.setUpdatedBy("sy");
                         newAdmin.setCreated(LocalDateTime.now());
                         newAdmin.setUpdated(LocalDateTime.now());
-                        newAdmin.setOrders(new ArrayList<>());
                         return newAdmin;
                     });
                     

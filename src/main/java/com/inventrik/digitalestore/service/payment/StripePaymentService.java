@@ -106,7 +106,7 @@ public class StripePaymentService implements PaymentService {
                         params.put("currency", paymentRequest.getCurrency().toLowerCase());
                         params.put("amount", paymentRequest.getAmount().multiply(new java.math.BigDecimal(100)).longValue());
                         params.put("description", "Payment for order #" + paymentRequest.getOrderId());
-                        params.put("confirmation_method", "manual");
+                        // params.put("confirmation_method", "manual");
                         params.put("capture_method", "automatic");
                         
                         // Add automatic payment methods configuration to prevent redirect issues

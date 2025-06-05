@@ -1,6 +1,5 @@
 package com.inventrik.digitalestore.domain.order;
 
-import com.inventrik.digitalestore.domain.user.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,12 +26,6 @@ public class Order {
     
     @Column(name = "user_id")
     private Long userId;
-    
-    @JoinColumns({
-        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id"),
-        @JoinColumn(name = "user_id", referencedColumnName = "user_id")
-    })
-    private User user;
     
     @Column(name = "order_date", nullable = false)
     private LocalDateTime orderDate;
