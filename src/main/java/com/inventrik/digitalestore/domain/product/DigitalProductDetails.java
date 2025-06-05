@@ -5,39 +5,43 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "DigitalProductDetails")
+@IdClass(DigitalProductDetails.DigitalProductDetailsPK.class)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class DigitalProductDetails {
     
     @Id
-    @Column(name = "product_id")
-    private Long productId;
-    
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
+    
+    @Id
+    @Column(name = "product_id")
+    private Long productId;
     
     @Column(name = "file_url", nullable = false, length = 255)
     private String fileUrl;
     
     @Column(name = "file_size")
-    private Integer fileSize; // Size in KB/MB as per design brief
+    private Integer fileSize;
     
     @Column(name = "file_format", length = 20)
-    private String fileFormat; // e.g., PDF, MP3, MP4, etc.
+    private String fileFormat;
     
     @Column(name = "license_info", columnDefinition = "TEXT")
-    private String licenseInfo; // Terms or license keys
+    private String licenseInfo;
     
     @Column(name = "version", length = 20)
     private String version;
     
     @Column(name = "status", nullable = false, length = 2)
-    private String status; // -1 INACTIVE, 0 ACTIVE
+    private String status;
     
     @Column(name = "created_by", nullable = false, length = 2)
     private String createdBy;
@@ -60,5 +64,35 @@ public class DigitalProductDetails {
     @PreUpdate
     protected void onUpdate() {
         updated = LocalDateTime.now();
+    }
+    
+    public static class DigitalProductDetailsPK implements Serializable {
+        private Integer tenantId;
+        private Long productId;
+        
+        public DigitalProductDetailsPK() {}
+        
+        public DigitalProductDetailsPK(Integer tenantId, Long productId) {
+            this.tenantId = tenantId;
+            this.productId = productId;
+        }
+        
+        public Integer getTenantId() { return tenantId; }
+        public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
+        public Long getProductId() { return productId; }
+        public void setProductId(Long productId) { this.productId = productId; }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof DigitalProductDetailsPK)) return false;
+            DigitalProductDetailsPK that = (DigitalProductDetailsPK) o;
+            return Objects.equals(tenantId, that.tenantId) && Objects.equals(productId, that.productId);
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(tenantId, productId);
+        }
     }
 }

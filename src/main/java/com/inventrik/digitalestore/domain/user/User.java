@@ -5,21 +5,25 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "Users")
+@IdClass(User.UserPK.class)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
     
     @Id
-    @Column(name = "user_id")
-    private Long userId;
-    
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
+    
+    @Id
+    @Column(name = "user_id")
+    private Long userId;
     
     @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
@@ -94,5 +98,35 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updated = LocalDateTime.now();
+    }
+    
+    public static class UserPK implements Serializable {
+        private Integer tenantId;
+        private Long userId;
+        
+        public UserPK() {}
+        
+        public UserPK(Integer tenantId, Long userId) {
+            this.tenantId = tenantId;
+            this.userId = userId;
+        }
+        
+        public Integer getTenantId() { return tenantId; }
+        public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
+        public Long getUserId() { return userId; }
+        public void setUserId(Long userId) { this.userId = userId; }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof UserPK)) return false;
+            UserPK userPK = (UserPK) o;
+            return Objects.equals(tenantId, userPK.tenantId) && Objects.equals(userId, userPK.userId);
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(tenantId, userId);
+        }
     }
 }

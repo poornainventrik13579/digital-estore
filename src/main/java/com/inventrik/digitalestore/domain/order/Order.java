@@ -5,24 +5,28 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "Orders")
+@IdClass(Order.OrderPK.class)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
     
     @Id
-    @Column(name = "order_id")
-    private Long orderId;
-    
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
+    
+    @Id
+    @Column(name = "order_id")
+    private Long orderId;
     
     @Column(name = "user_id")
     private Long userId;
@@ -69,7 +73,6 @@ public class Order {
         updated = LocalDateTime.now();
     }
     
-    // Helper method to add an order item
     public void addOrderItem(OrderItem orderItem) {
         orderItems.add(orderItem);
         orderItem.setOrder(this);
@@ -77,10 +80,39 @@ public class Order {
         orderItem.setTenantId(this.tenantId);
     }
     
-    // Helper method to remove an order item
     public void removeOrderItem(OrderItem orderItem) {
         orderItems.remove(orderItem);
         orderItem.setOrder(null);
         orderItem.setOrderId(null);
+    }
+    
+    public static class OrderPK implements Serializable {
+        private Integer tenantId;
+        private Long orderId;
+        
+        public OrderPK() {}
+        
+        public OrderPK(Integer tenantId, Long orderId) {
+            this.tenantId = tenantId;
+            this.orderId = orderId;
+        }
+        
+        public Integer getTenantId() { return tenantId; }
+        public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
+        public Long getOrderId() { return orderId; }
+        public void setOrderId(Long orderId) { this.orderId = orderId; }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof OrderPK)) return false;
+            OrderPK orderPK = (OrderPK) o;
+            return Objects.equals(tenantId, orderPK.tenantId) && Objects.equals(orderId, orderPK.orderId);
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(tenantId, orderId);
+        }
     }
 }
