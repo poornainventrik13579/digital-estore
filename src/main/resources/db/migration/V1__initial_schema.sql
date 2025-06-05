@@ -57,6 +57,23 @@ CREATE TABLE Products (
     PRIMARY KEY (tenant_id, product_id)
 );
 
+-- Create DigitalProductDetails table
+CREATE TABLE DigitalProductDetails (
+    tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
+    product_id BIGINT NOT NULL,
+    file_url VARCHAR(255) NOT NULL,
+    file_size INT,
+    file_format VARCHAR(20),
+    license_info TEXT,
+    version VARCHAR(20),
+    status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
+    created_by VARCHAR(2) NOT NULL,
+    created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(2) NOT NULL,
+    updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (tenant_id, product_id)
+);
+
 -- Create Orders table
 CREATE TABLE Orders (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
@@ -98,9 +115,11 @@ CREATE TABLE Payments (
     currency VARCHAR(3),
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     amount DECIMAL(10, 2) NOT NULL,
+    refunded_amount DECIMAL(10, 2) DEFAULT 0.00,
     payment_method VARCHAR(50),
     transaction_id VARCHAR(100),
     status VARCHAR(20) DEFAULT 'Pending',
+    refund_reason TEXT,
     created_by VARCHAR(2) NOT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(2) NOT NULL,

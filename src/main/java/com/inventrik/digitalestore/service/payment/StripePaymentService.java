@@ -5,8 +5,10 @@ import com.inventrik.digitalestore.domain.order.Order;
 import com.inventrik.digitalestore.domain.order.OrderStatus;
 import com.inventrik.digitalestore.domain.payment.Payment;
 import com.inventrik.digitalestore.domain.payment.PaymentStatus;
+import com.inventrik.digitalestore.dto.request.PartialRefundRequest;
 import com.inventrik.digitalestore.dto.request.PaymentRequest;
 import com.inventrik.digitalestore.dto.response.PaymentResponse;
+import com.inventrik.digitalestore.exception.payment.InsufficientRefundAmountException;
 import com.inventrik.digitalestore.exception.payment.PaymentNotFoundException;
 import com.inventrik.digitalestore.exception.payment.PaymentProcessingException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
@@ -29,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -53,20 +56,23 @@ public class StripePaymentService implements PaymentService {
     private final UserRepository userRepository;
 
     private PaymentResponse mapToDTO(Payment payment) {
-        return new PaymentResponse(
-            payment.getPaymentId(),
-            payment.getTenantId(),
-            payment.getOrderId(),
-            payment.getCurrency(),
-            payment.getPaymentDate(),
-            payment.getAmount(),
-            payment.getPaymentMethod(),
-            payment.getTransactionId(),
-            payment.getStatus(),
-            payment.getCreated(),
-            payment.getUpdated(),
-            null // Client secret is set only when creating a payment
-        );
+        PaymentResponse response = new PaymentResponse();
+        response.setPaymentId(payment.getPaymentId());
+        response.setTenantId(payment.getTenantId());
+        response.setOrderId(payment.getOrderId());
+        response.setCurrency(payment.getCurrency());
+        response.setPaymentDate(payment.getPaymentDate());
+        response.setAmount(payment.getAmount());
+        response.setRefundedAmount(payment.getRefundedAmount());
+        response.setRemainingAmount(payment.getRemainingAmount());
+        response.setPaymentMethod(payment.getPaymentMethod());
+        response.setTransactionId(payment.getTransactionId());
+        response.setStatus(payment.getStatus());
+        response.setRefundReason(payment.getRefundReason());
+        response.setCreated(payment.getCreated());
+        response.setUpdated(payment.getUpdated());
+        response.setClientSecret(null); // Set only when creating
+        return response;
     }
     
     @Override
@@ -347,21 +353,123 @@ public class StripePaymentService implements PaymentService {
     }
     
     @Override
+    public PaymentResponse partialRefundPayment(Integer tenantId, Long paymentId, PartialRefundRequest refundRequest, String username) {
+        return transactionCoordinator.executeInStrictTransaction(() -> {
+            try {
+                Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
+                        .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
+                
+                if (!PaymentStatus.SUCCESSFUL.getDisplayName().equals(payment.getStatus()) && 
+                    !PaymentStatus.PARTIALLY_REFUNDED.getDisplayName().equals(payment.getStatus())) {
+                    throw new PaymentProcessingException("Only successful or partially refunded payments can be partially refunded", false);
+                }
+                
+                BigDecimal currentRefundedAmount = payment.getRefundedAmount() != null ? payment.getRefundedAmount() : BigDecimal.ZERO;
+                BigDecimal remainingAmount = payment.getAmount().subtract(currentRefundedAmount);
+                
+                if (refundRequest.getRefundAmount().compareTo(remainingAmount) > 0) {
+                    throw new InsufficientRefundAmountException("Refund amount (" + refundRequest.getRefundAmount() + 
+                        ") exceeds remaining amount (" + remainingAmount + ")");
+                }
+                
+                if (refundRequest.getRefundAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new InsufficientRefundAmountException("Refund amount must be greater than zero");
+                }
+                
+                retryService.executeWithRetry(() -> {
+                    try {
+                        Map<String, Object> params = new HashMap<>();
+                        params.put("payment_intent", payment.getTransactionId());
+                        params.put("amount", refundRequest.getRefundAmount().multiply(new BigDecimal(100)).longValue());
+                        params.put("reason", "requested_by_customer");
+                        
+                        Map<String, String> metadata = new HashMap<>();
+                        metadata.put("paymentId", paymentId.toString());
+                        metadata.put("tenantId", tenantId.toString());
+                        metadata.put("partialRefund", "true");
+                        params.put("metadata", metadata);
+                        
+                        com.stripe.model.Refund.create(params);
+                        return null;
+                    } catch (StripeException e) {
+                        throw new PaymentProcessingException("Failed to process partial refund with Stripe: " + e.getMessage(), e, true);
+                    }
+                });
+                
+                BigDecimal newRefundedAmount = currentRefundedAmount.add(refundRequest.getRefundAmount());
+                payment.setRefundedAmount(newRefundedAmount);
+                payment.setRefundReason(refundRequest.getReason());
+                
+                if (newRefundedAmount.compareTo(payment.getAmount()) >= 0) {
+                    payment.setStatus(PaymentStatus.REFUNDED.getDisplayName());
+                } else {
+                    payment.setStatus(PaymentStatus.PARTIALLY_REFUNDED.getDisplayName());
+                }
+                
+                String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+                payment.setUpdatedBy(truncatedUsername);
+                payment.setUpdated(LocalDateTime.now());
+                
+                Payment updatedPayment = paymentRepository.save(payment);
+                
+                Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + payment.getOrderId()));
+                
+                if (payment.isFullyRefunded()) {
+                    order.setStatus("Refunded");
+                } else {
+                    order.setStatus("Partially Refunded");
+                }
+                order.setUpdatedBy(truncatedUsername);
+                order.setUpdated(LocalDateTime.now());
+                orderRepository.save(order);
+                
+                userRepository.findByTenantIdAndUserId(tenantId, order.getUserId()).ifPresent(user -> {
+                    try {
+                        emailService.sendPartialRefundNotification(order, updatedPayment, refundRequest.getRefundAmount(), user);
+                        log.info("Partial refund notification email sent for payment {}, amount {}", paymentId, refundRequest.getRefundAmount());
+                    } catch (Exception e) {
+                        log.error("Failed to send partial refund notification email: {}", e.getMessage(), e);
+                    }
+                });
+                
+                paymentEventLogger.logPartialRefund(updatedPayment, refundRequest.getRefundAmount(), refundRequest.getReason(), username);
+                
+                return mapToDTO(updatedPayment);
+            } catch (Exception e) {
+                if (e instanceof PaymentProcessingException || e instanceof ResourceNotFoundException || 
+                    e instanceof InsufficientRefundAmountException) {
+                    throw e;
+                }
+                throw new PaymentProcessingException("Failed to process partial refund: " + e.getMessage(), e, false);
+            }
+        });
+    }
+
+    @Override
     public PaymentResponse refundPayment(Integer tenantId, Long paymentId, String username) {
         return transactionCoordinator.executeInStrictTransaction(() -> {
             try {
                 Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
                         .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
                 
-                if (!PaymentStatus.SUCCESSFUL.getDisplayName().equals(payment.getStatus())) {
-                    throw new PaymentProcessingException("Only successful payments can be refunded", false);
+                if (!PaymentStatus.SUCCESSFUL.getDisplayName().equals(payment.getStatus()) && 
+                    !PaymentStatus.PARTIALLY_REFUNDED.getDisplayName().equals(payment.getStatus())) {
+                    throw new PaymentProcessingException("Only successful or partially refunded payments can be refunded", false);
+                }
+                
+                BigDecimal currentRefundedAmount = payment.getRefundedAmount() != null ? payment.getRefundedAmount() : BigDecimal.ZERO;
+                BigDecimal remainingAmount = payment.getAmount().subtract(currentRefundedAmount);
+                
+                if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new PaymentProcessingException("Payment is already fully refunded", false);
                 }
                 
                 retryService.executeWithRetry(() -> {
                     try {
-                        // Create a refund with Stripe
                         Map<String, Object> params = new HashMap<>();
                         params.put("payment_intent", payment.getTransactionId());
+                        params.put("amount", remainingAmount.multiply(new BigDecimal(100)).longValue());
                         
                         com.stripe.model.Refund.create(params);
                         return null;
@@ -370,9 +478,10 @@ public class StripePaymentService implements PaymentService {
                     }
                 });
                 
+                payment.setRefundedAmount(payment.getAmount());
                 payment.setStatus(PaymentStatus.REFUNDED.getDisplayName());
+                payment.setRefundReason("Full refund requested");
                 
-                // Update the order status
                 Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + payment.getOrderId()));
                 order.setStatus("Refunded");
@@ -380,25 +489,21 @@ public class StripePaymentService implements PaymentService {
                 order.setUpdated(LocalDateTime.now());
                 orderRepository.save(order);
                 
-                // Ensure username is truncated to 2 characters as per DB schema
                 String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
                 payment.setUpdatedBy(truncatedUsername);
                 payment.setUpdated(LocalDateTime.now());
                 
                 Payment updatedPayment = paymentRepository.save(payment);
                 
-                // Send refund notification email
                 userRepository.findByTenantIdAndUserId(tenantId, order.getUserId()).ifPresent(user -> {
                     try {
                         emailService.sendRefundNotification(order, updatedPayment, user);
                         log.info("Refund notification email sent for payment {}", paymentId);
                     } catch (Exception e) {
                         log.error("Failed to send refund notification email: {}", e.getMessage(), e);
-                        // Don't throw exception here to avoid disrupting the refund process
                     }
                 });
                 
-                // Log payment refund
                 paymentEventLogger.logPaymentRefund(updatedPayment, username);
                 
                 return mapToDTO(updatedPayment);

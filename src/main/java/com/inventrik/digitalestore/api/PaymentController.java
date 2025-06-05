@@ -1,12 +1,19 @@
 package com.inventrik.digitalestore.api;
 
+import com.inventrik.digitalestore.dto.request.PartialRefundRequest;
 import com.inventrik.digitalestore.dto.request.PaymentRequest;
 import com.inventrik.digitalestore.dto.response.PaymentResponse;
+import com.inventrik.digitalestore.exception.payment.InsufficientRefundAmountException;
+import com.inventrik.digitalestore.exception.payment.PaymentNotFoundException;
+import com.inventrik.digitalestore.exception.payment.PaymentProcessingException;
 import com.inventrik.digitalestore.service.payment.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -98,6 +105,29 @@ public class PaymentController {
         String username = (authentication != null) ? authentication.getName() : "system";
         PaymentResponse refundedPayment = paymentService.refundPayment(tenantId, paymentId, username);
         return ResponseEntity.ok(refundedPayment);
+    }
+    
+    @PostMapping("/{paymentId}/partial-refund")
+    @Operation(summary = "Process partial refund", description = "Process a partial refund for a payment")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Partial refund processed successfully"),
+        @ApiResponse(responseCode = "404", description = "Payment not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid refund request")
+    })
+    public ResponseEntity<PaymentResponse> partialRefundPayment(
+            @PathVariable Long paymentId,
+            @Valid @RequestBody PartialRefundRequest refundRequest,
+            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            Authentication authentication) {
+        
+        try {
+            PaymentResponse response = paymentService.partialRefundPayment(tenantId, paymentId, refundRequest, authentication.getName());
+            return ResponseEntity.ok(response);
+        } catch (PaymentNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (InsufficientRefundAmountException | PaymentProcessingException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
     
     @GetMapping("/order/{orderId}")

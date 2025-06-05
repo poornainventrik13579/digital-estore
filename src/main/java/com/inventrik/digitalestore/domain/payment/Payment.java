@@ -38,6 +38,9 @@ public class Payment {
     @Column(name = "amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
     
+    @Column(name = "refunded_amount", precision = 10, scale = 2)
+    private BigDecimal refundedAmount = BigDecimal.ZERO;
+    
     @Column(name = "payment_method", length = 50)
     private String paymentMethod;
     
@@ -46,6 +49,9 @@ public class Payment {
     
     @Column(name = "status", length = 20)
     private String status = PaymentStatus.PENDING.getDisplayName();
+    
+    @Column(name = "refund_reason", columnDefinition = "TEXT")
+    private String refundReason;
     
     @Column(name = "created_by", nullable = false, length = 2)
     private String createdBy;
@@ -64,11 +70,26 @@ public class Payment {
         created = LocalDateTime.now();
         updated = LocalDateTime.now();
         paymentDate = LocalDateTime.now();
+        if (refundedAmount == null) {
+            refundedAmount = BigDecimal.ZERO;
+        }
     }
     
     @PreUpdate
     protected void onUpdate() {
         updated = LocalDateTime.now();
+    }
+    
+    public BigDecimal getRemainingAmount() {
+        return amount.subtract(refundedAmount != null ? refundedAmount : BigDecimal.ZERO);
+    }
+    
+    public boolean isFullyRefunded() {
+        return refundedAmount != null && refundedAmount.compareTo(amount) >= 0;
+    }
+    
+    public boolean isPartiallyRefunded() {
+        return refundedAmount != null && refundedAmount.compareTo(BigDecimal.ZERO) > 0 && !isFullyRefunded();
     }
     
     public static class PaymentPK implements Serializable {

@@ -1,5 +1,6 @@
 package com.inventrik.digitalestore.service.payment;
 
+import com.inventrik.digitalestore.dto.request.PartialRefundRequest;
 import com.inventrik.digitalestore.dto.request.PaymentRequest;
 import com.inventrik.digitalestore.dto.response.PaymentResponse;
 
@@ -24,6 +25,9 @@ public interface PaymentService {
     
     // Process a refund
     PaymentResponse refundPayment(Integer tenantId, Long paymentId, String username);
+    
+    // Process a partial refund
+    PaymentResponse partialRefundPayment(Integer tenantId, Long paymentId, PartialRefundRequest refundRequest, String username);
     
     // Get payments by order
     List<PaymentResponse> getPaymentsByOrder(Integer tenantId, Long orderId);
