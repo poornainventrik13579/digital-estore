@@ -28,10 +28,9 @@ public class Order {
     @Column(name = "user_id")
     private Long userId;
     
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
-        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
-        @JoinColumn(name = "user_id", referencedColumnName = "user_id", insertable = false, updatable = false)
+        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id"),
+        @JoinColumn(name = "user_id", referencedColumnName = "user_id")
     })
     private User user;
     

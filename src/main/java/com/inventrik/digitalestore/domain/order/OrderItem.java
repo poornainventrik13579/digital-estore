@@ -33,18 +33,15 @@ public class OrderItem {
     @Column(name = "product_id", nullable = false)
     private Long productId;
     
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
-        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
-        @JoinColumn(name = "order_id", referencedColumnName = "order_id", insertable = false, updatable = false)
+        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id"),
+        @JoinColumn(name = "order_id", referencedColumnName = "order_id")
     })
-    @ToString.Exclude
     private Order order;
     
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
-        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
-        @JoinColumn(name = "product_id", referencedColumnName = "product_id", insertable = false, updatable = false)
+        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id"),
+        @JoinColumn(name = "product_id", referencedColumnName = "product_id")
     })
     private Product product;
     
