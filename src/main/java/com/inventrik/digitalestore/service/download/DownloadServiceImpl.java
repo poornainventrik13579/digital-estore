@@ -20,12 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -51,9 +48,9 @@ public class DownloadServiceImpl implements DownloadService {
     
     @Override
     @Transactional
-    public DownloadTokenResponse generateDownloadToken(Integer tenantId, Long orderItemId, String username, String ipAddress, String userAgent) {
-        // Find order item and validate
-        OrderItem orderItem = findOrderItemWithValidation(tenantId, orderItemId);
+    public DownloadTokenResponse generateDownloadToken(Integer tenantId, Long orderId, Long orderItemId, String username, String ipAddress, String userAgent) {
+        // FIXED: Find order item and validate using composite key
+        OrderItem orderItem = findOrderItemWithValidation(tenantId, orderId, orderItemId);
         
         // Get digital product details
         DigitalProductDetails digitalDetails = digitalProductDetailsRepository
@@ -61,7 +58,7 @@ public class DownloadServiceImpl implements DownloadService {
                 .orElseThrow(() -> new ResourceNotFoundException("Digital product details not found for product: " + orderItem.getProductId()));
         
         // Check download limits
-        validateDownloadLimits(orderItemId, digitalDetails);
+        validateDownloadLimits(tenantId, orderId, orderItemId, digitalDetails);
         
         // Check expiry
         validateDownloadExpiry(orderItem, digitalDetails);
@@ -73,6 +70,7 @@ public class DownloadServiceImpl implements DownloadService {
         DigitalDownload download = new DigitalDownload();
         download.setDownloadId(System.currentTimeMillis());
         download.setTenantId(tenantId);
+        download.setOrderId(orderId);  // FIXED: Set orderId
         download.setOrderItemId(orderItemId);
         download.setDownloadDate(LocalDateTime.now());
         download.setIpAddress(ipAddress);
@@ -89,7 +87,7 @@ public class DownloadServiceImpl implements DownloadService {
         DigitalDownload savedDownload = digitalDownloadRepository.save(download);
         
         // Calculate remaining downloads
-        int remainingDownloads = getRemainingDownloads(tenantId, orderItemId);
+        int remainingDownloads = getRemainingDownloads(tenantId, orderId, orderItemId);
         
         return new DownloadTokenResponse(
                 savedDownload.getDownloadToken(),
@@ -167,8 +165,9 @@ public class DownloadServiceImpl implements DownloadService {
     }
     
     @Override
-    public List<DownloadHistoryResponse> getDownloadHistory(Integer tenantId, Long orderItemId) {
-        List<DigitalDownload> downloads = digitalDownloadRepository.findByTenantIdAndOrderItemId(tenantId, orderItemId);
+    public List<DownloadHistoryResponse> getDownloadHistory(Integer tenantId, Long orderId, Long orderItemId) {
+        // FIXED: Use composite key
+        List<DigitalDownload> downloads = digitalDownloadRepository.findByTenantIdAndOrderIdAndOrderItemId(tenantId, orderId, orderItemId);
         return downloads.stream()
                 .map(this::mapToDownloadHistoryResponse)
                 .collect(Collectors.toList());
@@ -191,14 +190,20 @@ public class DownloadServiceImpl implements DownloadService {
     }
     
     @Override
-    public int getRemainingDownloads(Integer tenantId, Long orderItemId) {
-        DigitalProductDetails digitalDetails = getDigitalDetailsForOrderItem(tenantId, orderItemId);
+    public int getRemainingDownloads(Integer tenantId, Long orderId, Long orderItemId) {
+        // FIXED: Use composite key to get digital details
+        OrderItem orderItem = findOrderItemWithValidation(tenantId, orderId, orderItemId);
+        DigitalProductDetails digitalDetails = digitalProductDetailsRepository
+                .findByTenantIdAndProductId(tenantId, orderItem.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Digital product details not found"));
         
         if (digitalDetails.getDownloadLimit() == null) {
             return -1; // Unlimited downloads
         }
         
-        long completedDownloads = digitalDownloadRepository.countByOrderItemIdAndDownloadStatus(orderItemId, "COMPLETED");
+        // FIXED: Use composite key for counting
+        long completedDownloads = digitalDownloadRepository.countByTenantIdAndOrderIdAndOrderItemIdAndDownloadStatus(
+                tenantId, orderId, orderItemId, "COMPLETED");
         return Math.max(0, digitalDetails.getDownloadLimit() - (int) completedDownloads);
     }
     
@@ -307,20 +312,17 @@ public class DownloadServiceImpl implements DownloadService {
         return digitalProductDetailsRepository.existsByTenantIdAndProductId(tenantId, productId);
     }
     
-    // Helper methods
-    private OrderItem findOrderItemWithValidation(Integer tenantId, Long orderItemId) {
-        // This would require adding a method to OrderRepository or using a query
-        // For now, we'll assume we have access to the order item
-        return orderRepository.findAll().stream()
-                .flatMap(order -> order.getOrderItems().stream())
-                .filter(item -> item.getOrderItemId().equals(orderItemId) && item.getTenantId().equals(tenantId))
-                .findFirst()
+    // FIXED: Helper methods with composite key support
+    private OrderItem findOrderItemWithValidation(Integer tenantId, Long orderId, Long orderItemId) {
+        return orderRepository.findOrderItemByTenantIdAndOrderIdAndOrderItemId(tenantId, orderId, orderItemId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order item not found: " + orderItemId));
     }
     
-    private void validateDownloadLimits(Long orderItemId, DigitalProductDetails digitalDetails) {
+    private void validateDownloadLimits(Integer tenantId, Long orderId, Long orderItemId, DigitalProductDetails digitalDetails) {
         if (digitalDetails.getDownloadLimit() != null) {
-            long completedDownloads = digitalDownloadRepository.countByOrderItemIdAndDownloadStatus(orderItemId, "COMPLETED");
+            // FIXED: Use composite key for counting
+            long completedDownloads = digitalDownloadRepository.countByTenantIdAndOrderIdAndOrderItemIdAndDownloadStatus(
+                    tenantId, orderId, orderItemId, "COMPLETED");
             if (completedDownloads >= digitalDetails.getDownloadLimit()) {
                 throw new DownloadLimitExceededException("Download limit exceeded for this product");
             }
@@ -334,12 +336,6 @@ public class DownloadServiceImpl implements DownloadService {
                 throw new DownloadExpiredException("Download period has expired");
             }
         }
-    }
-    
-    private DigitalProductDetails getDigitalDetailsForOrderItem(Integer tenantId, Long orderItemId) {
-        OrderItem orderItem = findOrderItemWithValidation(tenantId, orderItemId);
-        return digitalProductDetailsRepository.findByTenantIdAndProductId(tenantId, orderItem.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Digital product details not found"));
     }
     
     private DownloadHistoryResponse mapToDownloadHistoryResponse(DigitalDownload download) {

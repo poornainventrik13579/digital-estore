@@ -22,12 +22,17 @@ public class DigitalDownload {
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
     
+    @Column(name = "order_id", nullable = false)  // ADDED: Need order_id for composite key
+    private Long orderId;
+    
     @Column(name = "order_item_id", nullable = false)
     private Long orderItemId;
     
+    // FIXED: Proper composite key mapping to OrderItem
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
         @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
+        @JoinColumn(name = "order_id", referencedColumnName = "order_id", insertable = false, updatable = false),
         @JoinColumn(name = "order_item_id", referencedColumnName = "order_item_id", insertable = false, updatable = false)
     })
     private OrderItem orderItem;
@@ -51,10 +56,10 @@ public class DigitalDownload {
     private Long fileSizeDownloaded;
     
     @Column(name = "download_status", length = 20)
-    private String downloadStatus; // INITIATED, IN_PROGRESS, COMPLETED, FAILED
+    private String downloadStatus;
     
     @Column(name = "status", nullable = false, length = 2)
-    private String status = "0"; // 0: Active, -1: Inactive
+    private String status = "0";
     
     @Column(name = "created_by", nullable = false, length = 2)
     private String createdBy;

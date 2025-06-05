@@ -13,41 +13,31 @@ import java.util.Optional;
 @Repository
 public interface DigitalDownloadRepository extends JpaRepository<DigitalDownload, Long> {
     
-    // Find downloads by order item ID
-    List<DigitalDownload> findByOrderItemId(Long orderItemId);
+    // FIXED: Use composite key for OrderItem lookup
+    List<DigitalDownload> findByTenantIdAndOrderIdAndOrderItemId(Integer tenantId, Long orderId, Long orderItemId);
     
-    // Find download by token
     Optional<DigitalDownload> findByDownloadToken(String downloadToken);
     
-    // Count downloads by order item ID
-    long countByOrderItemId(Long orderItemId);
+    // FIXED: Count using composite key
+    long countByTenantIdAndOrderIdAndOrderItemId(Integer tenantId, Long orderId, Long orderItemId);
     
-    // Count completed downloads by order item ID
-    long countByOrderItemIdAndDownloadStatus(Long orderItemId, String downloadStatus);
+    long countByTenantIdAndOrderIdAndOrderItemIdAndDownloadStatus(Integer tenantId, Long orderId, Long orderItemId, String downloadStatus);
     
-    // Find downloads by tenant and order item ID
-    List<DigitalDownload> findByTenantIdAndOrderItemId(Integer tenantId, Long orderItemId);
-    
-    // Find downloads by tenant ID
     List<DigitalDownload> findByTenantId(Integer tenantId);
     
-    // Find downloads by IP address
     List<DigitalDownload> findByIpAddress(String ipAddress);
     
-    // Find downloads within date range
     List<DigitalDownload> findByDownloadDateBetween(LocalDateTime startDate, LocalDateTime endDate);
     
-    // Find downloads by status
     List<DigitalDownload> findByTenantIdAndStatus(Integer tenantId, String status);
     
-    // Find expired tokens
     List<DigitalDownload> findByTokenExpiryBefore(LocalDateTime dateTime);
     
-    // Find downloads by user (through order item)
-    @Query("SELECT dd FROM DigitalDownload dd JOIN dd.orderItem oi JOIN oi.order o WHERE o.userId = :userId AND dd.tenantId = :tenantId")
+    // FIXED: Use proper join for user lookup
+    @Query("SELECT dd FROM DigitalDownload dd JOIN dd.orderItem oi JOIN oi.order o WHERE o.tenantId = :tenantId AND o.userId = :userId")
     List<DigitalDownload> findByTenantIdAndUserId(@Param("tenantId") Integer tenantId, @Param("userId") Long userId);
     
-    // Get download history for a specific product
-    @Query("SELECT dd FROM DigitalDownload dd JOIN dd.orderItem oi WHERE oi.productId = :productId AND dd.tenantId = :tenantId")
+    // FIXED: Use proper join for product lookup
+    @Query("SELECT dd FROM DigitalDownload dd JOIN dd.orderItem oi WHERE oi.tenantId = :tenantId AND oi.productId = :productId")
     List<DigitalDownload> findByTenantIdAndProductId(@Param("tenantId") Integer tenantId, @Param("productId") Long productId);
 }

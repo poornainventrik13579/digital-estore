@@ -30,10 +30,12 @@ public class DownloadController {
     
     private final DownloadService downloadService;
     
-    @PostMapping("/tenants/{tenantId}/order-items/{orderItemId}/download-token")
+    // FIXED: Updated endpoint to include orderId
+    @PostMapping("/tenants/{tenantId}/orders/{orderId}/order-items/{orderItemId}/download-token")
     @Operation(summary = "Generate download token for order item")
     public ResponseEntity<DownloadTokenResponse> generateDownloadToken(
             @PathVariable Integer tenantId,
+            @PathVariable Long orderId,  // FIXED: Added orderId parameter
             @PathVariable Long orderItemId,
             HttpServletRequest request,
             Authentication authentication) {
@@ -42,8 +44,9 @@ public class DownloadController {
         String ipAddress = getClientIpAddress(request);
         String userAgent = request.getHeader("User-Agent");
         
+        // FIXED: Pass orderId to service
         DownloadTokenResponse response = downloadService.generateDownloadToken(
-                tenantId, orderItemId, username, ipAddress, userAgent);
+                tenantId, orderId, orderItemId, username, ipAddress, userAgent);
         
         return ResponseEntity.ok(response);
     }
@@ -80,13 +83,16 @@ public class DownloadController {
         return ResponseEntity.ok().build();
     }
     
-    @GetMapping("/tenants/{tenantId}/order-items/{orderItemId}/download-history")
+    // FIXED: Updated endpoint to include orderId
+    @GetMapping("/tenants/{tenantId}/orders/{orderId}/order-items/{orderItemId}/download-history")
     @Operation(summary = "Get download history for order item")
     public ResponseEntity<List<DownloadHistoryResponse>> getDownloadHistory(
             @PathVariable Integer tenantId,
+            @PathVariable Long orderId,  // FIXED: Added orderId parameter
             @PathVariable Long orderItemId) {
         
-        List<DownloadHistoryResponse> history = downloadService.getDownloadHistory(tenantId, orderItemId);
+        // FIXED: Pass orderId to service
+        List<DownloadHistoryResponse> history = downloadService.getDownloadHistory(tenantId, orderId, orderItemId);
         return ResponseEntity.ok(history);
     }
     
@@ -110,13 +116,16 @@ public class DownloadController {
         return ResponseEntity.ok(history);
     }
     
-    @GetMapping("/tenants/{tenantId}/order-items/{orderItemId}/remaining-downloads")
+    // FIXED: Updated endpoint to include orderId
+    @GetMapping("/tenants/{tenantId}/orders/{orderId}/order-items/{orderItemId}/remaining-downloads")
     @Operation(summary = "Get remaining downloads for order item")
     public ResponseEntity<Integer> getRemainingDownloads(
             @PathVariable Integer tenantId,
+            @PathVariable Long orderId,  // FIXED: Added orderId parameter
             @PathVariable Long orderItemId) {
         
-        int remaining = downloadService.getRemainingDownloads(tenantId, orderItemId);
+        // FIXED: Pass orderId to service
+        int remaining = downloadService.getRemainingDownloads(tenantId, orderId, orderItemId);
         return ResponseEntity.ok(remaining);
     }
     
@@ -182,6 +191,7 @@ public class DownloadController {
         return ResponseEntity.ok().build();
     }
     
+    // Helper method to get client IP address
     private String getClientIpAddress(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {

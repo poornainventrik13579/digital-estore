@@ -10,8 +10,8 @@ import java.util.List;
 
 public interface DownloadService {
     
-    // Generate secure download token for order item
-    DownloadTokenResponse generateDownloadToken(Integer tenantId, Long orderItemId, String username, String ipAddress, String userAgent);
+    // FIXED: Generate secure download token for order item (now includes orderId)
+    DownloadTokenResponse generateDownloadToken(Integer tenantId, Long orderId, Long orderItemId, String username, String ipAddress, String userAgent);
     
     // Validate download access and return file resource
     Resource validateDownloadAccess(String downloadToken, String ipAddress);
@@ -19,8 +19,8 @@ public interface DownloadService {
     // Record download completion
     void recordDownloadCompletion(String downloadToken, Long fileSizeDownloaded);
     
-    // Get download history for order item
-    List<DownloadHistoryResponse> getDownloadHistory(Integer tenantId, Long orderItemId);
+    // FIXED: Get download history for order item (now includes orderId)
+    List<DownloadHistoryResponse> getDownloadHistory(Integer tenantId, Long orderId, Long orderItemId);
     
     // Get download history for user
     List<DownloadHistoryResponse> getUserDownloadHistory(Integer tenantId, Long userId);
@@ -28,8 +28,8 @@ public interface DownloadService {
     // Get download history for product
     List<DownloadHistoryResponse> getProductDownloadHistory(Integer tenantId, Long productId);
     
-    // Check remaining downloads for order item
-    int getRemainingDownloads(Integer tenantId, Long orderItemId);
+    // FIXED: Check remaining downloads for order item (now includes orderId)
+    int getRemainingDownloads(Integer tenantId, Long orderId, Long orderItemId);
     
     // Clean up expired tokens
     void cleanupExpiredTokens();

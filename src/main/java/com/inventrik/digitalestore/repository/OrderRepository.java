@@ -1,7 +1,10 @@
 package com.inventrik.digitalestore.repository;
 
 import com.inventrik.digitalestore.domain.order.Order;
+import com.inventrik.digitalestore.domain.order.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -24,4 +27,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     
     // Delete order by tenant and order ID
     void deleteByTenantIdAndOrderId(Integer tenantId, Long orderId);
+    
+    // FIXED: NEW METHOD - Find specific order item using composite key
+    @Query("SELECT oi FROM Order o JOIN o.orderItems oi WHERE o.tenantId = :tenantId AND o.orderId = :orderId AND oi.orderItemId = :orderItemId")
+    Optional<OrderItem> findOrderItemByTenantIdAndOrderIdAndOrderItemId(
+        @Param("tenantId") Integer tenantId, 
+        @Param("orderId") Long orderId, 
+        @Param("orderItemId") Long orderItemId);
 }
