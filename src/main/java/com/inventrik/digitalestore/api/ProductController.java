@@ -5,6 +5,7 @@ import com.inventrik.digitalestore.dto.request.ProductUpdateRequest;
 import com.inventrik.digitalestore.dto.response.ProductResponse;
 import com.inventrik.digitalestore.service.product.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.List;
 @RequestMapping("/api/v1/tenants/{tenantId}/products")
 @RequiredArgsConstructor
 @Tag(name = "Product Management", description = "APIs for managing products")
+@SecurityRequirement(name = "oauth2")
 public class ProductController {
 
     private final ProductService productService;

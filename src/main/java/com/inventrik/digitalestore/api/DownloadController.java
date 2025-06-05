@@ -5,6 +5,7 @@ import com.inventrik.digitalestore.dto.response.DigitalProductDetailsResponse;
 import com.inventrik.digitalestore.dto.response.DownloadHistoryResponse;
 import com.inventrik.digitalestore.service.download.DownloadService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import java.util.List;
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Tag(name = "Download Management", description = "APIs for managing digital product downloads")
+@SecurityRequirement(name = "oauth2")
 @Slf4j
 public class DownloadController {
     

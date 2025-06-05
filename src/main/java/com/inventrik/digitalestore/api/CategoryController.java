@@ -5,6 +5,7 @@ import com.inventrik.digitalestore.dto.request.CategoryUpdateRequest;
 import com.inventrik.digitalestore.dto.response.CategoryResponse;
 import com.inventrik.digitalestore.service.category.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.List;
 @RequestMapping("/api/v1/tenants/{tenantId}/categories")
 @RequiredArgsConstructor
 @Tag(name = "Category Management", description = "APIs for managing categories")
+@SecurityRequirement(name = "oauth2")
 public class CategoryController {
 
     private final CategoryService categoryService;

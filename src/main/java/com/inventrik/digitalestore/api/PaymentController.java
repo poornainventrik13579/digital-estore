@@ -4,6 +4,7 @@ import com.inventrik.digitalestore.dto.request.PaymentRequest;
 import com.inventrik.digitalestore.dto.response.PaymentResponse;
 import com.inventrik.digitalestore.service.payment.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import java.util.List;
 @RequestMapping("/api/v1/tenants/{tenantId}/payments")
 @RequiredArgsConstructor
 @Tag(name = "Payment Management", description = "APIs for processing payments")
+@SecurityRequirement(name = "oauth2")
 public class PaymentController {
 
     private final PaymentService paymentService;

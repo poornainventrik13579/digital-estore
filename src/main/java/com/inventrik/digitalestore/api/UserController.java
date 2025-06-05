@@ -22,7 +22,7 @@ import java.util.List;
 @RequestMapping("/api/v1/tenants/{tenantId}/users")
 @RequiredArgsConstructor
 @Tag(name = "User Management", description = "APIs for managing users")
-@SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = "oauth2")
 public class UserController {
 
     private final UserService userService;
