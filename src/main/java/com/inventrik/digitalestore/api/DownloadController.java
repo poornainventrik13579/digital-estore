@@ -2,17 +2,13 @@ package com.inventrik.digitalestore.api;
 
 import com.inventrik.digitalestore.dto.request.DigitalProductDetailsRequest;
 import com.inventrik.digitalestore.dto.response.DigitalProductDetailsResponse;
-import com.inventrik.digitalestore.dto.response.DownloadTokenResponse;
 import com.inventrik.digitalestore.dto.response.DownloadHistoryResponse;
 import com.inventrik.digitalestore.service.download.DownloadService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -30,69 +26,29 @@ public class DownloadController {
     
     private final DownloadService downloadService;
     
-    // FIXED: Updated endpoint to include orderId
-    @PostMapping("/tenants/{tenantId}/orders/{orderId}/order-items/{orderItemId}/download-token")
-    @Operation(summary = "Generate download token for order item")
-    public ResponseEntity<DownloadTokenResponse> generateDownloadToken(
+    @PostMapping("/tenants/{tenantId}/order-items/{orderItemId}/record-download")
+    @Operation(summary = "Record a download for order item")
+    public ResponseEntity<Void> recordDownload(
             @PathVariable Integer tenantId,
-            @PathVariable Long orderId,  // FIXED: Added orderId parameter
             @PathVariable Long orderItemId,
             HttpServletRequest request,
             Authentication authentication) {
         
         String username = (authentication != null) ? authentication.getName() : "system";
         String ipAddress = getClientIpAddress(request);
-        String userAgent = request.getHeader("User-Agent");
         
-        // FIXED: Pass orderId to service
-        DownloadTokenResponse response = downloadService.generateDownloadToken(
-                tenantId, orderId, orderItemId, username, ipAddress, userAgent);
+        downloadService.recordDownload(tenantId, orderItemId, ipAddress, username);
         
-        return ResponseEntity.ok(response);
-    }
-    
-    @GetMapping("/downloads/{token}")
-    @Operation(summary = "Download file using token")
-    public ResponseEntity<Resource> downloadFile(
-            @PathVariable String token,
-            HttpServletRequest request) {
-        
-        String ipAddress = getClientIpAddress(request);
-        Resource file = downloadService.validateDownloadAccess(token, ipAddress);
-        
-        // Record download completion (this could be done via a separate endpoint after successful download)
-        try {
-            downloadService.recordDownloadCompletion(token, file.contentLength());
-        } catch (Exception e) {
-            log.warn("Could not record download completion: {}", e.getMessage());
-        }
-        
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(file);
-    }
-    
-    @PostMapping("/downloads/{token}/complete")
-    @Operation(summary = "Record download completion")
-    public ResponseEntity<Void> recordDownloadCompletion(
-            @PathVariable String token,
-            @RequestParam Long fileSize) {
-        
-        downloadService.recordDownloadCompletion(token, fileSize);
         return ResponseEntity.ok().build();
     }
     
-    // FIXED: Updated endpoint to include orderId
-    @GetMapping("/tenants/{tenantId}/orders/{orderId}/order-items/{orderItemId}/download-history")
+    @GetMapping("/tenants/{tenantId}/order-items/{orderItemId}/download-history")
     @Operation(summary = "Get download history for order item")
     public ResponseEntity<List<DownloadHistoryResponse>> getDownloadHistory(
             @PathVariable Integer tenantId,
-            @PathVariable Long orderId,  // FIXED: Added orderId parameter
             @PathVariable Long orderItemId) {
         
-        // FIXED: Pass orderId to service
-        List<DownloadHistoryResponse> history = downloadService.getDownloadHistory(tenantId, orderId, orderItemId);
+        List<DownloadHistoryResponse> history = downloadService.getDownloadHistory(tenantId, orderItemId);
         return ResponseEntity.ok(history);
     }
     
@@ -104,29 +60,6 @@ public class DownloadController {
         
         List<DownloadHistoryResponse> history = downloadService.getUserDownloadHistory(tenantId, userId);
         return ResponseEntity.ok(history);
-    }
-    
-    @GetMapping("/tenants/{tenantId}/products/{productId}/download-history")
-    @Operation(summary = "Get download history for product")
-    public ResponseEntity<List<DownloadHistoryResponse>> getProductDownloadHistory(
-            @PathVariable Integer tenantId,
-            @PathVariable Long productId) {
-        
-        List<DownloadHistoryResponse> history = downloadService.getProductDownloadHistory(tenantId, productId);
-        return ResponseEntity.ok(history);
-    }
-    
-    // FIXED: Updated endpoint to include orderId
-    @GetMapping("/tenants/{tenantId}/orders/{orderId}/order-items/{orderItemId}/remaining-downloads")
-    @Operation(summary = "Get remaining downloads for order item")
-    public ResponseEntity<Integer> getRemainingDownloads(
-            @PathVariable Integer tenantId,
-            @PathVariable Long orderId,  // FIXED: Added orderId parameter
-            @PathVariable Long orderItemId) {
-        
-        // FIXED: Pass orderId to service
-        int remaining = downloadService.getRemainingDownloads(tenantId, orderId, orderItemId);
-        return ResponseEntity.ok(remaining);
     }
     
     // Digital Product Details Management
@@ -182,13 +115,6 @@ public class DownloadController {
         
         downloadService.deleteDigitalProductDetails(tenantId, productId);
         return ResponseEntity.noContent().build();
-    }
-    
-    @PostMapping("/admin/cleanup-expired-tokens")
-    @Operation(summary = "Cleanup expired download tokens")
-    public ResponseEntity<Void> cleanupExpiredTokens() {
-        downloadService.cleanupExpiredTokens();
-        return ResponseEntity.ok().build();
     }
     
     // Helper method to get client IP address

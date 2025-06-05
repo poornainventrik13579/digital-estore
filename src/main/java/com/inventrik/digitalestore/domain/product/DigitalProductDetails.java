@@ -28,32 +28,23 @@ public class DigitalProductDetails {
     })
     private Product product;
     
-    @Column(name = "file_url", nullable = false, length = 500)
+    @Column(name = "file_url", nullable = false, length = 255)
     private String fileUrl;
     
     @Column(name = "file_size")
-    private Long fileSize; // Size in bytes
+    private Integer fileSize; // Size in KB/MB as per design brief
     
-    @Column(name = "file_format", length = 50)
-    private String fileFormat; // e.g., PDF, MP3, MP4, ZIP
+    @Column(name = "file_format", length = 20)
+    private String fileFormat; // e.g., PDF, MP3, MP4, etc.
     
     @Column(name = "license_info", columnDefinition = "TEXT")
-    private String licenseInfo;
+    private String licenseInfo; // Terms or license keys
     
     @Column(name = "version", length = 20)
     private String version;
     
-    @Column(name = "download_limit")
-    private Integer downloadLimit; // Maximum number of downloads allowed (null = unlimited)
-    
-    @Column(name = "expiry_days")
-    private Integer expiryDays; // Days after purchase when download expires
-    
-    @Column(name = "file_hash", length = 64)
-    private String fileHash; // SHA-256 hash for file integrity
-    
     @Column(name = "status", nullable = false, length = 2)
-    private String status = "0"; // 0: Active, -1: Inactive
+    private String status; // -1 INACTIVE, 0 ACTIVE
     
     @Column(name = "created_by", nullable = false, length = 2)
     private String createdBy;

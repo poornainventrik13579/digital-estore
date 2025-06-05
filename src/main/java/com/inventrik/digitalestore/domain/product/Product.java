@@ -66,7 +66,6 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems = new ArrayList<>();
     
-    // NEW ADDITION: Digital Product Details relationship
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private DigitalProductDetails digitalDetails;
     
@@ -89,15 +88,5 @@ public class Product {
     // Setter for backward compatibility
     public void setCategoryId(Long categoryId) {
         this.categoryId = categoryId;
-    }
-    
-    // NEW ADDITION: Helper method to check if product has digital details
-    public boolean hasDigitalDetails() {
-        return digitalDetails != null && "0".equals(digitalDetails.getStatus());
-    }
-    
-    // NEW ADDITION: Helper method to check if product is digital
-    public boolean isDigitalProduct() {
-        return hasDigitalDetails();
     }
 }

@@ -12,10 +12,7 @@ import java.time.LocalDateTime;
 public class DownloadHistoryResponse {
     private Long downloadId;
     private Long orderItemId;
-    private Long productId;
     private LocalDateTime downloadDate;
     private String ipAddress;
-    private String downloadStatus;
-    private Long fileSizeDownloaded;
     private String status;
 }

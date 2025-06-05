@@ -13,13 +13,10 @@ public class DigitalProductDetailsResponse {
     private Long productId;
     private Integer tenantId;
     private String fileUrl;
-    private Long fileSize;
+    private Integer fileSize;
     private String fileFormat;
     private String licenseInfo;
     private String version;
-    private Integer downloadLimit;
-    private Integer expiryDays;
-    private String fileHash;
     private String status;
     private LocalDateTime created;
     private LocalDateTime updated;

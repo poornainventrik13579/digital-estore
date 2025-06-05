@@ -22,19 +22,11 @@ public class DigitalDownload {
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
     
-    @Column(name = "order_id", nullable = false)  // ADDED: Need order_id for composite key
-    private Long orderId;
-    
     @Column(name = "order_item_id", nullable = false)
     private Long orderItemId;
     
-    // FIXED: Proper composite key mapping to OrderItem
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumns({
-        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
-        @JoinColumn(name = "order_id", referencedColumnName = "order_id", insertable = false, updatable = false),
-        @JoinColumn(name = "order_item_id", referencedColumnName = "order_item_id", insertable = false, updatable = false)
-    })
+    @JoinColumn(name = "order_item_id", referencedColumnName = "order_item_id", insertable = false, updatable = false)
     private OrderItem orderItem;
     
     @Column(name = "download_date", nullable = false)
@@ -43,23 +35,8 @@ public class DigitalDownload {
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
     
-    @Column(name = "user_agent", length = 500)
-    private String userAgent;
-    
-    @Column(name = "download_token", length = 100, unique = true)
-    private String downloadToken;
-    
-    @Column(name = "token_expiry")
-    private LocalDateTime tokenExpiry;
-    
-    @Column(name = "file_size_downloaded")
-    private Long fileSizeDownloaded;
-    
-    @Column(name = "download_status", length = 20)
-    private String downloadStatus;
-    
     @Column(name = "status", nullable = false, length = 2)
-    private String status = "0";
+    private String status; // 0:ACTIVE, -1 INACTIVE
     
     @Column(name = "created_by", nullable = false, length = 2)
     private String createdBy;

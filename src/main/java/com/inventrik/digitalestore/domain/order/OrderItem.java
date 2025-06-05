@@ -69,7 +69,6 @@ public class OrderItem {
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
     
-    // NEW ADDITION: Digital Downloads relationship
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<DigitalDownload> downloads = new ArrayList<>();
@@ -83,57 +82,5 @@ public class OrderItem {
     @PreUpdate
     protected void onUpdate() {
         updated = LocalDateTime.now();
-    }
-    
-    // NEW ADDITION: Helper method to check if order item has downloads
-    public boolean hasDownloads() {
-        return downloads != null && !downloads.isEmpty();
-    }
-    
-    // NEW ADDITION: Helper method to get completed downloads count
-    public long getCompletedDownloadsCount() {
-        return downloads.stream()
-                .filter(download -> "COMPLETED".equals(download.getDownloadStatus()))
-                .count();
-    }
-    
-    // NEW ADDITION: Helper method to get total downloads count
-    public long getTotalDownloadsCount() {
-        return downloads != null ? downloads.size() : 0;
-    }
-    
-    // NEW ADDITION: Helper method to check if item is digital
-    public boolean isDigitalProduct() {
-        return product != null && product.hasDigitalDetails();
-    }
-    
-    // NEW ADDITION: Helper method to get remaining downloads
-    public int getRemainingDownloads() {
-        if (product == null || product.getDigitalDetails() == null) {
-            return 0;
-        }
-        
-        Integer downloadLimit = product.getDigitalDetails().getDownloadLimit();
-        if (downloadLimit == null) {
-            return -1; // Unlimited
-        }
-        
-        long completedDownloads = getCompletedDownloadsCount();
-        return Math.max(0, downloadLimit - (int) completedDownloads);
-    }
-    
-    // NEW ADDITION: Helper method to check if downloads are expired
-    public boolean areDownloadsExpired() {
-        if (product == null || product.getDigitalDetails() == null) {
-            return false;
-        }
-        
-        Integer expiryDays = product.getDigitalDetails().getExpiryDays();
-        if (expiryDays == null) {
-            return false; // No expiry
-        }
-        
-        LocalDateTime expiryDate = created.plusDays(expiryDays);
-        return LocalDateTime.now().isAfter(expiryDate);
     }
 }
