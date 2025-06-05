@@ -172,7 +172,7 @@
 				<configuration>
 					<url>jdbc:mysql://localhost:3306/digital_estore</url>
 					<user>root</user>
-					<password>Poorna@1479</password>
+					<password>your_password_here</password>
 					<locations>
 						<location>classpath:db/migration</location>
 					</locations>
