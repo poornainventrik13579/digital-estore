@@ -22,6 +22,14 @@ VALUES
 (1, 1000000003, 'Classical Music Collection', 'Collection of classical music pieces', 19.99, 'USD', 1000000003, '0', 'sy', 'sy'),
 (1, 1000000004, 'Web Development Course', 'Complete web development video course', 99.99, 'USD', 1000000004, '0', 'sy', 'sy');
 
+-- Sample DigitalProductDetails data
+INSERT INTO DigitalProductDetails (tenant_id, product_id, file_url, file_size, file_format, license_info, version, status, created_by, updated_by)
+VALUES
+(1, 1000000001, 'https://storage.example.com/ebooks/java-guide.pdf', 5120, 'PDF', 'Personal use license', '1.0', '0', 'sy', 'sy'),
+(1, 1000000002, 'https://storage.example.com/software/photo-editor.zip', 102400, 'ZIP', 'Single user license', '2.1', '0', 'sy', 'sy'),
+(1, 1000000003, 'https://storage.example.com/music/classical-collection.zip', 256000, 'ZIP', 'Personal listening license', '1.0', '0', 'sy', 'sy'),
+(1, 1000000004, 'https://storage.example.com/videos/web-dev-course.mp4', 1048576, 'MP4', 'Educational use license', '1.5', '0', 'sy', 'sy');
+
 -- Sample Orders data
 INSERT INTO Orders (tenant_id, order_id, user_id, currency, total_amount, exchange_rate, status, created_by, updated_by)
 VALUES
