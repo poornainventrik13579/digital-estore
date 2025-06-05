@@ -279,4 +279,10 @@ public class OrderServiceImpl implements OrderService {
         
         return mapToDTO(updatedOrder);
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasUserPurchasedProduct(Integer tenantId, Long userId, Long productId) {
+        return orderRepository.hasUserPurchasedProduct(tenantId, userId, productId);
+    }
 }

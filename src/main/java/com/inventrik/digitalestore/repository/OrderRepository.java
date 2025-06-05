@@ -34,4 +34,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         @Param("tenantId") Integer tenantId, 
         @Param("orderId") Long orderId, 
         @Param("orderItemId") Long orderItemId);
+    
+    // Check if user has purchased a specific product
+    @Query("SELECT COUNT(oi) > 0 FROM Order o JOIN o.orderItems oi WHERE o.tenantId = :tenantId AND o.userId = :userId AND oi.productId = :productId AND o.status IN ('Completed', 'Processing')")
+    boolean hasUserPurchasedProduct(@Param("tenantId") Integer tenantId, @Param("userId") Long userId, @Param("productId") Long productId);
 }
