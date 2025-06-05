@@ -1,6 +1,7 @@
 package com.inventrik.digitalestore.domain.order;
 
 import com.inventrik.digitalestore.domain.product.Product;
+import com.inventrik.digitalestore.domain.download.DigitalDownload;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,8 @@ import lombok.ToString;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "OrderItems")
@@ -66,6 +69,11 @@ public class OrderItem {
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
     
+    // NEW ADDITION: Digital Downloads relationship
+    @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<DigitalDownload> downloads = new ArrayList<>();
+    
     @PrePersist
     protected void onCreate() {
         created = LocalDateTime.now();
@@ -75,5 +83,57 @@ public class OrderItem {
     @PreUpdate
     protected void onUpdate() {
         updated = LocalDateTime.now();
+    }
+    
+    // NEW ADDITION: Helper method to check if order item has downloads
+    public boolean hasDownloads() {
+        return downloads != null && !downloads.isEmpty();
+    }
+    
+    // NEW ADDITION: Helper method to get completed downloads count
+    public long getCompletedDownloadsCount() {
+        return downloads.stream()
+                .filter(download -> "COMPLETED".equals(download.getDownloadStatus()))
+                .count();
+    }
+    
+    // NEW ADDITION: Helper method to get total downloads count
+    public long getTotalDownloadsCount() {
+        return downloads != null ? downloads.size() : 0;
+    }
+    
+    // NEW ADDITION: Helper method to check if item is digital
+    public boolean isDigitalProduct() {
+        return product != null && product.hasDigitalDetails();
+    }
+    
+    // NEW ADDITION: Helper method to get remaining downloads
+    public int getRemainingDownloads() {
+        if (product == null || product.getDigitalDetails() == null) {
+            return 0;
+        }
+        
+        Integer downloadLimit = product.getDigitalDetails().getDownloadLimit();
+        if (downloadLimit == null) {
+            return -1; // Unlimited
+        }
+        
+        long completedDownloads = getCompletedDownloadsCount();
+        return Math.max(0, downloadLimit - (int) completedDownloads);
+    }
+    
+    // NEW ADDITION: Helper method to check if downloads are expired
+    public boolean areDownloadsExpired() {
+        if (product == null || product.getDigitalDetails() == null) {
+            return false;
+        }
+        
+        Integer expiryDays = product.getDigitalDetails().getExpiryDays();
+        if (expiryDays == null) {
+            return false; // No expiry
+        }
+        
+        LocalDateTime expiryDate = created.plusDays(expiryDays);
+        return LocalDateTime.now().isAfter(expiryDate);
     }
 }

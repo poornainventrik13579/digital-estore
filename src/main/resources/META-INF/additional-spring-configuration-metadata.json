@@ -33,5 +33,25 @@
     "name": "oauth2.issuer",
     "type": "java.lang.String",
     "description": "A description for 'oauth2.issuer'"
+  },
+  {
+    "name": "email.from",
+    "type": "java.lang.String",
+    "description": "A description for 'email.from'"
+  },
+  {
+    "name": "email.sender-name",
+    "type": "java.lang.String",
+    "description": "A description for 'email.sender-name'"
+  },
+  {
+    "name": "stripe.api.key",
+    "type": "java.lang.String",
+    "description": "A description for 'stripe.api.key'"
+  },
+  {
+    "name": "stripe.webhook.secret",
+    "type": "java.lang.String",
+    "description": "A description for 'stripe.webhook.secret'"
   }
 ]}

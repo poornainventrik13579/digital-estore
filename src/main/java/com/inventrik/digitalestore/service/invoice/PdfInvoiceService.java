@@ -9,12 +9,12 @@ import com.itextpdf.text.pdf.PdfWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.spring6.SpringTemplateEngine;
+// import org.thymeleaf.context.Context;
+// import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+// import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
@@ -23,7 +23,7 @@ import java.util.UUID;
 @Slf4j
 public class PdfInvoiceService implements InvoiceService {
 
-    private final SpringTemplateEngine templateEngine;
+    // private final SpringTemplateEngine templateEngine;
     
     @Override
     public byte[] generateInvoice(Order order, User user) {
