@@ -13,7 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -23,27 +22,27 @@ import java.util.List;
 @RequestMapping("/api/v1/tenants/{tenantId}/users")
 @RequiredArgsConstructor
 @Tag(name = "User Management", description = "APIs for managing users")
-@SecurityRequirement(name = "oauth2")
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
     private final UserService userService;
     
     @GetMapping
-    @PreAuthorize("hasAuthority('SCOPE_read') and hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get all users")
     public ResponseEntity<List<UserResponse>> getAllUsers(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(userService.getAllUsers(tenantId));
     }
     
     @GetMapping("/{userId}")
-    @PreAuthorize("hasAuthority('SCOPE_read') and (hasRole('ROLE_ADMIN') or @userService.isCurrentUser(#tenantId, #userId, authentication.name))")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or @userService.isCurrentUser(#tenantId, #userId, authentication.name)")
     @Operation(summary = "Get a user by ID")
     public ResponseEntity<UserResponse> getUser(@PathVariable Integer tenantId, @PathVariable Long userId) {
         return ResponseEntity.ok(userService.getUser(tenantId, userId));
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasAuthority('SCOPE_write') and hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create a new user")
     public ResponseEntity<UserResponse> createUser(
             @PathVariable Integer tenantId,
@@ -56,7 +55,7 @@ public class UserController {
     }
     
     @PutMapping(path = "/{userId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasAuthority('SCOPE_write') and (hasRole('ROLE_ADMIN') or @userService.isCurrentUser(#tenantId, #userId, authentication.name))")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or @userService.isCurrentUser(#tenantId, #userId, authentication.name)")
     @Operation(summary = "Update a user")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable Integer tenantId,
@@ -70,7 +69,7 @@ public class UserController {
     }
     
     @DeleteMapping("/{userId}")
-    @PreAuthorize("hasAuthority('SCOPE_write') and hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete a user")
     public ResponseEntity<Void> deleteUser(@PathVariable Integer tenantId, @PathVariable Long userId) {
         userService.deleteUser(tenantId, userId);
@@ -78,38 +77,30 @@ public class UserController {
     }
     
     @GetMapping("/active")
-    @PreAuthorize("hasAuthority('SCOPE_read') and hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get active users")
     public ResponseEntity<List<UserResponse>> getActiveUsers(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(userService.getActiveUsers(tenantId));
     }
     
     @GetMapping("/username/{username}")
-    @PreAuthorize("hasAuthority('SCOPE_read') and (hasRole('ROLE_ADMIN') or #username == authentication.name)")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or #username == authentication.name")
     @Operation(summary = "Find user by username")
     public ResponseEntity<UserResponse> findByUsername(@PathVariable String username) {
         return ResponseEntity.ok(userService.findByUsername(username));
     }
     
     @GetMapping("/email/{email}")
-    @PreAuthorize("hasAuthority('SCOPE_read') and (hasRole('ROLE_ADMIN') or @userService.isUserWithEmail(#email, authentication.name))")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or @userService.isUserWithEmail(#email, authentication.name)")
     @Operation(summary = "Find user by email")
     public ResponseEntity<UserResponse> findByEmail(@PathVariable String email) {
         return ResponseEntity.ok(userService.findByEmail(email));
     }
     
     @GetMapping("/me")
-    @PreAuthorize("hasAuthority('SCOPE_read')")
     @Operation(summary = "Get current user details")
-    public ResponseEntity<UserResponse> getCurrentUser(JwtAuthenticationToken authentication) {
+    public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
         String username = authentication.getName();
         return ResponseEntity.ok(userService.findByUsername(username));
-    }
-    
-    @GetMapping("/token-info")
-    @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Get token information")
-    public ResponseEntity<?> getTokenInfo(JwtAuthenticationToken authentication) {
-        return ResponseEntity.ok(authentication.getTokenAttributes());
     }
 }
