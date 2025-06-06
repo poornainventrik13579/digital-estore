@@ -62,6 +62,6 @@ public class OrderFormRequest {
         items.add(item);
         
         // Create and return the full order request
-        return new OrderRequest(userId, currency, totalAmount, exchangeRate, items);
+        return new OrderRequest(userId, currency, totalAmount, exchangeRate, items, null);
     }
 }

@@ -14,11 +14,13 @@ import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.OrderRepository;
 import com.inventrik.digitalestore.repository.ProductRepository;
 import com.inventrik.digitalestore.repository.UserRepository;
+import com.inventrik.digitalestore.service.discount.DiscountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +34,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final DiscountService discountService;
     
     // Utility method to convert Order entity to OrderResponse DTO
     private OrderResponse mapToDTO(Order order) {
@@ -92,13 +95,32 @@ public class OrderServiceImpl implements OrderService {
         userRepository.findByTenantIdAndUserId(tenantId, orderRequest.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + orderRequest.getUserId()));
         
+        BigDecimal finalAmount = orderRequest.getTotalAmount();
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        
+        if (orderRequest.getDiscountCode() != null && !orderRequest.getDiscountCode().trim().isEmpty()) {
+            try {
+                discountAmount = discountService.applyDiscountToOrder(
+                    tenantId, 
+                    orderRequest.getDiscountCode().trim(), 
+                    newOrderId, 
+                    orderRequest.getUserId(), 
+                    orderRequest.getTotalAmount(), 
+                    username
+                );
+                finalAmount = orderRequest.getTotalAmount().subtract(discountAmount);
+            } catch (Exception e) {
+                throw new BusinessException("Failed to apply discount code: " + e.getMessage());
+            }
+        }
+        
         Order order = new Order();
         order.setTenantId(tenantId);
         order.setOrderId(newOrderId);
         order.setUserId(orderRequest.getUserId());
         order.setOrderDate(LocalDateTime.now());
         order.setCurrency(orderRequest.getCurrency());
-        order.setTotalAmount(orderRequest.getTotalAmount());
+        order.setTotalAmount(finalAmount);
         order.setExchangeRate(orderRequest.getExchangeRate());
         order.setStatus(OrderStatus.PENDING.getDisplayName());
         
