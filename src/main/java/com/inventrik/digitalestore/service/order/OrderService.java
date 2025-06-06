@@ -37,4 +37,7 @@ public interface OrderService {
     
     // Refund an order (full refund)
     OrderResponse refundOrder(Integer tenantId, Long orderId, String username);
+    
+    // Check if user has purchased a specific product
+    boolean hasUserPurchasedProduct(Integer tenantId, Long userId, Long productId);
 }

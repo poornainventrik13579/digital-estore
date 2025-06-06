@@ -1,0 +1,136 @@
+package com.inventrik.digitalestore.api;
+
+import com.inventrik.digitalestore.dto.request.DigitalProductDetailsRequest;
+import com.inventrik.digitalestore.dto.response.DigitalProductDetailsResponse;
+import com.inventrik.digitalestore.dto.response.DownloadHistoryResponse;
+import com.inventrik.digitalestore.service.download.DownloadService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1")
+@RequiredArgsConstructor
+@Tag(name = "Download Management", description = "APIs for managing digital product downloads")
+@SecurityRequirement(name = "oauth2")
+@Slf4j
+public class DownloadController {
+    
+    private final DownloadService downloadService;
+    
+    @PostMapping("/tenants/{tenantId}/order-items/{orderItemId}/record-download")
+    @Operation(summary = "Record a download for order item")
+    public ResponseEntity<Void> recordDownload(
+            @PathVariable Integer tenantId,
+            @PathVariable Long orderItemId,
+            HttpServletRequest request,
+            Authentication authentication) {
+        
+        String username = (authentication != null) ? authentication.getName() : "system";
+        String ipAddress = getClientIpAddress(request);
+        
+        downloadService.recordDownload(tenantId, orderItemId, ipAddress, username);
+        
+        return ResponseEntity.ok().build();
+    }
+    
+    @GetMapping("/tenants/{tenantId}/order-items/{orderItemId}/download-history")
+    @Operation(summary = "Get download history for order item")
+    public ResponseEntity<List<DownloadHistoryResponse>> getDownloadHistory(
+            @PathVariable Integer tenantId,
+            @PathVariable Long orderItemId) {
+        
+        List<DownloadHistoryResponse> history = downloadService.getDownloadHistory(tenantId, orderItemId);
+        return ResponseEntity.ok(history);
+    }
+    
+    @GetMapping("/tenants/{tenantId}/users/{userId}/download-history")
+    @Operation(summary = "Get download history for user")
+    public ResponseEntity<List<DownloadHistoryResponse>> getUserDownloadHistory(
+            @PathVariable Integer tenantId,
+            @PathVariable Long userId) {
+        
+        List<DownloadHistoryResponse> history = downloadService.getUserDownloadHistory(tenantId, userId);
+        return ResponseEntity.ok(history);
+    }
+    
+    // Digital Product Details Management
+    @PostMapping("/tenants/{tenantId}/digital-product-details")
+    @Operation(summary = "Create digital product details")
+    public ResponseEntity<DigitalProductDetailsResponse> createDigitalProductDetails(
+            @PathVariable Integer tenantId,
+            @Valid @RequestBody DigitalProductDetailsRequest request,
+            Authentication authentication) {
+        
+        String username = (authentication != null) ? authentication.getName() : "system";
+        DigitalProductDetailsResponse response = downloadService.createDigitalProductDetails(tenantId, username, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+    
+    @PutMapping("/tenants/{tenantId}/digital-product-details/{productId}")
+    @Operation(summary = "Update digital product details")
+    public ResponseEntity<DigitalProductDetailsResponse> updateDigitalProductDetails(
+            @PathVariable Integer tenantId,
+            @PathVariable Long productId,
+            @Valid @RequestBody DigitalProductDetailsRequest request,
+            Authentication authentication) {
+        
+        String username = (authentication != null) ? authentication.getName() : "system";
+        DigitalProductDetailsResponse response = downloadService.updateDigitalProductDetails(tenantId, productId, username, request);
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/tenants/{tenantId}/digital-product-details/{productId}")
+    @Operation(summary = "Get digital product details")
+    public ResponseEntity<DigitalProductDetailsResponse> getDigitalProductDetails(
+            @PathVariable Integer tenantId,
+            @PathVariable Long productId) {
+        
+        DigitalProductDetailsResponse response = downloadService.getDigitalProductDetails(tenantId, productId);
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/tenants/{tenantId}/digital-product-details")
+    @Operation(summary = "Get all digital product details")
+    public ResponseEntity<List<DigitalProductDetailsResponse>> getAllDigitalProductDetails(
+            @PathVariable Integer tenantId) {
+        
+        List<DigitalProductDetailsResponse> response = downloadService.getAllDigitalProductDetails(tenantId);
+        return ResponseEntity.ok(response);
+    }
+    
+    @DeleteMapping("/tenants/{tenantId}/digital-product-details/{productId}")
+    @Operation(summary = "Delete digital product details")
+    public ResponseEntity<Void> deleteDigitalProductDetails(
+            @PathVariable Integer tenantId,
+            @PathVariable Long productId) {
+        
+        downloadService.deleteDigitalProductDetails(tenantId, productId);
+        return ResponseEntity.noContent().build();
+    }
+    
+    // Helper method to get client IP address
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty()) {
+            return xRealIp;
+        }
+        
+        return request.getRemoteAddr();
+    }
+}

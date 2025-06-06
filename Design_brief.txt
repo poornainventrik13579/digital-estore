@@ -1,0 +1,258 @@
+API driven e-store to sell vouchers & other digital products
+Phase 1
+- product - CRUD
+- categories -CRUD
+- Order -CRUD
+- cancel order (complete order)
+- refund (partial)
+- Email for Order
+- Email for invoice (WEB/PDF)
+Phase 2
+- Discount codes
+- product bundles
+- others
+1. Users Table : Stores customer information.
+CREATE TABLE Users (
+tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+user_id BIGINT(15) NOT NULL,
+username VARCHAR(50) NOT NULL UNIQUE,
+first_name VARCHAR(50),
+last_name VARCHAR(50),
+image VARCHAR(256) NOT NULL UNIQUE,
+phone VARCHAR(100) NOT NULL UNIQUE,
+email VARCHAR(100) NOT NULL UNIQUE,
+user_type ENUM('INDIVIDUAL', 'COMPANY') NOT NULL DEFAULT 'INDIVIDUAL',
+company_name VARCHAR(100), -- Only applicable for COMPANY users
+company_registration_number VARCHAR(50), -- Only applicable for COMPANY
+users
+company_address1 VARCHAR(255), -- Only applicable for COMPANY users
+company_address2 VARCHAR(255), -- Only applicable for COMPANY users
+company_country VARCHAR(255), -- Only applicable for COMPANY users
+company_pincode VARCHAR(255), -- Only applicable for COMPANY users
+tax_id VARCHAR(50), -- Only applicable for COMPANY users
+otp VARCHAR(8) NOT NULL UNIQUE,
+password_hash VARCHAR(255) NOT NULL,
+status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
+created_by VARCHAR(2) NOT NULL,
+created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_by VARCHAR(2) NOT NULL,
+updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (tenant_id,user_id)
+);
+CREATE TABLE Currencies (
+tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+currency_code CHAR(3) NOT NULL, -- e.g., USD, EUR, SGD
+currency_name VARCHAR(50) NOT NULL,
+is_default VARCHAR(1) NOT NULL
+exchange_rate decimal(10,4) NOT NULL,
+symbol VARCHAR(10) NOT NULL,
+status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
+created_by VARCHAR(2) NOT NULL,
+created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_by VARCHAR(2) NOT NULL,
+updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+PRIMARY KEY (tenant_id,currency_code)
+);
+2. Categories Table
+(Optional) Groups digital products into categories.
+CREATE TABLE Categories (
+tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+category_id BIGINT(15) NOT NULL,
+category_name VARCHAR(50) NOT NULL,
+description TEXT,
+status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
+created_by VARCHAR(2) NOT NULL,
+created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_by VARCHAR(2) NOT NULL,
+updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (tenant_id,category_id)
+);
+CREATE TABLE CategoryTranslations (
+tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+category_id BIGINT(15) NOT NULL,
+language_code CHAR(2) NOT NULL, -- e.g., 'en', 'fr', 'zh'
+category_name VARCHAR(50) NOT NULL,
+description TEXT,
+status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
+created_by VARCHAR(2) NOT NULL,
+created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_by VARCHAR(2) NOT NULL,
+updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (tenant_id,category_id,language_code)
+--PRIMARY KEY (category_id, language_code),
+--FOREIGN KEY (category_id) REFERENCES Categories(category_id)
+);
+3. Products Table
+General product information for digital items.
+CREATE TABLE Products (
+tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+product_id INT BIGINT(15) NOT NULL,
+product_name VARCHAR(100) NOT NULL,
+description TEXT,
+default_price DECIMAL(10, 2) NOT NULL, -- Price in default currency (for
+reference only)
+default_currency CHAR(3) NOT NULL, -- Default currency code (should
+exist in Currencies)
+category_id INT,
+status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
+created_by VARCHAR(2) NOT NULL,
+created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_by VARCHAR(2) NOT NULL,
+updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (tenant_id,product_id)
+--FOREIGN KEY (category_id) REFERENCES Categories(category_id)
+);
+CREATE TABLE ProductTranslations (
+tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+
+product_id BIGINT(15) NOT NULL,
+language_code CHAR(2) NOT NULL, -- e.g., 'en', 'fr', 'zh'
+product_name VARCHAR(100) NOT NULL,
+description TEXT,
+status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
+created_by VARCHAR(2) NOT NULL,
+created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_by VARCHAR(2) NOT NULL,
+updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (tenant_id,product_id, language_code)
+--FOREIGN KEY (product_id) REFERENCES Products(product_id)
+);
+4. DigitalProductDetails Table
+Contains details specific to digital products, such as file URLs and license
+info.
+CREATE TABLE DigitalProductDetails (
+tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+product_id BIGINT(15) NOT NULL,
+file_url VARCHAR(255) NOT NULL, -- could be an S3 URL or similar
+file_size INT, -- size in KB/MB
+file_format VARCHAR(20), -- e.g., PDF, MP3, MP4, etc.
+license_info TEXT, -- terms or license keys
+version VARCHAR(20),
+status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
+created_by VARCHAR(2) NOT NULL,
+created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_by VARCHAR(2) NOT NULL,
+updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (tenant_id,product_id)
+--FOREIGN KEY (product_id) REFERENCES Products(product_id)
+);
+5. Orders Table
+Records a customer's order.
+CREATE TABLE Orders (
+tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+order_id INT BIGINT(15) NOT NULL,
+user_id INT NOT NULL,
+order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+currency VARCHAR(3),
+total_amount DECIMAL(10, 2) NOT NULL,
+exchange_rate DECIMAL(10, 2) NOT NULL,
+status VARCHAR(20) DEFAULT 'Pending', -- e.g., Pending, Completed, Cancelled
+created_by VARCHAR(2) NOT NULL,
+created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_by VARCHAR(2) NOT NULL,
+updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (tenant_id,order_id)
+--FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+6. OrderItems Table
+Lists the individual products purchased within an order.
+
+CREATE TABLE OrderItems (
+tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+order_id INT NOT NULL,
+order_item_id BIGINT(15) NOT NULL,
+product_id INT NOT NULL,
+price_at_purchase DECIMAL(10, 2) NOT NULL,
+license_key VARCHAR(100), -- if a unique key is generated per order
+status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
+created_by VARCHAR(2) NOT NULL,
+created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_by VARCHAR(2) NOT NULL,
+updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (tenant_id,order_id, order_item_id)
+--FOREIGN KEY (order_id) REFERENCES Orders(order_id),
+--FOREIGN KEY (product_id) REFERENCES Products(product_id)
+);
+7. Payments Table
+Captures payment information associated with orders.
+CREATE TABLE Payments (
+tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+payment_id INT BIGINT(15) NOT NULL,
+order_id INT NOT NULL,
+currency VARCHAR(3),
+payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+amount DECIMAL(10, 2) NOT NULL,
+payment_method VARCHAR(50), -- e.g., Credit Card, PayPal
+transaction_id VARCHAR(100),
+status VARCHAR(20) DEFAULT 'Successful', failed
+created_by VARCHAR(2) NOT NULL,
+created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_by VARCHAR(2) NOT NULL,
+updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (tenant_id,payment_id)
+--FOREIGN KEY (order_id) REFERENCES Orders(order_id)
+);
+8. DigitalDownloads Table
+Tracks each time a digital product is downloaded by a customer.
+CREATE TABLE DigitalDownloads (
+tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+download_id BIGINT(15) NOT NULL,
+order_item_id INT NOT NULL,
+download_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ip_address VARCHAR(45),
+status VARCHAR(20) DEFAULT '0', --0:ACTIVE , -1 INACTIVE
+created_by VARCHAR(2) NOT NULL,
+created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_by VARCHAR(2) NOT NULL,
+updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (tenant_id,download_id)
+--FOREIGN KEY (order_item_id) REFERENCES OrderItems(order_item_id)
+);
+Optional: Reviews Table
+
+Allows customers to review products.
+CREATE TABLE Reviews (
+tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+review_id BIGINT(15) NOT NULL,
+product_id INT NOT NULL,
+user_id INT NOT NULL,
+rating INT CHECK (rating BETWEEN 1 AND 5),
+comment TEXT,
+status VARCHAR(20) DEFAULT '0', --0:ACTIVE , -1 INACTIVE
+created_by VARCHAR(2) NOT NULL,
+created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_by VARCHAR(2) NOT NULL,
+updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (tenant_id,review_id)
+--FOREIGN KEY (product_id) REFERENCES Products(product_id),
+--FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+Explanation of Updates
+Currencies Table:
+A new table that holds supported currencies. Both the Products table (via
+default_currency) and Orders table (via currency_code) reference this table.
+Multiâ Currency Pricing:
+The ProductPrices table allows you to define the price of each product in one or
+more currencies. This table is linked to Products and Currencies.
+Multiâ Language Support:
+The ProductTranslations and CategoryTranslations tables store localeâ specific
+product and category names/descriptions. Each record includes a language_code so
+that the system can present the correct text based on the user's locale.
+Orders & Payments:
+The Orders table now stores a currency_code to capture the currency used for
+that order. The Payments table remains largely unchanged, assuming payments
+align with the order currency.
+This updated schema enables an eâ store to offer digital products with
+multiâ currency pricing and multiâ language descriptions, making it adaptable 
+for a global audience while supporting both individual (B2C) and business (B2B)
+users.
+Resources
+https://www.youtube.com/watch?v=yp28g5AJczM
+Swagger to generate API Documentation
+https://www.baeldung.com/swagger-2-documentation-for-spring-rest-api
+spring jpa
+hibernate
+mysql
+Spring security ( Oauth 2)
+Stripe : https://www.youtube.com/watch?v=BczS-wbxgp4

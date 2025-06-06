@@ -40,4 +40,7 @@ public class OrderRequest {
     @NotEmpty(message = "Order must contain at least one item")
     @Valid
     private List<OrderItemRequest> orderItems;
+    
+    @Schema(description = "Discount code to apply", example = "SAVE20")
+    private String discountCode;
 }

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -87,6 +88,20 @@ public class PaymentEventLogger {
      */
     public void logPaymentRefund(Payment payment, String username) {
         logPaymentEvent(payment, "REFUNDED", "Payment refunded", username);
+    }
+
+    /**
+     * Log a partial refund event.
+     *
+     * @param payment The payment being refunded
+     * @param refundAmount The amount being refunded
+     * @param reason The reason for the refund
+     * @param username The user performing the action
+     */
+    public void logPartialRefund(Payment payment, BigDecimal refundAmount, String reason, String username) {
+        String details = String.format("Partial refund processed: amount=%s, reason=%s, total_refunded=%s", 
+            refundAmount, reason, payment.getRefundedAmount());
+        logPaymentEvent(payment, "PARTIAL_REFUND", details, username);
     }
 
     /**

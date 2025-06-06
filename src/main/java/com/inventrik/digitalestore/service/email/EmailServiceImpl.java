@@ -18,6 +18,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -239,6 +240,7 @@ public class EmailServiceImpl implements EmailService {
         
         emailSender.send(message);
     }
+    
     @Override
     public void sendPaymentFailureNotification(Order order, Payment payment, User user, String failureReason) {
         try {
@@ -261,6 +263,32 @@ public class EmailServiceImpl implements EmailService {
         } catch (Exception e) {
             log.error("Failed to send payment failure email for order {}: {}", order.getOrderId(), e.getMessage(), e);
             throw new EmailSendException("Failed to send payment failure email", e);
+        }
+    }
+
+    @Override
+    public void sendPartialRefundNotification(Order order, Payment payment, BigDecimal refundAmount, User user) {
+        try {
+            Map<String, Object> templateModel = new HashMap<>();
+            templateModel.put("order", order);
+            templateModel.put("payment", payment);
+            templateModel.put("refundAmount", refundAmount);
+            templateModel.put("remainingAmount", payment.getRemainingAmount());
+            templateModel.put("user", user);
+            
+            sendEmail(
+                user.getEmail(),
+                "Partial Refund Confirmation #" + order.getOrderId(),
+                "email/partial-refund-confirmation",
+                templateModel
+            );
+            
+            log.info("Partial refund confirmation email sent to {} for order {}, amount {}", 
+                user.getEmail(), order.getOrderId(), refundAmount);
+        } catch (Exception e) {
+            log.error("Failed to send partial refund confirmation email for order {}: {}", 
+                order.getOrderId(), e.getMessage(), e);
+            throw new EmailSendException("Failed to send partial refund confirmation email", e);
         }
     }
 }

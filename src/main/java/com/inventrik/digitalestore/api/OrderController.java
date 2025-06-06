@@ -7,6 +7,7 @@ import com.inventrik.digitalestore.dto.response.OrderResponse;
 import com.inventrik.digitalestore.service.order.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import java.util.List;
 @RequestMapping("/api/v1/tenants/{tenantId}/orders")
 @RequiredArgsConstructor
 @Tag(name = "Order Management", description = "APIs for managing orders")
+@SecurityRequirement(name = "oauth2")
 public class OrderController {
 
     private final OrderService orderService;
@@ -83,8 +85,25 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
     }
     
+    @PutMapping(path = "/{orderId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @Operation(summary = "Update an order (JSON)")
+    public ResponseEntity<OrderResponse> updateOrderJson(
+            @Parameter(description = "Tenant ID", required = true) 
+            @PathVariable Integer tenantId,
+            @Parameter(description = "Order ID", required = true) 
+            @PathVariable Long orderId,
+            @Valid @RequestBody OrderUpdateRequest updateRequest,
+            Authentication authentication) {
+        
+        // Get username from authentication or use a default
+        String username = (authentication != null) ? authentication.getName() : "system";
+        
+        OrderResponse updatedOrder = orderService.updateOrder(tenantId, orderId, username, updateRequest);
+        return ResponseEntity.ok(updatedOrder);
+    }
+    
     @PutMapping(path = "/{orderId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @Operation(summary = "Update an order")
+    @Operation(summary = "Update an order (Form)")
     public ResponseEntity<OrderResponse> updateOrder(
             @Parameter(description = "Tenant ID", required = true) 
             @PathVariable Integer tenantId,

@@ -17,9 +17,12 @@ public class PaymentResponse {
     private String currency;
     private LocalDateTime paymentDate;
     private BigDecimal amount;
+    private BigDecimal refundedAmount;
+    private BigDecimal remainingAmount;
     private String paymentMethod;
     private String transactionId;
     private String status;
+    private String refundReason;
     private LocalDateTime created;
     private LocalDateTime updated;
     

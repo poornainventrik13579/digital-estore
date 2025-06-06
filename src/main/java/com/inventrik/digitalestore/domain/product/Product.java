@@ -1,30 +1,31 @@
 package com.inventrik.digitalestore.domain.product;
 
 import com.inventrik.digitalestore.domain.category.Category;
-import com.inventrik.digitalestore.domain.order.OrderItem;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "Products")
+@IdClass(Product.ProductPK.class)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Product {
     
     @Id
-    @Column(name = "product_id")
-    private Long productId;
-    
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
+    
+    @Id
+    @Column(name = "product_id")
+    private Long productId;
     
     @Column(name = "category_id")
     private Long categoryId;
@@ -41,13 +42,6 @@ public class Product {
     @Column(name = "default_currency", nullable = false, length = 3)
     private String defaultCurrency;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumns({
-        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
-        @JoinColumn(name = "category_id", referencedColumnName = "category_id", insertable = false, updatable = false)
-    })
-    private Category category;
-    
     @Column(name = "status", nullable = false, length = 2)
     private String status;
     
@@ -63,8 +57,12 @@ public class Product {
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
     
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    private List<OrderItem> orderItems = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumns({
+        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
+        @JoinColumn(name = "category_id", referencedColumnName = "category_id", insertable = false, updatable = false)
+    })
+    private Category category;
     
     @PrePersist
     protected void onCreate() {
@@ -77,13 +75,41 @@ public class Product {
         updated = LocalDateTime.now();
     }
     
-    // Getter for backward compatibility
     public Long getCategoryId() {
         return categoryId;
     }
     
-    // Setter for backward compatibility
     public void setCategoryId(Long categoryId) {
         this.categoryId = categoryId;
+    }
+    
+    public static class ProductPK implements Serializable {
+        private Integer tenantId;
+        private Long productId;
+        
+        public ProductPK() {}
+        
+        public ProductPK(Integer tenantId, Long productId) {
+            this.tenantId = tenantId;
+            this.productId = productId;
+        }
+        
+        public Integer getTenantId() { return tenantId; }
+        public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
+        public Long getProductId() { return productId; }
+        public void setProductId(Long productId) { this.productId = productId; }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof ProductPK)) return false;
+            ProductPK productPK = (ProductPK) o;
+            return Objects.equals(tenantId, productPK.tenantId) && Objects.equals(productId, productPK.productId);
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(tenantId, productId);
+        }
     }
 }

@@ -8,5 +8,50 @@
     "name": "jwt.secret",
     "type": "java.lang.String",
     "description": "A description for 'jwt.secret'"
+  },
+  {
+    "name": "springdoc.swagger-ui.oauth2.use-basic-authentication-with-access-code-grant",
+    "type": "java.lang.String",
+    "description": "A description for 'springdoc.swagger-ui.oauth2.use-basic-authentication-with-access-code-grant'"
+  },
+  {
+    "name": "springdoc.swagger-ui.oauth2.client-secret",
+    "type": "java.lang.String",
+    "description": "A description for 'springdoc.swagger-ui.oauth2.client-secret'"
+  },
+  {
+    "name": "springdoc.swagger-ui.oauth2.client-id",
+    "type": "java.lang.String",
+    "description": "A description for 'springdoc.swagger-ui.oauth2.client-id'"
+  },
+  {
+    "name": "spring.security.oauth2.authorization-server.enabled",
+    "type": "java.lang.String",
+    "description": "A description for 'spring.security.oauth2.authorization-server.enabled'"
+  },
+  {
+    "name": "oauth2.issuer",
+    "type": "java.lang.String",
+    "description": "A description for 'oauth2.issuer'"
+  },
+  {
+    "name": "email.from",
+    "type": "java.lang.String",
+    "description": "A description for 'email.from'"
+  },
+  {
+    "name": "email.sender-name",
+    "type": "java.lang.String",
+    "description": "A description for 'email.sender-name'"
+  },
+  {
+    "name": "stripe.api.key",
+    "type": "java.lang.String",
+    "description": "A description for 'stripe.api.key'"
+  },
+  {
+    "name": "stripe.webhook.secret",
+    "type": "java.lang.String",
+    "description": "A description for 'stripe.webhook.secret'"
   }
 ]}

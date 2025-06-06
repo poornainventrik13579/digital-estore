@@ -47,6 +47,17 @@
 			<artifactId>spring-boot-starter-thymeleaf</artifactId>
 		</dependency>
 		
+		<!-- Flyway for database migrations -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-mysql</artifactId>
+		</dependency>
+		
 		<dependency>
 			<groupId>com.itextpdf</groupId>
 			<artifactId>itextpdf</artifactId>
@@ -119,7 +130,7 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		
+	
 		<!-- Jackson for JSON processing (if not already included) -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -153,6 +164,18 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<configuration>
+					<url>jdbc:mysql://localhost:3306/digital_estore</url>
+					<user>root</user>
+					<password>${env.DB_PASSWORD}</password>
+					<locations>
+						<location>classpath:db/migration</location>
+					</locations>
 				</configuration>
 			</plugin>
 		</plugins>

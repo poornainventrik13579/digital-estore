@@ -1,28 +1,29 @@
 package com.inventrik.digitalestore.domain.user;
 
-import com.inventrik.digitalestore.domain.order.Order;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "Users")
+@IdClass(User.UserPK.class)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
     
     @Id
-    @Column(name = "user_id")
-    private Long userId;
-    
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
+    
+    @Id
+    @Column(name = "user_id")
+    private Long userId;
     
     @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
@@ -88,9 +89,6 @@ public class User {
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
     
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> orders = new ArrayList<>();
-    
     @PrePersist
     protected void onCreate() {
         created = LocalDateTime.now();
@@ -102,14 +100,33 @@ public class User {
         updated = LocalDateTime.now();
     }
     
-    // Helper methods for managing bidirectional relationship
-    public void addOrder(Order order) {
-        orders.add(order);
-        order.setUser(this);
-    }
-    
-    public void removeOrder(Order order) {
-        orders.remove(order);
-        order.setUser(null);
+    public static class UserPK implements Serializable {
+        private Integer tenantId;
+        private Long userId;
+        
+        public UserPK() {}
+        
+        public UserPK(Integer tenantId, Long userId) {
+            this.tenantId = tenantId;
+            this.userId = userId;
+        }
+        
+        public Integer getTenantId() { return tenantId; }
+        public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
+        public Long getUserId() { return userId; }
+        public void setUserId(Long userId) { this.userId = userId; }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof UserPK)) return false;
+            UserPK userPK = (UserPK) o;
+            return Objects.equals(tenantId, userPK.tenantId) && Objects.equals(userId, userPK.userId);
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hash(tenantId, userId);
+        }
     }
 }

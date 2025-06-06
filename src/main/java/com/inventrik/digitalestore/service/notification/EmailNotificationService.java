@@ -3,12 +3,12 @@ package com.inventrik.digitalestore.service.notification;
 
 import com.inventrik.digitalestore.domain.order.Order;
 import com.inventrik.digitalestore.domain.order.OrderStatus;
-import com.inventrik.digitalestore.domain.payment.Payment;
+// import com.inventrik.digitalestore.domain.payment.Payment;
 import com.inventrik.digitalestore.domain.user.User;
-import com.inventrik.digitalestore.repository.OrderRepository;
+// import com.inventrik.digitalestore.repository.OrderRepository;
 import com.inventrik.digitalestore.repository.UserRepository;
 import com.inventrik.digitalestore.service.email.EmailService;
-import com.inventrik.digitalestore.service.invoice.InvoiceService;
+// import com.inventrik.digitalestore.service.invoice.InvoiceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -20,9 +20,9 @@ import org.springframework.stereotype.Service;
 public class EmailNotificationService {
 
     private final EmailService emailService;
-    private final InvoiceService invoiceService;
+    // private final InvoiceService invoiceService;
     private final UserRepository userRepository;
-    private final OrderRepository orderRepository;
+    // private final OrderRepository orderRepository;
     
     /**
      * Send notifications for order status changes
