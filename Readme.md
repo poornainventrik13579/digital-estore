@@ -112,10 +112,10 @@ Alternatively, create an `application-local.properties` file for local developme
 ## Installation and Setup
 
 ### 1. Clone the Repository
-```bash
+   ```bash
 git clone https://github.com/inventrik/digital-estore.git
-cd digital-estore
-```
+   cd digital-estore
+   ```
 
 ### 2. Database Setup
 Follow the database setup instructions in the Database Setup section above.
@@ -124,20 +124,20 @@ Follow the database setup instructions in the Database Setup section above.
 Set the required environment variables as described in the Application Configuration section.
 
 ### 4. Install Dependencies and Run
-```bash
+   ```bash
 # Using Maven wrapper (recommended)
 ./mvnw clean install
 
 # Run the application
-./mvnw spring-boot:run
-```
-
+   ./mvnw spring-boot:run
+   ```
+   
 For Windows systems:
 ```cmd
 mvnw.cmd clean install
-mvnw.cmd spring-boot:run
-```
-
+   mvnw.cmd spring-boot:run
+   ```
+   
 ### 5. Database Migration
 The application uses Flyway for database migrations. Migrations will run automatically on startup, creating all necessary tables and sample data.
 
