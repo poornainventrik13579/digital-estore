@@ -83,6 +83,9 @@ Thumbs.db
 # Application properties with sensitive information
 src/main/resources/application-dev.properties
 src/main/resources/application-prod.properties
+src/main/resources/application-local.properties
+local.properties
 
-# Keep the base application.properties
-src/main/resources/application.properties
+# Environment specific files
+.env
+.env.local

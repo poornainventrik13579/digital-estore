@@ -170,9 +170,9 @@
 				<groupId>org.flywaydb</groupId>
 				<artifactId>flyway-maven-plugin</artifactId>
 				<configuration>
-					<url>jdbc:mysql://localhost:3306/digital_estore</url>
-					<user>root</user>
-					<password>your_password_here</password>
+					<url>${spring.datasource.url}</url>
+					<user>${spring.datasource.username}</user>
+					<password>${spring.datasource.password}</password>
 					<locations>
 						<location>classpath:db/migration</location>
 					</locations>
