@@ -325,7 +325,28 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"productName\": \"Adobe Photoshop License - Updated\",\n    \"description\": \"Updated professional photo editing software license\",\n    \"defaultPrice\": 349.99,\n    \"defaultCurrency\": \"USD\",\n    \"categoryId\": 1\n}"
+							"raw": "{\n    \"productName\": \"Adobe Photoshop License - Updated\",\n    \"description\": \"Updated professional photo editing software license\",\n    \"defaultPrice\": 349.99,\n    \"defaultCurrency\": \"USD\"\n}"
+						},
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/1"
+					}
+				},
+				{
+					"name": "Update Product Category",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"categoryId\": 1\n}"
 						},
 						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/1"
 					}
@@ -871,7 +892,7 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
-						"url": "{{base_url}}/api/tenants/{{tenant_id}}/discounts"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts"
 					}
 				},
 				{
@@ -884,7 +905,7 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
-						"url": "{{base_url}}/api/tenants/{{tenant_id}}/discounts/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1"
 					}
 				},
 				{
@@ -905,7 +926,7 @@
 							"mode": "raw",
 							"raw": "{\n    \"code\": \"SAVE20\",\n    \"discountType\": \"PERCENTAGE\",\n    \"discountValue\": 20.00,\n    \"minOrderAmount\": 100.00,\n    \"maxUses\": 100,\n    \"validFrom\": \"2024-01-01T00:00:00\",\n    \"validTo\": \"2024-12-31T23:59:59\"\n}"
 						},
-						"url": "{{base_url}}/api/tenants/{{tenant_id}}/discounts"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts"
 					}
 				},
 				{
@@ -926,7 +947,7 @@
 							"mode": "raw",
 							"raw": "{\n    \"code\": \"SAVE25\",\n    \"discountType\": \"PERCENTAGE\",\n    \"discountValue\": 25.00,\n    \"minOrderAmount\": 150.00,\n    \"maxUses\": 50\n}"
 						},
-						"url": "{{base_url}}/api/tenants/{{tenant_id}}/discounts/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1"
 					}
 				},
 				{
@@ -939,7 +960,7 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
-						"url": "{{base_url}}/api/tenants/{{tenant_id}}/discounts/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1"
 					}
 				},
 				{
@@ -960,7 +981,7 @@
 							"mode": "raw",
 							"raw": "{\n    \"code\": \"SAVE20\",\n    \"orderAmount\": 200.00\n}"
 						},
-						"url": "{{base_url}}/api/tenants/{{tenant_id}}/discounts/validate"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/validate"
 					}
 				},
 				{
@@ -973,7 +994,7 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
-						"url": "{{base_url}}/api/tenants/{{tenant_id}}/discounts/active"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/active"
 					}
 				},
 				{
@@ -986,7 +1007,7 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
-						"url": "{{base_url}}/api/tenants/{{tenant_id}}/discounts/1/usage"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1/usage"
 					}
 				}
 			]
@@ -1016,7 +1037,7 @@
 							"mode": "raw",
 							"raw": "{\n    \"productId\": 1,\n    \"rating\": 5,\n    \"comment\": \"Excellent product! Highly recommended.\"\n}"
 						},
-						"url": "{{base_url}}/api/v1/reviews"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews"
 					}
 				},
 				{
@@ -1029,7 +1050,7 @@
 								"value": "{{tenant_id}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/reviews/product/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/product/1"
 					}
 				},
 				{
@@ -1046,7 +1067,7 @@
 								"value": "{{tenant_id}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/reviews/user/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/user/1"
 					}
 				},
 				{
@@ -1059,7 +1080,7 @@
 								"value": "{{tenant_id}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/reviews/product/1/rating"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/product/1/rating"
 					}
 				},
 				{
@@ -1084,7 +1105,7 @@
 							"mode": "raw",
 							"raw": "{\n    \"rating\": 4,\n    \"comment\": \"Updated review: Good product with minor issues.\"\n}"
 						},
-						"url": "{{base_url}}/api/v1/reviews/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1"
 					}
 				},
 				{
@@ -1101,7 +1122,7 @@
 								"value": "{{tenant_id}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/reviews/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1"
 					}
 				}
 			]
