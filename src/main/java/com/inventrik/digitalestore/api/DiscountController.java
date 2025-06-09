@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/tenants/{tenantId}/discounts")
+@RequestMapping("/api/v1/tenants/{tenantId}/discounts")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Discount Management", description = "APIs for managing discount codes")

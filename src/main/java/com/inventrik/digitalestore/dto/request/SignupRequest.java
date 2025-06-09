@@ -2,12 +2,13 @@ package com.inventrik.digitalestore.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class SignupRequest {
-    @NotBlank
+    @NotNull(message = "Tenant ID is required")
     private Integer tenantId;
     
     @NotBlank
