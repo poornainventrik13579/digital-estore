@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "DiscountCodes")
+@Table(name = "discountcodes")
 @IdClass(DiscountCode.DiscountCodePK.class)
 @Data
 @NoArgsConstructor

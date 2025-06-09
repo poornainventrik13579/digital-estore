@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@Table(name = "Orders")
+@Table(name = "orders")
 @IdClass(Order.OrderPK.class)
 @Data
 @NoArgsConstructor

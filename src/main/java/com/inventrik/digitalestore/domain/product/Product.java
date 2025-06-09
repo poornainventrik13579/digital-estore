@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "Products")
+@Table(name = "products")
 @IdClass(Product.ProductPK.class)
 @Data
 @NoArgsConstructor

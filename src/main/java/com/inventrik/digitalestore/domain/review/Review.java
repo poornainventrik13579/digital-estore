@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "Reviews")
+@Table(name = "reviews")
 @IdClass(Review.ReviewPK.class)
 @Data
 @NoArgsConstructor

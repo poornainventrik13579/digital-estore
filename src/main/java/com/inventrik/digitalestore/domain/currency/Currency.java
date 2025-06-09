@@ -10,7 +10,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "Currencies")
+@Table(name = "currencies")
 @IdClass(CurrencyId.class)
 @Getter
 @Setter
