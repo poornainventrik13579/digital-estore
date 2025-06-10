@@ -256,6 +256,19 @@
 						],
 						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/1"
 					}
+				},
+				{
+					"name": "Get Active Categories",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/active"
+					}
 				}
 			]
 		},
@@ -501,6 +514,32 @@
 						],
 						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/username/johndoe123"
 					}
+				},
+				{
+					"name": "Find User by Email",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/email/john.doe@example.com"
+					}
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/users/me"
+					}
 				}
 			]
 		},
@@ -626,6 +665,32 @@
 						],
 						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1/cancel"
 					}
+				},
+				{
+					"name": "Complete Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1/complete"
+					}
+				},
+				{
+					"name": "Refund Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1/refund"
+					}
 				}
 			]
 		},
@@ -732,6 +797,93 @@
 							"raw": "{\n    \"amount\": 100.00,\n    \"reason\": \"Customer requested refund\"\n}"
 						},
 						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1/refund"
+					}
+				},
+				{
+					"name": "Confirm Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1/confirm?transactionId=pi_confirmed_transaction",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "1", "confirm"],
+							"query": [
+								{
+									"key": "transactionId",
+									"value": "pi_confirmed_transaction"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Cancel Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1/cancel"
+					}
+				},
+				{
+					"name": "Partial Refund Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": 50.00,\n    \"reason\": \"Partial refund requested\"\n}"
+						},
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1/partial-refund"
+					}
+				},
+				{
+					"name": "Get Payments by Order",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/order/1"
+					}
+				},
+				{
+					"name": "Get Payments by Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/status/Completed"
 					}
 				}
 			]
@@ -876,6 +1028,91 @@
 						},
 						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/calculate-price"
 					}
+				},
+				{
+					"name": "Get Bundles Containing Product",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/product/1"
+					}
+				},
+				{
+					"name": "Add Product to Bundle",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1/products/1?quantity=2",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "1", "products", "1"],
+							"query": [
+								{
+									"key": "quantity",
+									"value": "2"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Remove Product from Bundle",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1/products/1"
+					}
+				},
+				{
+					"name": "Update Product Quantity in Bundle",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1/products/1/quantity?quantity=3",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "1", "products", "1", "quantity"],
+							"query": [
+								{
+									"key": "quantity",
+									"value": "3"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Bundle Count",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/count"
+					}
 				}
 			]
 		},
@@ -998,7 +1235,7 @@
 					}
 				},
 				{
-					"name": "Get Discount Usage Statistics",
+					"name": "Get Discount Code by Code",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1007,7 +1244,33 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/code/SAVE20"
+					}
+				},
+				{
+					"name": "Get Discount Usage Statistics",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
 						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1/usage"
+					}
+				},
+				{
+					"name": "Cleanup Expired Discounts",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/cleanup-expired"
 					}
 				}
 			]
@@ -1037,7 +1300,7 @@
 							"mode": "raw",
 							"raw": "{\n    \"productId\": 1,\n    \"rating\": 5,\n    \"comment\": \"Excellent product! Highly recommended.\"\n}"
 						},
-						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews"
+						"url": "{{base_url}}/api/v1/reviews"
 					}
 				},
 				{
@@ -1050,7 +1313,7 @@
 								"value": "{{tenant_id}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/product/1"
+						"url": "{{base_url}}/api/v1/reviews/product/1"
 					}
 				},
 				{
@@ -1067,7 +1330,20 @@
 								"value": "{{tenant_id}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/user/1"
+						"url": "{{base_url}}/api/v1/reviews/user/1"
+					}
+				},
+				{
+					"name": "Get Review by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/reviews/1"
 					}
 				},
 				{
@@ -1080,7 +1356,7 @@
 								"value": "{{tenant_id}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/product/1/rating"
+						"url": "{{base_url}}/api/v1/reviews/product/1/rating"
 					}
 				},
 				{
@@ -1105,7 +1381,7 @@
 							"mode": "raw",
 							"raw": "{\n    \"rating\": 4,\n    \"comment\": \"Updated review: Good product with minor issues.\"\n}"
 						},
-						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1"
+						"url": "{{base_url}}/api/v1/reviews/1"
 					}
 				},
 				{
@@ -1122,7 +1398,37 @@
 								"value": "{{tenant_id}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1"
+						"url": "{{base_url}}/api/v1/reviews/1"
+					}
+				},
+				{
+					"name": "Get Verified Reviews",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/reviews/verified"
+					}
+				},
+				{
+					"name": "Verify Review",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/reviews/1/verify"
 					}
 				}
 			]
@@ -1131,28 +1437,20 @@
 			"name": "10. Digital Downloads",
 			"item": [
 				{
-					"name": "Track Download",
+					"name": "Record Download",
 					"request": {
 						"method": "POST",
 						"header": [
 							{
 								"key": "Authorization",
 								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
 							}
 						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"orderItemId\": 1,\n    \"ipAddress\": \"192.168.1.1\"\n}"
-						},
-						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/downloads"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/order-items/1/record-download"
 					}
 				},
 				{
-					"name": "Get Download History",
+					"name": "Get Download History for Order Item",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1161,11 +1459,11 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/downloads/user/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/order-items/1/download-history"
 					}
 				},
 				{
-					"name": "Get Order Item Downloads",
+					"name": "Get User Download History",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1174,7 +1472,7 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/downloads/order-item/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/1/download-history"
 					}
 				},
 				{
@@ -1223,6 +1521,32 @@
 					"name": "Get Digital Product Details",
 					"request": {
 						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/digital-product-details/1"
+					}
+				},
+				{
+					"name": "Get All Digital Product Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/digital-product-details"
+					}
+				},
+				{
+					"name": "Delete Digital Product Details",
+					"request": {
+						"method": "DELETE",
 						"header": [
 							{
 								"key": "Authorization",
@@ -1350,6 +1674,33 @@
 									"key": "amount",
 									"value": "100"
 								},
+								{
+									"key": "fromCurrency",
+									"value": "USD"
+								},
+								{
+									"key": "toCurrency",
+									"value": "EUR"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Exchange Rate",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Tenant-ID",
+								"value": "{{tenant_id}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/currencies/exchange-rate?fromCurrency=USD&toCurrency=EUR",
+							"host": ["{{base_url}}"],
+							"path": ["api", "currencies", "exchange-rate"],
+							"query": [
 								{
 									"key": "fromCurrency",
 									"value": "USD"
