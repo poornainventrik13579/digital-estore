@@ -1,41 +1,16 @@
 {
 	"info": {
 		"name": "Digital E-Store API Collection",
-		"description": "Complete API collection for Digital E-Store application with OAuth2 authentication",
+		"description": "Complete API collection for Digital E-Store application with simplified JWT authentication. Uses custom /api/v1/auth/login endpoint. Run 'Complete Authentication Flow' to test the review system fix.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"version": "1.0.0"
+		"version": "2.0.0"
 	},
 	"auth": {
-		"type": "oauth2",
-		"oauth2": [
+		"type": "bearer",
+		"bearer": [
 			{
-				"key": "tokenUrl",
-				"value": "{{base_url}}/oauth2/token",
-				"type": "string"
-			},
-			{
-				"key": "authUrl",
-				"value": "{{base_url}}/oauth2/authorize",
-				"type": "string"
-			},
-			{
-				"key": "grant_type",
-				"value": "client_credentials",
-				"type": "string"
-			},
-			{
-				"key": "scope",
-				"value": "read write",
-				"type": "string"
-			},
-			{
-				"key": "clientId",
-				"value": "{{client_id}}",
-				"type": "string"
-			},
-			{
-				"key": "clientSecret",
-				"value": "{{client_secret}}",
+				"key": "token",
+				"value": "{{access_token}}",
 				"type": "string"
 			}
 		]
@@ -65,6 +40,21 @@
 			"key": "access_token",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "testuser",
+			"type": "string"
+		},
+		{
+			"key": "user_password",
+			"value": "password123",
+			"type": "string"
+		},
+		{
+			"key": "review_id",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"item": [
@@ -72,7 +62,164 @@
 			"name": "01. Authentication",
 			"item": [
 				{
-					"name": "Get OAuth2 Token",
+					"name": "Complete Authentication Flow",
+					"item": [
+						{
+							"name": "Step 1: Create Test User",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    console.log('✅ Test user created successfully');",
+											"} else if (pm.response.code === 400 && pm.response.text().includes('already exists')) {",
+											"    console.log('✅ Test user already exists - ready to use');",
+											"} else {",
+											"    console.log('❌ User creation failed:', pm.response.text());",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "tenantId",
+											"value": "{{tenant_id}}"
+										},
+										{
+											"key": "username",
+											"value": "{{username}}"
+										},
+										{
+											"key": "email",
+											"value": "{{username}}@example.com"
+										},
+										{
+											"key": "password",
+											"value": "{{user_password}}"
+										},
+										{
+											"key": "firstName",
+											"value": "Test"
+										},
+										{
+											"key": "lastName",
+											"value": "User"
+										},
+										{
+											"key": "phone",
+											"value": "1234567890"
+										}
+									]
+								},
+								"url": "{{base_url}}/api/v1/auth/signup"
+							}
+						},
+						{
+							"name": "Step 2: Get User Token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    pm.collectionVariables.set('access_token', response.access_token);",
+											"    console.log('✅ User token obtained successfully');",
+											"    console.log('Username:', response.username);",
+											"    console.log('Token will be used for authenticated requests');",
+											"} else {",
+											"    console.log('❌ Token request failed:', pm.response.text());",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "username",
+											"value": "{{username}}"
+										},
+										{
+											"key": "password",
+											"value": "{{user_password}}"
+										}
+									]
+								},
+								"url": "{{base_url}}/api/v1/auth/login"
+							}
+						},
+						{
+							"name": "Step 3: Test Review Creation",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    const response = pm.response.json();",
+											"    console.log('✅ Review created successfully!');",
+											"    console.log('Review ID:', response.reviewId);",
+											"    console.log('Username in review:', response.username);",
+											"    pm.collectionVariables.set('review_id', response.reviewId);",
+											"} else {",
+											"    console.log('❌ Review creation failed:', pm.response.text());",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "X-Tenant-ID",
+										"value": "{{tenant_id}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"productId\": 1,\n    \"rating\": 5,\n    \"comment\": \"Test review created by user {{username}} - authentication working correctly!\"\n}"
+								},
+								"url": "{{base_url}}/api/v1/reviews"
+							}
+						}
+					]
+				},
+				{
+					"name": "Get User Token (Custom Login)",
 					"event": [
 						{
 							"listen": "test",
@@ -81,7 +228,10 @@
 									"if (pm.response.code === 200) {",
 									"    const response = pm.response.json();",
 									"    pm.collectionVariables.set('access_token', response.access_token);",
-									"    console.log('Token saved:', response.access_token);",
+									"    console.log('User token saved:', response.access_token);",
+									"    console.log('Authenticated as:', response.username);",
+									"} else {",
+									"    console.log('Token request failed:', pm.response.text());",
 									"}"
 								],
 								"type": "text/javascript"
@@ -100,33 +250,37 @@
 							"mode": "urlencoded",
 							"urlencoded": [
 								{
-									"key": "grant_type",
-									"value": "client_credentials"
-								},
-								{
-									"key": "scope",
-									"value": "read write"
-								}
-							]
-						},
-						"url": "{{base_url}}/oauth2/token",
-						"auth": {
-							"type": "basic",
-							"basic": [
-								{
 									"key": "username",
-									"value": "{{client_id}}"
+									"value": "{{username}}"
 								},
 								{
 									"key": "password",
-									"value": "{{client_secret}}"
+									"value": "{{user_password}}"
 								}
 							]
-						}
+						},
+						"url": "{{base_url}}/api/v1/auth/login"
 					}
 				},
 				{
-					"name": "User Signup",
+					"name": "Create Test User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    console.log('Test user created successfully');",
+									"} else if (pm.response.code === 400 && pm.response.text().includes('already exists')) {",
+									"    console.log('Test user already exists - ready to use');",
+									"} else {",
+									"    console.log('User creation failed:', pm.response.text());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -144,27 +298,27 @@
 								},
 								{
 									"key": "username",
-									"value": "newuser123"
+									"value": "{{username}}"
 								},
 								{
 									"key": "email",
-									"value": "newuser@example.com"
+									"value": "{{username}}@example.com"
 								},
 								{
 									"key": "password",
-									"value": "Password123!"
+									"value": "{{user_password}}"
 								},
 								{
 									"key": "firstName",
-									"value": "John"
+									"value": "Test"
 								},
 								{
 									"key": "lastName",
-									"value": "Doe"
+									"value": "User"
 								},
 								{
 									"key": "phone",
-									"value": "+1234567890"
+									"value": "1234567890"
 								}
 							]
 						},
@@ -538,7 +692,21 @@
 								"value": "Bearer {{access_token}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/users/me"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/me"
+					}
+				},
+				{
+					"name": "Get Current User (Simple)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": "{{base_url}}/api/v1/auth/me",
+						"description": "Get current user details without requiring tenant ID"
 					}
 				}
 			]
@@ -1280,6 +1448,23 @@
 			"item": [
 				{
 					"name": "Create Review",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    console.log('Review created successfully:', response);",
+									"    pm.collectionVariables.set('review_id', response.reviewId);",
+									"} else {",
+									"    console.log('Review creation failed:', pm.response.text());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1298,7 +1483,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"productId\": 1,\n    \"rating\": 5,\n    \"comment\": \"Excellent product! Highly recommended.\"\n}"
+							"raw": "{\n    \"productId\": 1,\n    \"rating\": 5,\n    \"comment\": \"Excellent product! Highly recommended by {{username}}!\"\n}"
 						},
 						"url": "{{base_url}}/api/v1/reviews"
 					}

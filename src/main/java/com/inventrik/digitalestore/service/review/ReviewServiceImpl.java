@@ -58,8 +58,8 @@ public class ReviewServiceImpl implements ReviewService {
         review.setComment(reviewRequest.getComment());
         review.setVerified(hasPurchased);
         review.setStatus("0");
-        review.setCreatedBy(username);
-        review.setUpdatedBy(username);
+        review.setCreatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        review.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
         
         Review savedReview = reviewRepository.save(review);
         
@@ -213,6 +213,8 @@ public class ReviewServiceImpl implements ReviewService {
         Long maxId = reviewRepository.findMaxReviewId(tenantId);
         return maxId != null ? maxId + 1 : 1000000001L;
     }
+    
+
     
     private ReviewResponse mapToResponse(Review review, String username) {
         return new ReviewResponse(
