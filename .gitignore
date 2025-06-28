@@ -90,12 +90,8 @@ Thumbs.db
 
 # Security & Configuration Files
 ## Application properties with sensitive information
-src/main/resources/application-dev.properties
-src/main/resources/application-prod.properties
-src/main/resources/application-local.properties
-src/main/resources/application-staging.properties
+# Ignore ALL application properties files - keep them local only
 src/main/resources/application*.properties
-!src/main/resources/application.properties
 local.properties
 
 ## Environment files
