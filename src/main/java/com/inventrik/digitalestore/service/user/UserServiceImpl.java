@@ -102,8 +102,10 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("Phone number already exists");
         }
         
-        // Generate a new user ID
-        Long newUserId = System.currentTimeMillis();
+        // Generate a unique user ID using timestamp + random component to prevent collisions
+        Long timestamp = System.currentTimeMillis();
+        int randomComponent = new Random().nextInt(1000); // 0-999
+        Long newUserId = Long.parseLong(timestamp.toString() + String.format("%03d", randomComponent));
         
         // Generate OTP
         String otp = generateOTP();
@@ -134,10 +136,11 @@ public class UserServiceImpl implements UserService {
         // Encode password
         user.setPasswordHash(passwordEncoder.encode(userRequest.getPassword()));
         user.setStatus("0"); // Active status
-        // Ensure createdBy doesn't exceed 2 characters
-        user.setCreatedBy(createdBy.length() > 2 ? createdBy.substring(0, 2) : createdBy);
-        // Ensure updatedBy doesn't exceed 2 characters
-        user.setUpdatedBy(createdBy.length() > 2 ? createdBy.substring(0, 2) : createdBy);
+        // Ensure createdBy doesn't exceed 2 characters and handle null values
+        String safeCreatedBy = (createdBy != null && !createdBy.trim().isEmpty()) ? createdBy.trim() : "sy";
+        user.setCreatedBy(safeCreatedBy.length() > 2 ? safeCreatedBy.substring(0, 2) : safeCreatedBy);
+        // Ensure updatedBy doesn't exceed 2 characters and handle null values
+        user.setUpdatedBy(safeCreatedBy.length() > 2 ? safeCreatedBy.substring(0, 2) : safeCreatedBy);
         user.setCreated(LocalDateTime.now());
         user.setUpdated(LocalDateTime.now());
         
@@ -199,8 +202,9 @@ public class UserServiceImpl implements UserService {
             user.setStatus(updateRequest.getStatus());
         }
         
-        // Ensure updatedBy doesn't exceed 2 characters
-        user.setUpdatedBy(updatedBy.length() > 2 ? updatedBy.substring(0, 2) : updatedBy);
+        // Ensure updatedBy doesn't exceed 2 characters and handle null values
+        String safeUpdatedBy = (updatedBy != null && !updatedBy.trim().isEmpty()) ? updatedBy.trim() : "sy";
+        user.setUpdatedBy(safeUpdatedBy.length() > 2 ? safeUpdatedBy.substring(0, 2) : safeUpdatedBy);
         user.setUpdated(LocalDateTime.now());
         
         User updatedUser = userRepository.save(user);
@@ -211,11 +215,16 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(Integer tenantId, Long userId) {
-        if (!userRepository.findByTenantIdAndUserId(tenantId, userId).isPresent()) {
-            throw new ResourceNotFoundException("User not found with id: " + userId);
-        }
+        // Verify user exists before attempting deletion
+        User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         
-        userRepository.deleteByTenantIdAndUserId(tenantId, userId);
+        // Perform soft delete by updating status instead of hard delete
+        user.setStatus("1"); // Inactive status
+        user.setUpdated(LocalDateTime.now());
+        userRepository.save(user);
+        
+        // Note: For hard delete, use: userRepository.deleteByTenantIdAndUserId(tenantId, userId);
     }
     
     @Override

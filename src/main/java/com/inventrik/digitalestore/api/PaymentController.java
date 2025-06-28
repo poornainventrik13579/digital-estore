@@ -115,9 +115,9 @@ public class PaymentController {
         @ApiResponse(responseCode = "400", description = "Invalid refund request")
     })
     public ResponseEntity<PaymentResponse> partialRefundPayment(
+            @PathVariable Integer tenantId,
             @PathVariable Long paymentId,
             @Valid @RequestBody PartialRefundRequest refundRequest,
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
             Authentication authentication) {
         
         try {

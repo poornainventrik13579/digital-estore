@@ -28,7 +28,6 @@ import com.inventrik.digitalestore.dto.request.UserRequest;
 import com.inventrik.digitalestore.dto.request.LoginRequest;
 import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.service.user.UserService;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
