@@ -2,6 +2,7 @@ package com.inventrik.digitalestore.config;
 
 import com.inventrik.digitalestore.domain.user.User;
 import com.inventrik.digitalestore.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,12 +11,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.LocalDateTime;
 
 @Configuration
+@Slf4j
 public class DataInitializer {
 
     @Bean
     public CommandLineRunner initData(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
-            System.out.println("***** RESETTING ADMIN USER *****");
+            log.info("***** RESETTING ADMIN USER *****");
             
             // Find admin or create if doesn't exist
             User admin = userRepository.findByUsername("admin")
@@ -41,7 +43,7 @@ public class DataInitializer {
             admin.setPasswordHash(passwordEncoder.encode("admin"));
             userRepository.save(admin);
             
-            System.out.println("Admin user reset successfully with password: admin");
+            log.info("Admin user reset successfully with password: admin");
         };
     }
 }
