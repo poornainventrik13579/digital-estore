@@ -4,6 +4,8 @@
 # Log files
 *.log
 logs/
+*.log.*
+log/
 
 # BlueJ files
 *.ctxt
@@ -22,6 +24,7 @@ logs/
 
 # Virtual machine crash logs
 hs_err_pid*
+replay_pid*
 
 # Maven
 target/
@@ -78,14 +81,92 @@ bin/
 
 # OS specific files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Application properties with sensitive information
+# Security & Configuration Files
+## Application properties with sensitive information
 src/main/resources/application-dev.properties
 src/main/resources/application-prod.properties
 src/main/resources/application-local.properties
+src/main/resources/application-staging.properties
+src/main/resources/application*.properties
+!src/main/resources/application.properties
 local.properties
 
-# Environment specific files
+## Environment files
 .env
 .env.local
+.env.dev
+.env.prod
+.env.staging
+.env.test
+
+## SSL/TLS certificates and keys
+*.key
+*.pem
+*.crt
+*.cer
+*.p12
+*.pfx
+*.jks
+keystore.*
+
+## Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.#*
+\#*#
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Spring Boot specific
+spring.log
+application.pid
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+.docker/
+
+# Test coverage reports
+coverage/
+*.lcov
+jacoco.xml
+
+# Node modules (if using frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Generated documentation
+docs/generated/
+javadoc/
+
+# Application specific
+uploads/
+downloads/
+temp/
+cache/
+*.cache
+
+# Development artifacts
+*.orig
+*.rej
+.sass-cache/
