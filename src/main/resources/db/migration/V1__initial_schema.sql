@@ -1,5 +1,5 @@
 -- Create Users table
-CREATE TABLE Users (
+CREATE TABLE users (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
     user_id BIGINT NOT NULL,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -27,7 +27,7 @@ CREATE TABLE Users (
 );
 
 -- Create Categories table
-CREATE TABLE Categories (
+CREATE TABLE categories (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
     category_id BIGINT NOT NULL,
     category_name VARCHAR(50) NOT NULL,
@@ -41,13 +41,13 @@ CREATE TABLE Categories (
 );
 
 -- Create Products table
-CREATE TABLE Products (
+CREATE TABLE products (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
     product_id BIGINT NOT NULL,
     product_name VARCHAR(100) NOT NULL,
     description TEXT,
     default_price DECIMAL(10, 2) NOT NULL,
-    default_currency CHAR(3) NOT NULL,
+    default_currency VARCHAR(3) NOT NULL,
     category_id BIGINT,
     status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
     created_by VARCHAR(2) NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE Products (
 );
 
 -- Create DigitalProductDetails table
-CREATE TABLE DigitalProductDetails (
+CREATE TABLE digital_product_details (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
     product_id BIGINT NOT NULL,
     file_url VARCHAR(255) NOT NULL,
@@ -75,7 +75,7 @@ CREATE TABLE DigitalProductDetails (
 );
 
 -- Create Orders table
-CREATE TABLE Orders (
+CREATE TABLE orders (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
     order_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
@@ -92,7 +92,7 @@ CREATE TABLE Orders (
 );
 
 -- Create Order Items table
-CREATE TABLE OrderItems (
+CREATE TABLE order_items (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
     order_id BIGINT NOT NULL,
     order_item_id BIGINT NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE OrderItems (
 );
 
 -- Create Payments table
-CREATE TABLE Payments (
+CREATE TABLE payments (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
     payment_id BIGINT NOT NULL,
     order_id BIGINT NOT NULL,

@@ -10,7 +10,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "productprices")
+@Table(name = "product_prices")
 @IdClass(ProductPriceId.class)
 @Getter
 @Setter

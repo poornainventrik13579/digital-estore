@@ -1,7 +1,7 @@
 -- V5__reviews_system.sql
 -- Reviews system migration
 
-CREATE TABLE Reviews (
+CREATE TABLE reviews (
     tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
     review_id BIGINT(15) NOT NULL,
     product_id BIGINT(15) NOT NULL,

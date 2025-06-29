@@ -2,7 +2,7 @@
 -- Discount codes system migration
 
 -- Create DiscountCodes table
-CREATE TABLE DiscountCodes (
+CREATE TABLE discount_codes (
     tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
     discount_id BIGINT(15) NOT NULL,
     code VARCHAR(50) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE DiscountCodes (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Create DiscountUsage table to track usage
-CREATE TABLE DiscountUsage (
+CREATE TABLE discount_usage (
     tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
     usage_id BIGINT(15) NOT NULL,
     discount_id BIGINT(15) NOT NULL,

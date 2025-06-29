@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "orderitems")
+@Table(name = "order_items")
 @IdClass(OrderItem.OrderItemPK.class)
 @Data
 @NoArgsConstructor
