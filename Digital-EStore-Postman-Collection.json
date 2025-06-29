@@ -43,7 +43,12 @@
 		},
 		{
 			"key": "username",
-			"value": "testuser",
+			"value": "johndoe",
+			"type": "string"
+		},
+		{
+			"key": "user_email",
+			"value": "john.doe@example.com",
 			"type": "string"
 		},
 		{
@@ -104,7 +109,7 @@
 										},
 										{
 											"key": "email",
-											"value": "{{username}}@example.com"
+											"value": "{{user_email}}"
 										},
 										{
 											"key": "password",
@@ -112,11 +117,11 @@
 										},
 										{
 											"key": "firstName",
-											"value": "Test"
+											"value": "John"
 										},
 										{
 											"key": "lastName",
-											"value": "User"
+											"value": "Doe"
 										},
 										{
 											"key": "phone",
