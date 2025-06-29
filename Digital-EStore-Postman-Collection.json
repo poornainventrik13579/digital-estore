@@ -306,8 +306,8 @@
 									"value": "{{username}}"
 								},
 								{
-									"key": "email",
-									"value": "{{username}}@example.com"
+									"key": "user_email",
+									"value": "{{user_email}}@example.com"
 								},
 								{
 									"key": "password",
