@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.MediaType;
 
+import com.inventrik.digitalestore.dto.request.ForgotPasswordRequest;
 import com.inventrik.digitalestore.dto.request.SignupRequest;
 import com.inventrik.digitalestore.dto.request.UserRequest;
 import com.inventrik.digitalestore.dto.request.LoginRequest;
@@ -106,5 +107,22 @@ public class AuthController {
     public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
         String username = authentication.getName();
         return ResponseEntity.ok(userService.findByUsername(username));
+    }
+    
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        try {
+            userService.sendPasswordResetEmail(request.getEmail());
+            return ResponseEntity.ok(Map.of(
+                "message", "If an account with that email exists, we've sent a password reset link.",
+                "email", request.getEmail()
+            ));
+        } catch (Exception e) {
+            // For security reasons, always return success message
+            return ResponseEntity.ok(Map.of(
+                "message", "If an account with that email exists, we've sent a password reset link.",
+                "email", request.getEmail()
+            ));
+        }
     }
 }

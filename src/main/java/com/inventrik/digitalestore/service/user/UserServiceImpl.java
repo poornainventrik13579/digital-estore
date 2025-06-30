@@ -245,4 +245,23 @@ public class UserServiceImpl implements UserService {
         int otp = 100000 + random.nextInt(900000); // 6-digit OTP
         return String.valueOf(otp);
     }
+    
+    @Override
+    public void sendPasswordResetEmail(String email) {
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+            
+            // Generate reset token (using OTP for simplicity)
+            String resetToken = generateOTP();
+            
+            // Send password reset email
+            emailNotificationService.sendPasswordResetEmail(user, resetToken);
+            
+        } catch (ResourceNotFoundException e) {
+            // For security reasons, don't reveal if email exists or not
+            // Just log the error and return success to user
+            System.out.println("Password reset attempted for non-existent email: " + email);
+        }
+    }
 }

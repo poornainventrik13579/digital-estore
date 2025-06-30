@@ -33,5 +33,8 @@ public interface UserService {
     UserResponse findByEmail(String email);
     boolean isCurrentUser(Integer tenantId, Long userId, String username);
     boolean isUserWithEmail(String email, String username);
+    
+    // Forgot password functionality
+    void sendPasswordResetEmail(String email);
 
 }
