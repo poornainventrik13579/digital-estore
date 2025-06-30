@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -40,6 +41,7 @@ public class EmailServiceImpl implements EmailService {
     private String baseUrl;
 
     @Override
+    @Async("taskExecutor")
     public void sendOrderConfirmationWithInvoice(Order order, User user, byte[] invoicePdf) {
         try {
             // Prepare email context
@@ -68,6 +70,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    @Async("taskExecutor")
     public void sendCancellationNotification(Order order, User user) {
         try {
             // Prepare email context
@@ -91,6 +94,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    @Async("taskExecutor")
     public void sendRefundNotification(Order order, Payment payment, User user) {
         try {
             // Prepare email context
@@ -115,6 +119,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    @Async("taskExecutor")
     public void sendAccountCreationConfirmation(User user) {
         try {
             // Prepare email context
@@ -137,6 +142,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    @Async("taskExecutor")
     public void sendPasswordResetLink(User user, String resetToken) {
         try {
             // Prepare email context
@@ -160,6 +166,7 @@ public class EmailServiceImpl implements EmailService {
     }
     
     @Override
+    @Async("taskExecutor")
     public void sendDigitalProductAccessEmail(Order order, User user) {
         try {
             // Prepare email context
@@ -242,6 +249,7 @@ public class EmailServiceImpl implements EmailService {
     }
     
     @Override
+    @Async("taskExecutor")
     public void sendPaymentFailureNotification(Order order, Payment payment, User user, String failureReason) {
         try {
             // Prepare email context
@@ -267,6 +275,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    @Async("taskExecutor")
     public void sendPartialRefundNotification(Order order, Payment payment, BigDecimal refundAmount, User user) {
         try {
             Map<String, Object> templateModel = new HashMap<>();
