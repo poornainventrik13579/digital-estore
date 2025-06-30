@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,6 +42,7 @@ public class CategoryController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create a new category (JSON)")
     public ResponseEntity<CategoryResponse> createCategoryJson(
             @PathVariable Integer tenantId,
@@ -53,6 +55,7 @@ public class CategoryController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create a new category (Form)")
     public ResponseEntity<CategoryResponse> createCategory(
             @PathVariable Integer tenantId,
@@ -65,6 +68,7 @@ public class CategoryController {
     }
     
     @PutMapping(path = "/{categoryId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update a category (JSON)")
     public ResponseEntity<CategoryResponse> updateCategoryJson(
             @PathVariable Integer tenantId,
@@ -78,6 +82,7 @@ public class CategoryController {
     }
     
     @PutMapping(path = "/{categoryId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update a category (Form)")
     public ResponseEntity<CategoryResponse> updateCategory(
             @PathVariable Integer tenantId,
@@ -91,6 +96,7 @@ public class CategoryController {
     }
     
     @DeleteMapping("/{categoryId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete a category")
     public ResponseEntity<Void> deleteCategory(
             @PathVariable Integer tenantId,

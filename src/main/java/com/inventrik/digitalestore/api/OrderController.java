@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +30,7 @@ public class OrderController {
     private final OrderService orderService;
     
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get all orders")
     public ResponseEntity<List<OrderResponse>> getAllOrders(
             @Parameter(description = "Tenant ID", required = true) 
@@ -86,6 +88,7 @@ public class OrderController {
     }
     
     @PutMapping(path = "/{orderId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update an order (JSON)")
     public ResponseEntity<OrderResponse> updateOrderJson(
             @Parameter(description = "Tenant ID", required = true) 
@@ -103,6 +106,7 @@ public class OrderController {
     }
     
     @PutMapping(path = "/{orderId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update an order (Form)")
     public ResponseEntity<OrderResponse> updateOrder(
             @Parameter(description = "Tenant ID", required = true) 
@@ -120,6 +124,7 @@ public class OrderController {
     }
     
     @DeleteMapping("/{orderId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete an order")
     public ResponseEntity<Void> deleteOrder(
             @Parameter(description = "Tenant ID", required = true) 
@@ -162,6 +167,7 @@ public class OrderController {
     }
     
     @PostMapping("/{orderId}/complete")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Complete an order")
     public ResponseEntity<OrderResponse> completeOrder(
             @Parameter(description = "Tenant ID", required = true) 

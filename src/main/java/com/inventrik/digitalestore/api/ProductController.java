@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,6 +47,7 @@ public class ProductController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create a new product (JSON)")
     public ResponseEntity<ProductResponse> createProductJson(
             @PathVariable Integer tenantId,
@@ -58,6 +60,7 @@ public class ProductController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create a new product (Form)")
     public ResponseEntity<ProductResponse> createProduct(
             @PathVariable Integer tenantId,
@@ -70,6 +73,7 @@ public class ProductController {
     }
     
     @PutMapping(path = "/{productId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update a product (JSON)")
     public ResponseEntity<ProductResponse> updateProductJson(
             @PathVariable Integer tenantId,
@@ -83,6 +87,7 @@ public class ProductController {
     }
     
     @PutMapping(path = "/{productId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update a product (Form)")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Integer tenantId,
@@ -96,6 +101,7 @@ public class ProductController {
     }
     
     @DeleteMapping("/{productId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete a product")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable Integer tenantId,
