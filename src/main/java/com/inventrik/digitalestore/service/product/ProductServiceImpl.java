@@ -8,6 +8,8 @@ import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.CategoryRepository;
 import com.inventrik.digitalestore.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +41,7 @@ public class ProductServiceImpl implements ProductService {
     }
     
     @Override
+    @Cacheable(value = "products", key = "#tenantId + ':all'")
     public List<ProductResponse> getAllProducts(Integer tenantId) {
         return productRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDTO)
@@ -46,6 +49,7 @@ public class ProductServiceImpl implements ProductService {
     }
     
     @Override
+    @Cacheable(value = "products", key = "#tenantId + ':product:' + #productId")
     public ProductResponse getProduct(Integer tenantId, Long productId) {
         Product product = productRepository.findByTenantIdAndProductId(tenantId, productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
@@ -89,6 +93,7 @@ public class ProductServiceImpl implements ProductService {
     
     @Override
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public ProductResponse updateProduct(Integer tenantId, Long productId, String username, ProductUpdateRequest updateRequest) {
         Product product = productRepository.findByTenantIdAndProductId(tenantId, productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
@@ -127,6 +132,7 @@ public class ProductServiceImpl implements ProductService {
     
     @Override
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public void deleteProduct(Integer tenantId, Long productId) {
         if (!productRepository.findByTenantIdAndProductId(tenantId, productId).isPresent()) {
             throw new ResourceNotFoundException("Product not found with id: " + productId);
@@ -136,6 +142,7 @@ public class ProductServiceImpl implements ProductService {
     }
     
     @Override
+    @Cacheable(value = "products", key = "#tenantId + ':category:' + #categoryId")
     public List<ProductResponse> getProductsByCategory(Integer tenantId, Long categoryId) {
         return productRepository.findByTenantIdAndCategoryId(tenantId, categoryId).stream()
                 .map(this::mapToDTO)
