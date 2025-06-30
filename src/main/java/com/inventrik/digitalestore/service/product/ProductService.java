@@ -2,6 +2,7 @@ package com.inventrik.digitalestore.service.product;
 
 import com.inventrik.digitalestore.dto.request.ProductRequest;
 import com.inventrik.digitalestore.dto.request.ProductUpdateRequest;
+import com.inventrik.digitalestore.dto.response.PagedResponse;
 import com.inventrik.digitalestore.dto.response.ProductResponse;
 
 import java.util.List;
@@ -10,6 +11,9 @@ public interface ProductService {
     
     // Get all products for a tenant
     List<ProductResponse> getAllProducts(Integer tenantId);
+    
+    // Get all products for a tenant with pagination
+    PagedResponse<ProductResponse> getAllProductsPaginated(Integer tenantId, int page, int size);
     
     // Get a single product by ID
     ProductResponse getProduct(Integer tenantId, Long productId);

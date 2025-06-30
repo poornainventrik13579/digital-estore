@@ -3,6 +3,7 @@ package com.inventrik.digitalestore.service.product;
 import com.inventrik.digitalestore.domain.product.Product;
 import com.inventrik.digitalestore.dto.request.ProductRequest;
 import com.inventrik.digitalestore.dto.request.ProductUpdateRequest;
+import com.inventrik.digitalestore.dto.response.PagedResponse;
 import com.inventrik.digitalestore.dto.response.ProductResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.CategoryRepository;
@@ -10,6 +11,10 @@ import com.inventrik.digitalestore.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +51,19 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+    
+    @Override
+    @Cacheable(value = "products", key = "#tenantId + ':page:' + #page + ':' + #size")
+    public PagedResponse<ProductResponse> getAllProductsPaginated(Integer tenantId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("created").descending());
+        Page<Product> productPage = productRepository.findByTenantId(tenantId, pageable);
+        
+        List<ProductResponse> products = productPage.getContent().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+                
+        return PagedResponse.of(products, page, size, productPage.getTotalElements());
     }
     
     @Override

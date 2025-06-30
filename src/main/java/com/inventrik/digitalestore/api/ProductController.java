@@ -2,6 +2,7 @@ package com.inventrik.digitalestore.api;
 
 import com.inventrik.digitalestore.dto.request.ProductRequest;
 import com.inventrik.digitalestore.dto.request.ProductUpdateRequest;
+import com.inventrik.digitalestore.dto.response.PagedResponse;
 import com.inventrik.digitalestore.dto.response.ProductResponse;
 import com.inventrik.digitalestore.service.product.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,9 +28,13 @@ public class ProductController {
     private final ProductService productService;
     
     @GetMapping
-    @Operation(summary = "Get all products")
-    public ResponseEntity<List<ProductResponse>> getAllProducts(@PathVariable Integer tenantId) {
-        return ResponseEntity.ok(productService.getAllProducts(tenantId));
+    @Operation(summary = "Get all products with pagination")
+    public ResponseEntity<PagedResponse<ProductResponse>> getAllProducts(
+            @PathVariable Integer tenantId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PagedResponse<ProductResponse> products = productService.getAllProductsPaginated(tenantId, page, size);
+        return ResponseEntity.ok(products);
     }
     
     @GetMapping("/{productId}")

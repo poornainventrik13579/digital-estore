@@ -1,6 +1,8 @@
 package com.inventrik.digitalestore.repository;
 
 import com.inventrik.digitalestore.domain.product.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -18,6 +20,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     
     // Find all products for a tenant
     List<Product> findByTenantId(Integer tenantId);
+    
+    // Find all products for a tenant with pagination
+    Page<Product> findByTenantId(Integer tenantId, Pageable pageable);
     
     // Find active products for a tenant
     List<Product> findByTenantIdAndStatus(Integer tenantId, String status);
