@@ -9,6 +9,8 @@ import com.inventrik.digitalestore.dto.response.DiscountValidationResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.DiscountCodeRepository;
 import com.inventrik.digitalestore.repository.DiscountUsageRepository;
+import com.inventrik.digitalestore.service.IdGeneratorService;
+import com.inventrik.digitalestore.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,8 @@ public class DiscountServiceImpl implements DiscountService {
     
     private final DiscountCodeRepository discountCodeRepository;
     private final DiscountUsageRepository discountUsageRepository;
+    private final IdGeneratorService idGeneratorService;
+    private final UserService userService;
     
     @Override
     public DiscountCodeResponse createDiscountCode(Integer tenantId, DiscountCodeRequest request, String username) {
@@ -34,8 +38,8 @@ public class DiscountServiceImpl implements DiscountService {
             throw new IllegalArgumentException("Discount code already exists: " + request.getCode());
         }
         
-        Long newDiscountId = generateDiscountId(tenantId);
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+        Long newDiscountId = idGeneratorService.generateId(tenantId, "DISCOUNT");
+        String auditCode = userService.getAuditCode(username);
         
         DiscountCode discountCode = new DiscountCode();
         discountCode.setTenantId(tenantId);
@@ -49,8 +53,8 @@ public class DiscountServiceImpl implements DiscountService {
         discountCode.setValidFrom(request.getValidFrom());
         discountCode.setValidTo(request.getValidTo());
         discountCode.setStatus("0");
-        discountCode.setCreatedBy(truncatedUsername);
-        discountCode.setUpdatedBy(truncatedUsername);
+        discountCode.setCreatedBy(auditCode);
+        discountCode.setUpdatedBy(auditCode);
         
         DiscountCode savedDiscountCode = discountCodeRepository.save(discountCode);
         log.info("Created discount code {} for tenant {}", savedDiscountCode.getCode(), tenantId);
@@ -194,8 +198,8 @@ public class DiscountServiceImpl implements DiscountService {
     
     @Override
     public void recordDiscountUsage(Integer tenantId, Long discountId, Long orderId, Long userId, BigDecimal discountAmount, String username) {
-        Long newUsageId = generateUsageId(tenantId);
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+        Long newUsageId = idGeneratorService.generateId(tenantId, "DISCOUNT_USAGE");
+        String auditCode = userService.getAuditCode(username);
         
         DiscountUsage usage = new DiscountUsage();
         usage.setTenantId(tenantId);
@@ -206,8 +210,8 @@ public class DiscountServiceImpl implements DiscountService {
         usage.setDiscountAmount(discountAmount);
         usage.setUsedDate(LocalDateTime.now());
         usage.setStatus("0");
-        usage.setCreatedBy(truncatedUsername);
-        usage.setUpdatedBy(truncatedUsername);
+        usage.setCreatedBy(auditCode);
+        usage.setUpdatedBy(auditCode);
         
         discountUsageRepository.save(usage);
         log.info("Recorded discount usage for discount {} in order {}", discountId, orderId);
@@ -262,14 +266,5 @@ public class DiscountServiceImpl implements DiscountService {
         response.setRemainingUses(discountCode.getMaxUses() == 0 ? Integer.MAX_VALUE : 
                                  Math.max(0, discountCode.getMaxUses() - discountCode.getUsedCount()));
         return response;
-    }
-    
-    private Long generateDiscountId(Integer tenantId) {
-        long count = discountCodeRepository.countByTenantIdAndStatus(tenantId, "0");
-        return System.currentTimeMillis() + count;
-    }
-    
-    private Long generateUsageId(Integer tenantId) {
-        return System.currentTimeMillis() + System.nanoTime() % 1000;
     }
 } 

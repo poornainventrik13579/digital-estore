@@ -15,6 +15,7 @@ import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.OrderRepository;
 import com.inventrik.digitalestore.repository.PaymentRepository;
 import com.inventrik.digitalestore.repository.UserRepository;
+import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.email.EmailService;
 import com.inventrik.digitalestore.service.invoice.InvoiceService;
 import com.inventrik.digitalestore.service.logging.PaymentEventLogger;
@@ -30,6 +31,8 @@ import com.stripe.net.Webhook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -50,6 +53,7 @@ public class StripePaymentService implements PaymentService {
     private final PaymentRetryService retryService;
     private final PaymentEventLogger paymentEventLogger;
     private final IdempotencyKeyService idempotencyKeyService;
+    private final IdGeneratorService idGeneratorService;
     
     private final EmailService emailService;
     private final InvoiceService invoiceService;
@@ -91,51 +95,42 @@ public class StripePaymentService implements PaymentService {
     
 
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public PaymentResponse createPayment(Integer tenantId, String username, PaymentRequest paymentRequest) {
-        // Generate a unique idempotency key for this request
-        String idempotencyKey = tenantId + ":" + paymentRequest.getOrderId() + ":" + System.currentTimeMillis();
+        String idempotencyKey = tenantId + ":" + paymentRequest.getOrderId() + ":" + idGeneratorService.generateUniqueId();
         
-        return transactionCoordinator.executeInTransaction(() -> {
+        return transactionCoordinator.executeInStrictTransaction(() -> {
             try {
-                // Verify order exists
                 Order order = orderRepository.findByTenantIdAndOrderId(tenantId, paymentRequest.getOrderId())
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + paymentRequest.getOrderId()));
                 
-                // Generate a new payment ID
-                Long newPaymentId = System.currentTimeMillis();
+                Long newPaymentId = idGeneratorService.generateId(tenantId, "PAYMENT");
                 
-                // Create a payment intent with Stripe
                 PaymentIntent paymentIntent = retryService.executeWithRetry(() -> {
                     try {
-                        // Create parameters for Stripe payment intent
                         Map<String, Object> params = new HashMap<>();
                         params.put("currency", paymentRequest.getCurrency().toLowerCase());
                         params.put("amount", paymentRequest.getAmount().multiply(new java.math.BigDecimal(100)).longValue());
                         params.put("description", "Payment for order #" + paymentRequest.getOrderId());
-                        // params.put("confirmation_method", "manual");
                         params.put("capture_method", "automatic");
                         
-                        // Add automatic payment methods configuration to prevent redirect issues
                         Map<String, Object> automaticPaymentMethods = new HashMap<>();
                         automaticPaymentMethods.put("enabled", true);
                         automaticPaymentMethods.put("allow_redirects", "never");
                         params.put("automatic_payment_methods", automaticPaymentMethods);
                         
-                        // Add metadata
                         Map<String, String> metadata = new HashMap<>();
                         metadata.put("orderId", paymentRequest.getOrderId().toString());
                         metadata.put("tenantId", tenantId.toString());
                         metadata.put("paymentId", newPaymentId.toString());
                         params.put("metadata", metadata);
                         
-                        // Create the payment intent
                         return PaymentIntent.create(params);
                     } catch (StripeException e) {
                         throw new PaymentProcessingException("Failed to create payment with Stripe: " + e.getMessage(), e, true);
                     }
                 });
                 
-                // Create local payment record
                 Payment payment = new Payment();
                 payment.setTenantId(tenantId);
                 payment.setPaymentId(newPaymentId);
@@ -147,7 +142,6 @@ public class StripePaymentService implements PaymentService {
                 payment.setTransactionId(paymentIntent.getId());
                 payment.setStatus(PaymentStatus.PENDING.getDisplayName());
                 
-                // Set the full username now that DB schema supports longer usernames
                 payment.setCreatedBy(username);
                 payment.setUpdatedBy(username);
                 payment.setCreated(LocalDateTime.now());
@@ -155,12 +149,10 @@ public class StripePaymentService implements PaymentService {
                 
                 Payment savedPayment = paymentRepository.save(payment);
                 
-                // Log the payment creation
                 paymentEventLogger.logPaymentCreation(savedPayment, username);
                 
                 PaymentResponse response = mapToDTO(savedPayment);
                 
-                // Add client secret for client-side confirmation
                 response.setClientSecret(paymentIntent.getClientSecret());
                 
                 return response;

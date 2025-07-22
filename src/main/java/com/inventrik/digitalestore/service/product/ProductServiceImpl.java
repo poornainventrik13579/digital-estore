@@ -8,6 +8,8 @@ import com.inventrik.digitalestore.dto.response.ProductResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.CategoryRepository;
 import com.inventrik.digitalestore.repository.ProductRepository;
+import com.inventrik.digitalestore.service.IdGeneratorService;
+import com.inventrik.digitalestore.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -28,6 +30,8 @@ public class ProductServiceImpl implements ProductService {
     
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final IdGeneratorService idGeneratorService;
+    private final UserService userService;
     
     // Utility method to convert Entity to DTO
     private ProductResponse mapToDTO(Product product) {
@@ -78,7 +82,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponse createProduct(Integer tenantId, String username, ProductRequest productRequest) {
         // Generate a new product ID
-        Long newProductId = System.currentTimeMillis();
+        Long newProductId = idGeneratorService.generateId(tenantId, "PRODUCT");
         
         Product product = new Product();
         product.setTenantId(tenantId);
@@ -99,8 +103,8 @@ public class ProductServiceImpl implements ProductService {
         }
         
         product.setStatus("0"); // Active status
-        product.setCreatedBy(username.length() > 2 ? username.substring(0, 2) : username);
-        product.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        product.setCreatedBy(userService.getAuditCode(username));
+        product.setUpdatedBy(userService.getAuditCode(username));
         product.setCreated(LocalDateTime.now());
         product.setUpdated(LocalDateTime.now());
         

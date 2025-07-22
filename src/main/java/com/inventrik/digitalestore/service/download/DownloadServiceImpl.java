@@ -9,6 +9,8 @@ import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.DigitalDownloadRepository;
 import com.inventrik.digitalestore.repository.DigitalProductDetailsRepository;
 import com.inventrik.digitalestore.repository.ProductRepository;
+import com.inventrik.digitalestore.service.IdGeneratorService;
+import com.inventrik.digitalestore.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,25 +28,24 @@ public class DownloadServiceImpl implements DownloadService {
     private final DigitalDownloadRepository digitalDownloadRepository;
     private final DigitalProductDetailsRepository digitalProductDetailsRepository;
     private final ProductRepository productRepository;
+    private final IdGeneratorService idGeneratorService;
+    private final UserService userService;
     
     @Override
     @Transactional
     public void recordDownload(Integer tenantId, Long orderItemId, String ipAddress, String username) {
-        // Generate a new download ID
-        Long newDownloadId = System.currentTimeMillis();
+        Long newDownloadId = idGeneratorService.generateId(tenantId, "DOWNLOAD");
         
-        // Create download record
         DigitalDownload download = new DigitalDownload();
         download.setDownloadId(newDownloadId);
         download.setTenantId(tenantId);
         download.setOrderItemId(orderItemId);
         download.setDownloadDate(LocalDateTime.now());
         download.setIpAddress(ipAddress);
-        download.setStatus("0"); // Active
+        download.setStatus("0");
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
-        download.setCreatedBy(truncatedUsername);
-        download.setUpdatedBy(truncatedUsername);
+        download.setCreatedBy(userService.getAuditCode(username));
+        download.setUpdatedBy(userService.getAuditCode(username));
         download.setCreated(LocalDateTime.now());
         download.setUpdated(LocalDateTime.now());
         

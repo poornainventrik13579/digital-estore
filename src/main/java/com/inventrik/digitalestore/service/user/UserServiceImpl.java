@@ -7,6 +7,7 @@ import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.exception.BusinessException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.UserRepository;
+import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.notification.EmailNotificationService;
 
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailNotificationService emailNotificationService;
+    private final IdGeneratorService idGeneratorService;
 
     // Utility method to convert Entity to DTO
     private UserResponse mapToDTO(User user) {
@@ -104,7 +106,7 @@ public class UserServiceImpl implements UserService {
         }
         
         // Generate a new user ID
-        Long newUserId = System.currentTimeMillis();
+        Long newUserId = idGeneratorService.generateId(tenantId, "USER");
         
         // Generate OTP
         String otp = generateOTP();
@@ -137,9 +139,8 @@ public class UserServiceImpl implements UserService {
         user.setPasswordHash(passwordEncoder.encode(userRequest.getPassword()));
         user.setStatus("0"); // Active status
         // Ensure createdBy doesn't exceed 2 characters
-        user.setCreatedBy(createdBy.length() > 2 ? createdBy.substring(0, 2) : createdBy);
-        // Ensure updatedBy doesn't exceed 2 characters
-        user.setUpdatedBy(createdBy.length() > 2 ? createdBy.substring(0, 2) : createdBy);
+        user.setCreatedBy(String.format("%02d", newUserId % 98 + 1));
+        user.setUpdatedBy(String.format("%02d", newUserId % 98 + 1));
         user.setCreated(LocalDateTime.now());
         user.setUpdated(LocalDateTime.now());
         
@@ -205,7 +206,7 @@ public class UserServiceImpl implements UserService {
         }
         
         // Ensure updatedBy doesn't exceed 2 characters
-        user.setUpdatedBy(updatedBy.length() > 2 ? updatedBy.substring(0, 2) : updatedBy);
+        user.setUpdatedBy(getAuditCode(updatedBy));
         user.setUpdated(LocalDateTime.now());
         
         User updatedUser = userRepository.save(user);
@@ -267,6 +268,23 @@ public class UserServiceImpl implements UserService {
             // For security reasons, don't reveal if email exists or not
             // Just log the error and return success to user
             System.out.println("Password reset attempted for non-existent email: " + email);
+        }
+    }
+    
+    public String getAuditCode(String username) {
+        if (username == null || username.equals("system")) {
+            return "00";
+        }
+        if (username.equals("webhook")) {
+            return "99";
+        }
+        
+        try {
+            UserResponse user = findByUsername(username);
+            return String.format("%02d", user.getUserId() % 98 + 1);
+        } catch (Exception e) {
+            int hash = Math.abs(username.hashCode()) % 89 + 10;
+            return String.format("%02d", hash);
         }
     }
 }

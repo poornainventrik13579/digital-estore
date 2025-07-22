@@ -6,6 +6,8 @@ import com.inventrik.digitalestore.dto.request.CategoryUpdateRequest;
 import com.inventrik.digitalestore.dto.response.CategoryResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.CategoryRepository;
+import com.inventrik.digitalestore.service.IdGeneratorService;
+import com.inventrik.digitalestore.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 public class CategoryServiceImpl implements CategoryService {
     
     private final CategoryRepository categoryRepository;
+    private final IdGeneratorService idGeneratorService;
+    private final UserService userService;
     
     // Utility method to convert Entity to DTO
     private CategoryResponse mapToDTO(Category category) {
@@ -52,7 +56,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryResponse createCategory(Integer tenantId, String username, CategoryRequest categoryRequest) {
         // Generate a new category ID
-        Long newCategoryId = System.currentTimeMillis();
+        Long newCategoryId = idGeneratorService.generateId(tenantId, "CATEGORY");
         
         Category category = new Category();
         category.setTenantId(tenantId);
@@ -63,8 +67,8 @@ public class CategoryServiceImpl implements CategoryService {
         category.setProducts(new ArrayList<>()); // Initialize empty products list
         
         // Ensure username is truncated to 2 characters as per DB schema
-        category.setCreatedBy(username.length() > 2 ? username.substring(0, 2) : username);
-        category.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        category.setCreatedBy(userService.getAuditCode(username));
+        category.setUpdatedBy(userService.getAuditCode(username));
         category.setCreated(LocalDateTime.now());
         category.setUpdated(LocalDateTime.now());
         

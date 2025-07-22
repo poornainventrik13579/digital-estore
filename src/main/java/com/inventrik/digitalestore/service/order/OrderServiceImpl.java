@@ -14,10 +14,13 @@ import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.OrderRepository;
 import com.inventrik.digitalestore.repository.ProductRepository;
 import com.inventrik.digitalestore.repository.UserRepository;
+import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.discount.DiscountService;
+import com.inventrik.digitalestore.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -35,6 +38,8 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final DiscountService discountService;
+    private final IdGeneratorService idGeneratorService;
+    private final UserService userService;
     
     // Utility method to convert Order entity to OrderResponse DTO
     private OrderResponse mapToDTO(Order order) {
@@ -86,10 +91,10 @@ public class OrderServiceImpl implements OrderService {
     }
     
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public OrderResponse createOrder(Integer tenantId, String username, OrderRequest orderRequest) {
         // Generate a new order ID
-        Long newOrderId = System.currentTimeMillis();
+        Long newOrderId = idGeneratorService.generateId(tenantId, "ORDER");
         
         // Verify user exists
         userRepository.findByTenantIdAndUserId(tenantId, orderRequest.getUserId())
@@ -124,10 +129,8 @@ public class OrderServiceImpl implements OrderService {
         order.setExchangeRate(orderRequest.getExchangeRate());
         order.setStatus(OrderStatus.PENDING.getDisplayName());
         
-        // Ensure username is truncated to 2 characters
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
-        order.setCreatedBy(truncatedUsername);
-        order.setUpdatedBy(truncatedUsername);
+        order.setCreatedBy(userService.getAuditCode(username));
+        order.setUpdatedBy(userService.getAuditCode(username));
         
         // Save order first to get the ID
         Order savedOrder = orderRepository.save(order);
@@ -142,13 +145,13 @@ public class OrderServiceImpl implements OrderService {
             OrderItem orderItem = new OrderItem();
             orderItem.setTenantId(tenantId);
             orderItem.setOrderId(newOrderId);
-            orderItem.setOrderItemId(System.currentTimeMillis() + orderItems.size());
+            orderItem.setOrderItemId(idGeneratorService.generateId(tenantId, "ORDER_ITEM"));
             orderItem.setProductId(itemRequest.getProductId());
             orderItem.setPriceAtPurchase(itemRequest.getPriceAtPurchase());
             orderItem.setLicenseKey(itemRequest.getLicenseKey());
-            orderItem.setStatus("0"); // Active
-            orderItem.setCreatedBy(truncatedUsername);
-            orderItem.setUpdatedBy(truncatedUsername);
+            orderItem.setStatus("0");
+            orderItem.setCreatedBy(userService.getAuditCode(username));
+            orderItem.setUpdatedBy(userService.getAuditCode(username));
             orderItem.setCreated(LocalDateTime.now());
             orderItem.setUpdated(LocalDateTime.now());
             orderItems.add(orderItem);

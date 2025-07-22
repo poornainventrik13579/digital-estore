@@ -36,5 +36,8 @@ public interface UserService {
     
     // Forgot password functionality
     void sendPasswordResetEmail(String email);
+    
+    // Get audit code for username
+    String getAuditCode(String username);
 
 }

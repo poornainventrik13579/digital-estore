@@ -68,9 +68,6 @@ public class BundleItem {
     protected void onCreate() {
         created = LocalDateTime.now();
         updated = LocalDateTime.now();
-        if (bundleItemId == null) {
-            bundleItemId = System.currentTimeMillis();
-        }
     }
     
     @PreUpdate

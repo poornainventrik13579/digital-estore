@@ -9,6 +9,8 @@ import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.BundleItemRepository;
 import com.inventrik.digitalestore.repository.ProductBundleRepository;
 import com.inventrik.digitalestore.repository.ProductRepository;
+import com.inventrik.digitalestore.service.IdGeneratorService;
+import com.inventrik.digitalestore.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,14 +29,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BundleServiceImpl implements BundleService {
     
-    private final ProductBundleRepository productBundleRepository;
+    private final ProductBundleRepository bundleRepository;
     private final BundleItemRepository bundleItemRepository;
     private final ProductRepository productRepository;
+    private final IdGeneratorService idGeneratorService;
+    private final UserService userService;
     
     @Override
     @Transactional(readOnly = true)
     public List<BundleResponse> getAllBundles(Integer tenantId) {
-        return productBundleRepository.findByTenantId(tenantId).stream()
+        return bundleRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -41,7 +46,7 @@ public class BundleServiceImpl implements BundleService {
     @Override
     @Transactional(readOnly = true)
     public List<BundleResponse> getActiveBundles(Integer tenantId) {
-        return productBundleRepository.findActiveBundles(tenantId).stream()
+        return bundleRepository.findActiveBundles(tenantId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -49,121 +54,89 @@ public class BundleServiceImpl implements BundleService {
     @Override
     @Transactional(readOnly = true)
     public BundleResponse getBundle(Integer tenantId, Long bundleId) {
-        ProductBundle bundle = productBundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
+        ProductBundle bundle = bundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bundle not found with id: " + bundleId));
         return mapToResponse(bundle);
     }
     
     @Override
     public BundleResponse createBundle(Integer tenantId, BundleRequest bundleRequest, String username) {
-        // Validate bundle composition
         if (!validateBundleComposition(tenantId, bundleRequest.getBundleItems())) {
             throw new IllegalArgumentException("Invalid bundle composition");
         }
         
-        // Create bundle
+        Long newBundleId = idGeneratorService.generateId(tenantId, "BUNDLE");
+        
         ProductBundle bundle = new ProductBundle();
         bundle.setTenantId(tenantId);
+        bundle.setBundleId(newBundleId);
         bundle.setBundleName(bundleRequest.getBundleName());
         bundle.setDescription(bundleRequest.getDescription());
         bundle.setBundlePrice(bundleRequest.getBundlePrice());
         bundle.setDiscountPercent(bundleRequest.getDiscountPercent());
         bundle.setCurrency(bundleRequest.getCurrency());
         bundle.setStatus("0");
-        bundle.setCreatedBy("1");
-        bundle.setUpdatedBy("1");
+        bundle.setCreatedBy(userService.getAuditCode(username));
+        bundle.setUpdatedBy(userService.getAuditCode(username));
+        bundle.setCreated(LocalDateTime.now());
+        bundle.setUpdated(LocalDateTime.now());
         
-        bundle = productBundleRepository.save(bundle);
+        ProductBundle savedBundle = bundleRepository.save(bundle);
         
-        // Create bundle items
         for (BundleRequest.BundleItemRequest itemRequest : bundleRequest.getBundleItems()) {
+            Long newItemId = idGeneratorService.generateId(tenantId, "BUNDLE_ITEM");
+            
             BundleItem bundleItem = new BundleItem();
             bundleItem.setTenantId(tenantId);
-            bundleItem.setBundleId(bundle.getBundleId());
+            bundleItem.setBundleItemId(newItemId);
+            bundleItem.setBundleId(newBundleId);
             bundleItem.setProductId(itemRequest.getProductId());
             bundleItem.setQuantity(itemRequest.getQuantity());
             bundleItem.setStatus("0");
-            bundleItem.setCreatedBy("1");
-            bundleItem.setUpdatedBy("1");
+            bundleItem.setCreatedBy(userService.getAuditCode(username));
+            bundleItem.setUpdatedBy(userService.getAuditCode(username));
+            bundleItem.setCreated(LocalDateTime.now());
+            bundleItem.setUpdated(LocalDateTime.now());
             
             bundleItemRepository.save(bundleItem);
         }
         
-        log.info("Bundle created successfully: bundleId={}, tenantId={}, username={}", 
-                bundle.getBundleId(), tenantId, username);
-        
-        return getBundle(tenantId, bundle.getBundleId());
+        return mapToResponse(savedBundle);
     }
     
     @Override
     public BundleResponse updateBundle(Integer tenantId, Long bundleId, BundleRequest bundleRequest, String username) {
-        ProductBundle bundle = productBundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
+        ProductBundle bundle = bundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bundle not found with id: " + bundleId));
         
-        // Update bundle details
         bundle.setBundleName(bundleRequest.getBundleName());
         bundle.setDescription(bundleRequest.getDescription());
         bundle.setBundlePrice(bundleRequest.getBundlePrice());
         bundle.setDiscountPercent(bundleRequest.getDiscountPercent());
         bundle.setCurrency(bundleRequest.getCurrency());
-        bundle.setUpdatedBy("1");
+        bundle.setUpdatedBy(userService.getAuditCode(username));
+        bundle.setUpdated(LocalDateTime.now());
         
-        productBundleRepository.save(bundle);
-        
-        // Remove existing bundle items
-        List<BundleItem> existingItems = bundleItemRepository.findByTenantIdAndBundleId(tenantId, bundleId);
-        existingItems.forEach(item -> {
-            item.setStatus("-1");
-            item.setUpdatedBy("1");
-        });
-        bundleItemRepository.saveAll(existingItems);
-        
-        // Add new bundle items
-        for (BundleRequest.BundleItemRequest itemRequest : bundleRequest.getBundleItems()) {
-            BundleItem bundleItem = new BundleItem();
-            bundleItem.setTenantId(tenantId);
-            bundleItem.setBundleId(bundleId);
-            bundleItem.setProductId(itemRequest.getProductId());
-            bundleItem.setQuantity(itemRequest.getQuantity());
-            bundleItem.setStatus("0");
-            bundleItem.setCreatedBy("1");
-            bundleItem.setUpdatedBy("1");
-            
-            bundleItemRepository.save(bundleItem);
-        }
-        
-        log.info("Bundle updated successfully: bundleId={}, tenantId={}, username={}", 
-                bundleId, tenantId, username);
-        
-        return getBundle(tenantId, bundleId);
+        ProductBundle savedBundle = bundleRepository.save(bundle);
+        return mapToResponse(savedBundle);
     }
     
     @Override
     public void deleteBundle(Integer tenantId, Long bundleId, String username) {
-        ProductBundle bundle = productBundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
+        ProductBundle bundle = bundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bundle not found with id: " + bundleId));
         
-        // Deactivate bundle
         bundle.setStatus("-1");
-        bundle.setUpdatedBy("1");
-        productBundleRepository.save(bundle);
+        bundle.setUpdatedBy(userService.getAuditCode(username));
+        bundle.setUpdated(LocalDateTime.now());
         
-        // Deactivate bundle items
-        List<BundleItem> bundleItems = bundleItemRepository.findByTenantIdAndBundleId(tenantId, bundleId);
-        bundleItems.forEach(item -> {
-            item.setStatus("-1");
-            item.setUpdatedBy("1");
-        });
-        bundleItemRepository.saveAll(bundleItems);
-        
-        log.info("Bundle deleted successfully: bundleId={}, tenantId={}, username={}", 
-                bundleId, tenantId, username);
+        bundleRepository.save(bundle);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<BundleResponse> searchBundles(Integer tenantId, String name) {
-        return productBundleRepository.findByBundleNameContaining(tenantId, name).stream()
+        return bundleRepository.findByBundleNameContaining(tenantId, name).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -218,7 +191,7 @@ public class BundleServiceImpl implements BundleService {
     
     @Override
     public BundleResponse addProductToBundle(Integer tenantId, Long bundleId, Long productId, Integer quantity, String username) {
-        ProductBundle bundle = productBundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
+        ProductBundle bundle = bundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bundle not found with id: " + bundleId));
         
         // Check if product exists
@@ -288,7 +261,7 @@ public class BundleServiceImpl implements BundleService {
     @Override
     @Transactional(readOnly = true)
     public Long getBundleCount(Integer tenantId) {
-        return productBundleRepository.countActiveBundles(tenantId);
+        return bundleRepository.countActiveBundles(tenantId);
     }
     
     private BundleResponse mapToResponse(ProductBundle bundle) {
