@@ -1,5 +1,8 @@
 package com.inventrik.digitalestore.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +17,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
 import java.time.Duration;
+import java.util.TimeZone;
 
 /**
  * Redis Cache Configuration for multi-tenant e-commerce platform.
@@ -37,9 +41,18 @@ public class CacheConfig {
         template.setKeySerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
         
-        // Use JSON serializer for values
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        // Configure ObjectMapper with JSR310 module for LocalDateTime support
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.setTimeZone(TimeZone.getTimeZone("UTC"));
+        // Enable type information for proper deserialization
+        objectMapper.activateDefaultTyping(objectMapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL);
+        
+        // Use JSON serializer for values with configured ObjectMapper
+        GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+        template.setValueSerializer(jsonSerializer);
+        template.setHashValueSerializer(jsonSerializer);
         
         template.afterPropertiesSet();
         return template;
@@ -47,13 +60,21 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        // Configure ObjectMapper with JSR310 module for LocalDateTime support
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.setTimeZone(TimeZone.getTimeZone("UTC"));
+        // Enable type information for proper deserialization
+        objectMapper.activateDefaultTyping(objectMapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL);
+        
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
             .entryTtl(Duration.ofHours(1)) // Cache for 1 hour
             .computePrefixWith(cacheName -> "estore:" + cacheName + ":")
             .serializeKeysWith(RedisSerializationContext.SerializationPair
                 .fromSerializer(new StringRedisSerializer()))
             .serializeValuesWith(RedisSerializationContext.SerializationPair
-                .fromSerializer(new GenericJackson2JsonRedisSerializer()));
+                .fromSerializer(new GenericJackson2JsonRedisSerializer(objectMapper)));
 
         return RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(config)
