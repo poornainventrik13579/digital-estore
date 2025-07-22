@@ -1,3 +1,5 @@
+package com.inventrik.digitalestore;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
