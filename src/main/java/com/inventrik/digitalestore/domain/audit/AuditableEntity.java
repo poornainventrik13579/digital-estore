@@ -11,13 +11,13 @@ import java.time.LocalDateTime;
 @Setter
 public abstract class AuditableEntity {
     
-    @Column(name = "created_by", nullable = false, length = 2)
+    @Column(name = "created_by", nullable = false, length = 50)
     private String createdBy;
     
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
     
-    @Column(name = "updated_by", nullable = false, length = 2)
+    @Column(name = "updated_by", nullable = false, length = 50)
     private String updatedBy;
     
     @Column(name = "updated", nullable = false)
@@ -28,10 +28,10 @@ public abstract class AuditableEntity {
         created = LocalDateTime.now();
         updated = LocalDateTime.now();
         if (createdBy == null) {
-            createdBy = "0"; // Default value
+            createdBy = "system"; // Default value
         }
         if (updatedBy == null) {
-            updatedBy = "0"; // Default value
+            updatedBy = "system"; // Default value
         }
     }
     
@@ -39,7 +39,7 @@ public abstract class AuditableEntity {
     protected void onUpdate() {
         updated = LocalDateTime.now();
         if (updatedBy == null) {
-            updatedBy = "0"; // Default value
+            updatedBy = "system"; // Default value
         }
     }
 } 

@@ -49,7 +49,7 @@ public class StripePaymentService implements PaymentService {
     private final TransactionCoordinatorService transactionCoordinator;
     private final PaymentRetryService retryService;
     private final PaymentEventLogger paymentEventLogger;
-    // private final IdempotencyKeyService idempotencyKeyService;
+    private final IdempotencyKeyService idempotencyKeyService;
     
     private final EmailService emailService;
     private final InvoiceService invoiceService;
@@ -93,13 +93,13 @@ public class StripePaymentService implements PaymentService {
     @Override
     public PaymentResponse createPayment(Integer tenantId, String username, PaymentRequest paymentRequest) {
         // Generate a unique idempotency key for this request
-        // String idempotencyKey = tenantId + ":" + paymentRequest.getOrderId() + ":" + System.currentTimeMillis();
+        String idempotencyKey = tenantId + ":" + paymentRequest.getOrderId() + ":" + System.currentTimeMillis();
         
         return transactionCoordinator.executeInTransaction(() -> {
             try {
                 // Verify order exists
-                // Order order = orderRepository.findByTenantIdAndOrderId(tenantId, paymentRequest.getOrderId())
-                //         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + paymentRequest.getOrderId()));
+                Order order = orderRepository.findByTenantIdAndOrderId(tenantId, paymentRequest.getOrderId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + paymentRequest.getOrderId()));
                 
                 // Generate a new payment ID
                 Long newPaymentId = System.currentTimeMillis();
@@ -147,10 +147,9 @@ public class StripePaymentService implements PaymentService {
                 payment.setTransactionId(paymentIntent.getId());
                 payment.setStatus(PaymentStatus.PENDING.getDisplayName());
                 
-                // Ensure username is truncated to 2 characters as per DB schema
-                String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
-                payment.setCreatedBy(truncatedUsername);
-                payment.setUpdatedBy(truncatedUsername);
+                // Set the full username now that DB schema supports longer usernames
+                payment.setCreatedBy(username);
+                payment.setUpdatedBy(username);
                 payment.setCreated(LocalDateTime.now());
                 payment.setUpdated(LocalDateTime.now());
                 
