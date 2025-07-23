@@ -16,18 +16,22 @@ Digital E-Store is an enterprise-grade Spring Boot application that provides a c
 - Multi-currency pricing support
 
 ### Order Management
-- Full order lifecycle from creation to completion
+- Full order lifecycle from creation to completion with early validation
 - Order cancellation and refund processing
-- Partial refund capabilities
-- Order history and tracking
-- Automated order fulfillment
+- Partial refund capabilities with precise amount tracking
+- Order history and tracking with comprehensive audit trails
+- Automated order fulfillment with status notifications
+- Discount code validation before order ID generation
+- Thread-safe order processing with serializable isolation
 
 ### Payment Processing
-- Stripe integration for secure payment processing
-- Support for multiple payment methods
-- Webhook handling for payment events
-- Automated invoice generation
-- Payment reconciliation
+- Stripe integration with secure payment processing
+- Support for multiple payment methods with precision handling
+- Webhook handling for payment events with idempotency protection
+- Automated invoice generation and storage
+- Payment reconciliation with duplicate prevention
+- Partial and full refund capabilities
+- Real-time payment status updates
 
 ### User Management
 - Support for individual and business customers
@@ -37,12 +41,15 @@ Digital E-Store is an enterprise-grade Spring Boot application that provides a c
 - User profile and preference management
 
 ### Advanced Features
-- Discount code management with usage tracking
+- Discount code management with usage tracking and race condition protection
 - Product review and rating system
 - Email notification system with templates
 - PDF invoice generation
 - Download tracking and analytics
-- Comprehensive audit logging
+- Comprehensive audit logging with secure event tracking
+- Payment retry mechanism with exponential backoff
+- Database query optimization to prevent N+1 issues
+- Atomic discount usage updates for concurrent safety
 
 ## Technology Stack
 
@@ -50,6 +57,7 @@ Digital E-Store is an enterprise-grade Spring Boot application that provides a c
 - Security: Spring Security with OAuth2 Authorization Server
 - Database: MySQL 8.0 with Flyway migrations
 - ORM: Spring Data JPA with Hibernate
+- Caching: Redis with Lettuce connection factory
 - Payment: Stripe API integration
 - Email: Spring Mail with SMTP support
 - Documentation: Swagger/OpenAPI 3.0
@@ -57,6 +65,30 @@ Digital E-Store is an enterprise-grade Spring Boot application that provides a c
 - Template Engine: Thymeleaf for email templates
 - Build Tool: Maven 3.9+
 - Java Version: JDK 17+
+
+## Performance & Optimization
+
+### Caching Strategy
+- Redis-based distributed caching with 1-hour TTL
+- Product catalog caching to reduce database load
+- Lettuce connection pooling for optimal Redis performance
+- Jackson JSON serialization for complex object caching
+- Tenant-aware cache prefixes for multi-tenancy support
+
+### Rate Limiting
+- IP-based rate limiting with configurable thresholds per endpoint type
+- Authentication endpoints: 5 requests/minute
+- Payment endpoints: 10 requests/minute  
+- Admin endpoints: 100 requests/minute
+- Standard endpoints: 60 requests/minute
+- Automatic cleanup and thread-safe implementation
+
+### Connection Pooling
+- HikariCP database connection pooling with optimized settings
+- Maximum pool size: 20 connections (production)
+- Connection leak detection and automatic timeout handling
+- Async thread pool for email operations (5-10 threads)
+- Redis connection pooling through Lettuce driver
 
 ## Prerequisites
 
@@ -250,6 +282,11 @@ The API includes several security features to protect your data:
 - All sensitive data is encrypted
 - Rate limiting prevents system abuse
 - Comprehensive audit logging tracks all activities
+- Payment idempotency protection prevents duplicate charges
+- Thread-safe discount code management prevents overuse
+- Currency validation ensures ISO 4217 compliance
+- Sanitized error messages prevent information disclosure
+- Memory leak protection with bounded cache sizes
 
 ## API Endpoints Guide
 
