@@ -6,6 +6,8 @@ import com.inventrik.digitalestore.domain.order.OrderStatus;
 import com.inventrik.digitalestore.dto.request.OrderItemRequest;
 import com.inventrik.digitalestore.dto.request.OrderRequest;
 import com.inventrik.digitalestore.dto.request.OrderUpdateRequest;
+import com.inventrik.digitalestore.dto.request.ValidateDiscountRequest;
+import com.inventrik.digitalestore.dto.response.DiscountValidationResponse;
 import com.inventrik.digitalestore.dto.response.OrderItemResponse;
 import com.inventrik.digitalestore.dto.response.OrderResponse;
 import com.inventrik.digitalestore.event.OrderStatusChangeEvent;
@@ -93,16 +95,30 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public OrderResponse createOrder(Integer tenantId, String username, OrderRequest orderRequest) {
-        // Generate a new order ID
-        Long newOrderId = idGeneratorService.generateId(tenantId, "ORDER");
-        
-        // Verify user exists
+        // Verify user exists first
         userRepository.findByTenantIdAndUserId(tenantId, orderRequest.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + orderRequest.getUserId()));
         
+        // Validate discount code before generating order ID
         BigDecimal finalAmount = orderRequest.getTotalAmount();
         BigDecimal discountAmount = BigDecimal.ZERO;
         
+        if (orderRequest.getDiscountCode() != null && !orderRequest.getDiscountCode().trim().isEmpty()) {
+            // Validate discount code without applying it yet
+            DiscountValidationResponse validation = discountService.validateDiscountCode(tenantId, 
+                new ValidateDiscountRequest(orderRequest.getDiscountCode().trim(), orderRequest.getTotalAmount(), orderRequest.getUserId()));
+            
+            if (!validation.isValid()) {
+                throw new BusinessException("Invalid discount code: " + validation.getMessage());
+            }
+            discountAmount = validation.getDiscountAmount();
+            finalAmount = validation.getFinalAmount();
+        }
+        
+        // Generate order ID only after all validations pass
+        Long newOrderId = idGeneratorService.generateId(tenantId, "ORDER");
+        
+        // Now apply the discount if valid
         if (orderRequest.getDiscountCode() != null && !orderRequest.getDiscountCode().trim().isEmpty()) {
             try {
                 discountAmount = discountService.applyDiscountToOrder(

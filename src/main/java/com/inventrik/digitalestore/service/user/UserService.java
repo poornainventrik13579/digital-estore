@@ -39,5 +39,8 @@ public interface UserService {
     
     // Get audit code for username
     String getAuditCode(String username);
+    
+    // Safely truncate username for audit fields
+    String truncateUsernameForAudit(String username);
 
 }

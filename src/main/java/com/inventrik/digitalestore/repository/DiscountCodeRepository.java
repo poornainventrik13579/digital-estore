@@ -3,6 +3,7 @@ package com.inventrik.digitalestore.repository;
 import com.inventrik.digitalestore.domain.discount.DiscountCode;
 import com.inventrik.digitalestore.domain.discount.DiscountType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -44,4 +45,11 @@ public interface DiscountCodeRepository extends JpaRepository<DiscountCode, Disc
     List<DiscountCode> findExpiredDiscountCodes(@Param("tenantId") Integer tenantId, 
                                                 @Param("now") LocalDateTime now, 
                                                 @Param("status") String status);
+    
+    @Modifying
+    @Query("UPDATE DiscountCode d SET d.usedCount = d.usedCount + 1, d.updatedBy = :updatedBy, d.updated = CURRENT_TIMESTAMP " +
+           "WHERE d.tenantId = :tenantId AND d.discountId = :discountId AND (d.maxUses = 0 OR d.usedCount < d.maxUses)")
+    int incrementUsedCount(@Param("tenantId") Integer tenantId, 
+                          @Param("discountId") Long discountId, 
+                          @Param("updatedBy") String updatedBy);
 } 

@@ -20,6 +20,7 @@ import com.inventrik.digitalestore.service.email.EmailService;
 import com.inventrik.digitalestore.service.invoice.InvoiceService;
 import com.inventrik.digitalestore.service.logging.PaymentEventLogger;
 import com.inventrik.digitalestore.service.transaction.TransactionCoordinatorService;
+import com.inventrik.digitalestore.service.user.UserService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
@@ -58,6 +59,7 @@ public class StripePaymentService implements PaymentService {
     private final EmailService emailService;
     private final InvoiceService invoiceService;
     private final UserRepository userRepository;
+    private final UserService userService;
 
     private PaymentResponse mapToDTO(Payment payment) {
         PaymentResponse response = new PaymentResponse();
@@ -97,10 +99,27 @@ public class StripePaymentService implements PaymentService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public PaymentResponse createPayment(Integer tenantId, String username, PaymentRequest paymentRequest) {
-        String idempotencyKey = tenantId + ":" + paymentRequest.getOrderId() + ":" + idGeneratorService.generateUniqueId();
+        String idempotencyKey = tenantId + ":" + paymentRequest.getOrderId() + ":" + username;
         
         return transactionCoordinator.executeInStrictTransaction(() -> {
             try {
+                // Check for existing payments with idempotency
+                if (idempotencyKeyService.isKeyRegistered(idempotencyKey)) {
+                    // Find existing payment for this order
+                    List<Payment> existingPayments = paymentRepository.findByTenantIdAndOrderId(tenantId, paymentRequest.getOrderId());
+                    if (!existingPayments.isEmpty()) {
+                        Payment existingPayment = existingPayments.get(0);
+                        log.warn("Duplicate payment attempt detected for order {}, returning existing payment {}", 
+                                paymentRequest.getOrderId(), existingPayment.getPaymentId());
+                        return mapToDTO(existingPayment);
+                    }
+                }
+                
+                // Register idempotency key
+                if (!idempotencyKeyService.registerKey(idempotencyKey)) {
+                    throw new PaymentProcessingException("Duplicate payment request detected", false);
+                }
+                
                 Order order = orderRepository.findByTenantIdAndOrderId(tenantId, paymentRequest.getOrderId())
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + paymentRequest.getOrderId()));
                 
@@ -110,7 +129,12 @@ public class StripePaymentService implements PaymentService {
                     try {
                         Map<String, Object> params = new HashMap<>();
                         params.put("currency", paymentRequest.getCurrency().toLowerCase());
-                        params.put("amount", paymentRequest.getAmount().multiply(new java.math.BigDecimal(100)).longValue());
+                        // Convert to cents with proper precision handling
+                        BigDecimal amountInCents = paymentRequest.getAmount().multiply(BigDecimal.valueOf(100));
+                        if (amountInCents.scale() > 0) {
+                            throw new PaymentProcessingException("Payment amount has too many decimal places for currency conversion", false);
+                        }
+                        params.put("amount", amountInCents.longValueExact());
                         params.put("description", "Payment for order #" + paymentRequest.getOrderId());
                         params.put("capture_method", "automatic");
                         
@@ -306,7 +330,7 @@ public class StripePaymentService implements PaymentService {
                 payment.setStatus(PaymentStatus.FAILED.getDisplayName());
                 
                 // Ensure username is truncated to 2 characters as per DB schema
-                String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+                String truncatedUsername = userService.truncateUsernameForAudit(username);
                 payment.setUpdatedBy(truncatedUsername);
                 payment.setUpdated(LocalDateTime.now());
                 

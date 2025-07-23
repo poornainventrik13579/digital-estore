@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class IdempotencyKeyService {
 
     private static final long EXPIRATION_MINUTES = 60; // Keys expire after 60 minutes
+    private static final int MAX_CACHE_SIZE = 10000; // Maximum number of keys to store
     
     // Store idempotency keys and their timestamps
     private final Map<String, LocalDateTime> idempotencyKeys = new ConcurrentHashMap<>();
@@ -29,6 +30,12 @@ public class IdempotencyKeyService {
     public boolean registerKey(String key) {
         // Clean expired keys
         cleanExpiredKeys();
+        
+        // Check cache size limit
+        if (idempotencyKeys.size() >= MAX_CACHE_SIZE) {
+            log.warn("Idempotency cache is full, clearing all entries to prevent memory leak");
+            idempotencyKeys.clear();
+        }
         
         // Check if key already exists
         if (idempotencyKeys.containsKey(key)) {

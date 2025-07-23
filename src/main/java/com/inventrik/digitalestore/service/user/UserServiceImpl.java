@@ -287,4 +287,14 @@ public class UserServiceImpl implements UserService {
             return String.format("%02d", hash);
         }
     }
+    
+    /**
+     * Safely truncates username to 2 characters for database audit fields
+     */
+    public String truncateUsernameForAudit(String username) {
+        if (username == null || username.isEmpty()) {
+            return "00";
+        }
+        return username.length() > 2 ? username.substring(0, 2) : username;
+    }
 }

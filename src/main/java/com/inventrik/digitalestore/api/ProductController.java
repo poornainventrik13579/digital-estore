@@ -29,6 +29,7 @@ public class ProductController {
     private final ProductService productService;
     
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get all products with pagination")
     public ResponseEntity<PagedResponse<ProductResponse>> getAllProducts(
             @PathVariable Integer tenantId,
@@ -39,6 +40,7 @@ public class ProductController {
     }
     
     @GetMapping("/{productId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get a product by ID")
     public ResponseEntity<ProductResponse> getProduct(
             @PathVariable Integer tenantId,

@@ -14,6 +14,7 @@ import com.inventrik.digitalestore.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -170,6 +171,7 @@ public class DiscountServiceImpl implements DiscountService {
     }
     
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public BigDecimal applyDiscountToOrder(Integer tenantId, String discountCode, Long orderId, Long userId, BigDecimal orderAmount, String username) {
         DiscountCode discount = discountCodeRepository.findValidDiscountCode(
                 tenantId, discountCode.toUpperCase(), "0", LocalDateTime.now())
@@ -179,6 +181,11 @@ public class DiscountServiceImpl implements DiscountService {
             throw new IllegalArgumentException("Order amount must be at least " + discount.getMinOrderAmount());
         }
         
+        // Check if discount has reached max uses limit (thread-safe check)
+        if (discount.getMaxUses() > 0 && discount.getUsedCount() >= discount.getMaxUses()) {
+            throw new IllegalArgumentException("Discount code has reached its usage limit");
+        }
+        
         BigDecimal discountAmount = discount.calculateDiscount(orderAmount);
         if (discountAmount.compareTo(orderAmount) > 0) {
             discountAmount = orderAmount;
@@ -186,10 +193,13 @@ public class DiscountServiceImpl implements DiscountService {
         
         recordDiscountUsage(tenantId, discount.getDiscountId(), orderId, userId, discountAmount, username);
         
-        discount.setUsedCount(discount.getUsedCount() + 1);
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
-        discount.setUpdatedBy(truncatedUsername);
-        discountCodeRepository.save(discount);
+        // Atomic increment using database-level update
+        int updatedRows = discountCodeRepository.incrementUsedCount(tenantId, discount.getDiscountId(), 
+            username.length() > 2 ? username.substring(0, 2) : username);
+        
+        if (updatedRows == 0) {
+            throw new IllegalStateException("Failed to update discount usage - discount may have been modified concurrently");
+        }
         
         log.info("Applied discount {} to order {}, amount: {}", discountCode, orderId, discountAmount);
         

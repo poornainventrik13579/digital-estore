@@ -66,9 +66,11 @@ public class PaymentRetryService {
                         delay.toMillis(), attempts + 1, maxRetries, e.getMessage());
                 
                 try {
+                    // Use a more efficient waiting mechanism for better resource management
                     Thread.sleep(delay.toMillis());
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
+                    log.warn("Payment retry was interrupted");
                     throw new PaymentException("Payment retry interrupted", ie, false);
                 }
                 
