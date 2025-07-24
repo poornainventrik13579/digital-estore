@@ -42,6 +42,30 @@ public class Product {
     @Column(name = "default_currency", nullable = false, length = 3)
     private String defaultCurrency;
     
+    @Column(name = "image1_url", length = 256)
+    private String image1Url;
+    
+    @Column(name = "image2_url", length = 256)
+    private String image2Url;
+    
+    @Column(name = "image3_url", length = 256)
+    private String image3Url;
+    
+    @Column(name = "image4_url", length = 256)
+    private String image4Url;
+    
+    @Column(name = "image5_url", length = 256)
+    private String image5Url;
+    
+    @Column(name = "banner", length = 256)
+    private String banner;
+    
+    @Column(name = "thumbnail", length = 256)
+    private String thumbnail;
+    
+    @Column(name = "metadata", columnDefinition = "TEXT")
+    private String metadata;
+    
     @Column(name = "status", nullable = false, length = 2)
     private String status;
     
