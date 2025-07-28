@@ -7,12 +7,14 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
@@ -75,16 +77,16 @@ public class AuthController {
             );
             
             Instant now = Instant.now();
-            String scope = authentication.getAuthorities().stream()
+            List<String> authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(" "));
+                .collect(Collectors.toList());
             
             JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("http://localhost:8080")
                 .issuedAt(now)
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .subject(authentication.getName())
-                .claim("scope", scope)
+                .claim("authorities", authorities)
                 .build();
             
             String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
@@ -93,7 +95,7 @@ public class AuthController {
                 "access_token", token,
                 "token_type", "Bearer",
                 "expires_in", 3600,
-                "scope", scope,
+                "authorities", authorities,
                 "username", authentication.getName()
             ));
             
@@ -103,6 +105,7 @@ public class AuthController {
     }
     
     @GetMapping("/me")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
         String username = authentication.getName();
         return ResponseEntity.ok(userService.findByUsername(username));

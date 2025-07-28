@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -27,6 +28,7 @@ public class ReviewController {
     private final ReviewService reviewService;
     
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Create a new review", description = "Create a review for a product")
     public ResponseEntity<ReviewResponse> createReview(
             @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,
@@ -76,6 +78,7 @@ public class ReviewController {
     }
     
     @PutMapping("/{reviewId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Update review", description = "Update an existing review")
     public ResponseEntity<ReviewResponse> updateReview(
             @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,
@@ -90,6 +93,7 @@ public class ReviewController {
     }
     
     @DeleteMapping("/{reviewId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete review", description = "Delete a review")
     public ResponseEntity<Void> deleteReview(
             @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,
@@ -126,6 +130,7 @@ public class ReviewController {
     }
     
     @PutMapping("/{reviewId}/verify")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Verify review", description = "Mark a review as verified (admin only)")
     public ResponseEntity<ReviewResponse> verifyReview(
             @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,

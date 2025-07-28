@@ -28,12 +28,14 @@ public class CategoryController {
     private final CategoryService categoryService;
     
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get all categories")
     public ResponseEntity<List<CategoryResponse>> getAllCategories(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(categoryService.getAllCategories(tenantId));
     }
     
     @GetMapping("/{categoryId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get a category by ID")
     public ResponseEntity<CategoryResponse> getCategory(
             @PathVariable Integer tenantId,
@@ -106,6 +108,7 @@ public class CategoryController {
     }
     
     @GetMapping("/active")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get active categories")
     public ResponseEntity<List<CategoryResponse>> getActiveCategories(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(categoryService.getActiveCategories(tenantId));

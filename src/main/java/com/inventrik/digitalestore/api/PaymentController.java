@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -26,19 +27,21 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantId}/payments")
 @RequiredArgsConstructor
-@Tag(name = "Payment Management", description = "APIs for processing payments")
+@Tag(name = "Payment Management", description = "APIs for managing payments")
 @SecurityRequirement(name = "oauth2")
 public class PaymentController {
 
     private final PaymentService paymentService;
     
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get all payments")
     public ResponseEntity<List<PaymentResponse>> getAllPayments(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(paymentService.getAllPayments(tenantId));
     }
     
     @GetMapping("/{paymentId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get a payment by ID")
     public ResponseEntity<PaymentResponse> getPayment(
             @PathVariable Integer tenantId,
@@ -47,6 +50,7 @@ public class PaymentController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Create a new payment (JSON)")
     public ResponseEntity<PaymentResponse> createPaymentJson(
             @PathVariable Integer tenantId,
@@ -59,6 +63,7 @@ public class PaymentController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Create a new payment (Form)")
     public ResponseEntity<PaymentResponse> createPayment(
             @PathVariable Integer tenantId,
@@ -71,6 +76,7 @@ public class PaymentController {
     }
     
     @PostMapping("/{paymentId}/confirm")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Confirm a payment")
     public ResponseEntity<PaymentResponse> confirmPayment(
             @PathVariable Integer tenantId,
@@ -84,6 +90,7 @@ public class PaymentController {
     }
     
     @PostMapping("/{paymentId}/cancel")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Cancel a payment")
     public ResponseEntity<PaymentResponse> cancelPayment(
             @PathVariable Integer tenantId,
@@ -96,6 +103,7 @@ public class PaymentController {
     }
     
     @PostMapping("/{paymentId}/refund")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Refund a payment")
     public ResponseEntity<PaymentResponse> refundPayment(
             @PathVariable Integer tenantId,
@@ -108,6 +116,7 @@ public class PaymentController {
     }
     
     @PostMapping("/{paymentId}/partial-refund")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Process partial refund", description = "Process a partial refund for a payment")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Partial refund processed successfully"),
@@ -131,6 +140,7 @@ public class PaymentController {
     }
     
     @GetMapping("/order/{orderId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get payments by order")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByOrder(
             @PathVariable Integer tenantId,
@@ -139,6 +149,7 @@ public class PaymentController {
     }
     
     @GetMapping("/status/{status}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get payments by status")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByStatus(
             @PathVariable Integer tenantId,

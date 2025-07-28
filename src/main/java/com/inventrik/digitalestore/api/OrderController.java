@@ -39,6 +39,7 @@ public class OrderController {
     }
     
     @GetMapping("/{orderId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get an order by ID")
     public ResponseEntity<OrderResponse> getOrder(
             @Parameter(description = "Tenant ID", required = true) 
@@ -49,6 +50,7 @@ public class OrderController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(
         summary = "Create a new order with a single product item", 
         description = "Creates a new order with a single product item. For multiple items, submit multiple orders."

@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
@@ -33,6 +34,7 @@ public class DiscountController {
     private final DiscountService discountService;
     
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create a new discount code", description = "Create a new discount code for the tenant")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Discount code created successfully"),
@@ -54,6 +56,7 @@ public class DiscountController {
     }
     
     @PutMapping("/{discountId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update a discount code", description = "Update an existing discount code")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Discount code updated successfully"),
@@ -76,6 +79,7 @@ public class DiscountController {
     }
     
     @GetMapping("/{discountId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get discount code by ID", description = "Retrieve a specific discount code by its ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Discount code found"),
@@ -90,6 +94,7 @@ public class DiscountController {
     }
     
     @GetMapping("/code/{code}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get discount code by code", description = "Retrieve a specific discount code by its code")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Discount code found"),
@@ -104,6 +109,7 @@ public class DiscountController {
     }
     
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get all discount codes", description = "Retrieve all discount codes for the tenant")
     @ApiResponse(responseCode = "200", description = "List of discount codes")
     public ResponseEntity<List<DiscountCodeResponse>> getAllDiscountCodes(@PathVariable Integer tenantId) {
@@ -112,6 +118,7 @@ public class DiscountController {
     }
     
     @GetMapping("/active")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get active discount codes", description = "Retrieve all currently active discount codes")
     @ApiResponse(responseCode = "200", description = "List of active discount codes")
     public ResponseEntity<List<DiscountCodeResponse>> getActiveDiscountCodes(@PathVariable Integer tenantId) {
@@ -120,6 +127,7 @@ public class DiscountController {
     }
     
     @DeleteMapping("/{discountId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete a discount code", description = "Soft delete a discount code")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Discount code deleted successfully"),
@@ -135,6 +143,7 @@ public class DiscountController {
     }
     
     @PostMapping("/validate")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Validate discount code", description = "Validate a discount code against order amount")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Validation completed"),
@@ -149,6 +158,7 @@ public class DiscountController {
     }
     
     @PostMapping("/{discountId}/usage")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get discount usage statistics", description = "Get usage count and total amount for a discount code")
     @ApiResponse(responseCode = "200", description = "Usage statistics")
     public ResponseEntity<Map<String, Object>> getDiscountUsageStats(
@@ -168,6 +178,7 @@ public class DiscountController {
     }
     
     @PostMapping("/cleanup-expired")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Cleanup expired discounts", description = "Deactivate all expired discount codes")
     @ApiResponse(responseCode = "200", description = "Cleanup completed")
     public ResponseEntity<Map<String, String>> cleanupExpiredDiscounts(@PathVariable Integer tenantId) {

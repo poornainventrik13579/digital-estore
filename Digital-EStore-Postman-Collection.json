@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "Digital E-Store API Collection",
-		"description": "Complete API collection for Digital E-Store application with simplified JWT authentication. Uses custom /api/v1/auth/login endpoint. Run 'Complete Authentication Flow' to test the review system fix.",
+		"description": "Complete API collection for Digital E-Store application with simplified JWT authentication. Updated with enhanced product fields including multiple images, banners, thumbnails, and metadata. Includes examples for software licenses, e-books, music tracks, and stock photos.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"version": "2.0.0"
 	},
@@ -59,6 +59,16 @@
 		{
 			"key": "review_id",
 			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "product_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "category_id",
+			"value": "1",
 			"type": "string"
 		}
 	],
@@ -476,7 +486,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"productName\": \"Adobe Photoshop License\",\n    \"description\": \"Professional photo editing software license\",\n    \"defaultPrice\": 299.99,\n    \"defaultCurrency\": \"USD\",\n    \"categoryId\": 1,\n    \"digitalProductDetails\": {\n        \"fileUrl\": \"https://example.com/downloads/photoshop.zip\",\n        \"fileSize\": 2048,\n        \"fileFormat\": \"ZIP\",\n        \"licenseInfo\": \"Single user license valid for 1 year\",\n        \"version\": \"2024\"\n    }\n}"
+							"raw": "{\n    \"productName\": \"Adobe Photoshop License\",\n    \"description\": \"Professional photo editing software license\",\n    \"defaultPrice\": 299.99,\n    \"defaultCurrency\": \"USD\",\n    \"categoryId\": 1,\n    \"image1Url\": \"https://example.com/images/photoshop-main.jpg\",\n    \"image2Url\": \"https://example.com/images/photoshop-features.jpg\",\n    \"image3Url\": \"https://example.com/images/photoshop-interface.jpg\",\n    \"image4Url\": \"https://example.com/images/photoshop-tools.jpg\",\n    \"image5Url\": \"https://example.com/images/photoshop-examples.jpg\",\n    \"banner\": \"https://example.com/banners/photoshop-banner.jpg\",\n    \"thumbnail\": \"https://example.com/thumbnails/photoshop-thumb.jpg\",\n    \"metadata\": \"{\\\"licenseType\\\":\\\"Single User\\\",\\\"validity\\\":\\\"1 Year\\\",\\\"platforms\\\":[\\\"Windows\\\",\\\"Mac\\\"],\\\"version\\\":\\\"2024\\\",\\\"fileSize\\\":\\\"2.5GB\\\"}\"\n}"
 						},
 						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products"
 					}
@@ -497,7 +507,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"productName\": \"Adobe Photoshop License - Updated\",\n    \"description\": \"Updated professional photo editing software license\",\n    \"defaultPrice\": 349.99,\n    \"defaultCurrency\": \"USD\"\n}"
+							"raw": "{\n    \"productName\": \"Adobe Photoshop License - Updated\",\n    \"description\": \"Updated professional photo editing software license with enhanced features\",\n    \"defaultPrice\": 349.99,\n    \"defaultCurrency\": \"USD\",\n    \"categoryId\": 1,\n    \"image1Url\": \"https://example.com/images/photoshop-main-updated.jpg\",\n    \"image2Url\": \"https://example.com/images/photoshop-features-updated.jpg\",\n    \"image3Url\": \"https://example.com/images/photoshop-interface-updated.jpg\",\n    \"image4Url\": \"https://example.com/images/photoshop-tools-updated.jpg\",\n    \"image5Url\": \"https://example.com/images/photoshop-examples-updated.jpg\",\n    \"banner\": \"https://example.com/banners/photoshop-banner-updated.jpg\",\n    \"thumbnail\": \"https://example.com/thumbnails/photoshop-thumb-updated.jpg\",\n    \"metadata\": \"{\\\"licenseType\\\":\\\"Single User\\\",\\\"validity\\\":\\\"1 Year\\\",\\\"platforms\\\":[\\\"Windows\\\",\\\"Mac\\\"],\\\"version\\\":\\\"2024.1\\\",\\\"fileSize\\\":\\\"2.7GB\\\",\\\"updated\\\":true}\"\n}"
 						},
 						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/1"
 					}
@@ -560,6 +570,69 @@
 							}
 						],
 						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/category/1"
+					}
+				},
+				{
+					"name": "Create E-book Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productName\": \"Complete Guide to Digital Marketing\",\n    \"description\": \"Comprehensive e-book covering all aspects of digital marketing strategies, tools, and best practices for modern businesses.\",\n    \"defaultPrice\": 29.99,\n    \"defaultCurrency\": \"USD\",\n    \"categoryId\": 2,\n    \"image1Url\": \"https://example.com/images/ebook-cover.jpg\",\n    \"image2Url\": \"https://example.com/images/ebook-preview-1.jpg\",\n    \"image3Url\": \"https://example.com/images/ebook-preview-2.jpg\",\n    \"banner\": \"https://example.com/banners/ebook-banner.jpg\",\n    \"thumbnail\": \"https://example.com/thumbnails/ebook-thumb.jpg\",\n    \"metadata\": \"{\\\"format\\\":\\\"PDF\\\",\\\"pages\\\":350,\\\"language\\\":\\\"English\\\",\\\"isbn\\\":\\\"978-1234567890\\\",\\\"publishDate\\\":\\\"2024-01-15\\\",\\\"fileSize\\\":\\\"25MB\\\"}\"\n}"
+						},
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products"
+					}
+				},
+				{
+					"name": "Create Music Track Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productName\": \"Summer Vibes - Electronic Mix\",\n    \"description\": \"High-quality electronic music track perfect for background music, videos, and presentations. Royalty-free license included.\",\n    \"defaultPrice\": 9.99,\n    \"defaultCurrency\": \"USD\",\n    \"categoryId\": 3,\n    \"image1Url\": \"https://example.com/images/music-artwork.jpg\",\n    \"image2Url\": \"https://example.com/images/waveform.jpg\",\n    \"banner\": \"https://example.com/banners/music-banner.jpg\",\n    \"thumbnail\": \"https://example.com/thumbnails/music-thumb.jpg\",\n    \"metadata\": \"{\\\"genre\\\":\\\"Electronic\\\",\\\"duration\\\":\\\"3:45\\\",\\\"bpm\\\":128,\\\"key\\\":\\\"C Major\\\",\\\"format\\\":\\\"MP3/WAV\\\",\\\"bitrate\\\":\\\"320kbps\\\",\\\"license\\\":\\\"Royalty-Free\\\"}\"\n}"
+						},
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products"
+					}
+				},
+				{
+					"name": "Create Stock Photo Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productName\": \"Professional Business Team Meeting\",\n    \"description\": \"High-resolution stock photo of diverse business professionals in a modern meeting room. Perfect for corporate websites, presentations, and marketing materials.\",\n    \"defaultPrice\": 19.99,\n    \"defaultCurrency\": \"USD\",\n    \"categoryId\": 4,\n    \"image1Url\": \"https://example.com/images/stock-photo-preview.jpg\",\n    \"image2Url\": \"https://example.com/images/stock-photo-variations.jpg\",\n    \"image3Url\": \"https://example.com/images/usage-examples.jpg\",\n    \"banner\": \"https://example.com/banners/stock-photo-banner.jpg\",\n    \"thumbnail\": \"https://example.com/thumbnails/stock-photo-thumb.jpg\",\n    \"metadata\": \"{\\\"resolution\\\":\\\"6000x4000\\\",\\\"format\\\":\\\"JPEG/PNG\\\",\\\"dpi\\\":300,\\\"colorSpace\\\":\\\"sRGB\\\",\\\"license\\\":\\\"Extended\\\",\\\"keywords\\\":[\\\"business\\\",\\\"meeting\\\",\\\"team\\\",\\\"corporate\\\",\\\"professional\\\"]}\"\n}"
+						},
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products"
 					}
 				}
 			]

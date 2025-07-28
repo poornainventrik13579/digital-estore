@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -29,6 +30,7 @@ public class DownloadController {
     private final DownloadService downloadService;
     
     @PostMapping("/tenants/{tenantId}/order-items/{orderItemId}/record-download")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Record a download for order item")
     public ResponseEntity<Void> recordDownload(
             @PathVariable Integer tenantId,
@@ -45,6 +47,7 @@ public class DownloadController {
     }
     
     @GetMapping("/tenants/{tenantId}/order-items/{orderItemId}/download-history")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get download history for order item")
     public ResponseEntity<List<DownloadHistoryResponse>> getDownloadHistory(
             @PathVariable Integer tenantId,
@@ -55,6 +58,7 @@ public class DownloadController {
     }
     
     @GetMapping("/tenants/{tenantId}/users/{userId}/download-history")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get download history for user")
     public ResponseEntity<List<DownloadHistoryResponse>> getUserDownloadHistory(
             @PathVariable Integer tenantId,
@@ -66,6 +70,7 @@ public class DownloadController {
     
     // Digital Product Details Management
     @PostMapping("/tenants/{tenantId}/digital-product-details")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create digital product details")
     public ResponseEntity<DigitalProductDetailsResponse> createDigitalProductDetails(
             @PathVariable Integer tenantId,
@@ -78,6 +83,7 @@ public class DownloadController {
     }
     
     @PutMapping("/tenants/{tenantId}/digital-product-details/{productId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update digital product details")
     public ResponseEntity<DigitalProductDetailsResponse> updateDigitalProductDetails(
             @PathVariable Integer tenantId,
@@ -91,6 +97,7 @@ public class DownloadController {
     }
     
     @GetMapping("/tenants/{tenantId}/digital-product-details/{productId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get digital product details")
     public ResponseEntity<DigitalProductDetailsResponse> getDigitalProductDetails(
             @PathVariable Integer tenantId,
@@ -101,6 +108,7 @@ public class DownloadController {
     }
     
     @GetMapping("/tenants/{tenantId}/digital-product-details")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get all digital product details")
     public ResponseEntity<List<DigitalProductDetailsResponse>> getAllDigitalProductDetails(
             @PathVariable Integer tenantId) {
@@ -110,6 +118,7 @@ public class DownloadController {
     }
     
     @DeleteMapping("/tenants/{tenantId}/digital-product-details/{productId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete digital product details")
     public ResponseEntity<Void> deleteDigitalProductDetails(
             @PathVariable Integer tenantId,
