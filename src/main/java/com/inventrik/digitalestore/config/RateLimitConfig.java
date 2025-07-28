@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import com.inventrik.digitalestore.util.HttpUtils;
 
 import jakarta.annotation.PreDestroy;
 import java.util.concurrent.ConcurrentHashMap;
@@ -108,7 +109,7 @@ public class RateLimitConfig implements WebMvcConfigurer {
                 return true;
             }
             
-            String clientIp = getClientIpAddress(request);
+            String clientIp = HttpUtils.getClientIpAddress(request);
             String requestUri = request.getRequestURI();
             String key = clientIp + ":" + getEndpointType(requestUri);
             
@@ -135,19 +136,7 @@ public class RateLimitConfig implements WebMvcConfigurer {
             return true;
         }
         
-        private String getClientIpAddress(jakarta.servlet.http.HttpServletRequest request) {
-            String xForwardedFor = request.getHeader("X-Forwarded-For");
-            if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-                return xForwardedFor.split(",")[0].trim();
-            }
-            
-            String xRealIp = request.getHeader("X-Real-IP");
-            if (xRealIp != null && !xRealIp.isEmpty()) {
-                return xRealIp;
-            }
-            
-            return request.getRemoteAddr();
-        }
+
         
         private String getEndpointType(String requestUri) {
             if (requestUri.contains("/auth/")) {

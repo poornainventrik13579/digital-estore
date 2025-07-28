@@ -4,6 +4,7 @@ import com.inventrik.digitalestore.dto.request.DigitalProductDetailsRequest;
 import com.inventrik.digitalestore.dto.response.DigitalProductDetailsResponse;
 import com.inventrik.digitalestore.dto.response.DownloadHistoryResponse;
 import com.inventrik.digitalestore.service.download.DownloadService;
+import com.inventrik.digitalestore.util.HttpUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,7 +40,7 @@ public class DownloadController {
             Authentication authentication) {
         
         String username = (authentication != null) ? authentication.getName() : "system";
-        String ipAddress = getClientIpAddress(request);
+        String ipAddress = HttpUtils.getClientIpAddress(request);
         
         downloadService.recordDownload(tenantId, orderItemId, ipAddress, username);
         
@@ -128,18 +129,5 @@ public class DownloadController {
         return ResponseEntity.noContent().build();
     }
     
-    // Helper method to get client IP address
-    private String getClientIpAddress(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty()) {
-            return xRealIp;
-        }
-        
-        return request.getRemoteAddr();
-    }
+
 }
