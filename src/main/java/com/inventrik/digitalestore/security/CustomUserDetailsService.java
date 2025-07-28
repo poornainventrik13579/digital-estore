@@ -43,12 +43,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     private Collection<? extends GrantedAuthority> getAuthorities(User user) {
         List<GrantedAuthority> authorities = new ArrayList<>();
         
-        // Add role based on user's role field
+        // Add role based on user's role field (only give specific role, not all roles)
         if ("0".equals(user.getStatus())) {
-            // Always add ROLE_USER for active users
-            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-            
-            // Add specific role based on user_role field
             switch (user.getUserRole()) {
                 case ADMIN:
                     authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
@@ -58,7 +54,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                     break;
                 case USER:
                 default:
-                    // ROLE_USER already added above
+                    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
                     break;
             }
         }
