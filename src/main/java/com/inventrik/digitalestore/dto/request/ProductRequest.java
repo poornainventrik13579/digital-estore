@@ -28,5 +28,28 @@ public class ProductRequest {
     @Size(min = 3, max = 3, message = "Currency code must be exactly 3 characters")
     private String defaultCurrency;
     
+    @Size(max = 256, message = "Image1 URL must be less than 256 characters")
+    private String image1Url;
+    
+    @Size(max = 256, message = "Image2 URL must be less than 256 characters")
+    private String image2Url;
+    
+    @Size(max = 256, message = "Image3 URL must be less than 256 characters")
+    private String image3Url;
+    
+    @Size(max = 256, message = "Image4 URL must be less than 256 characters")
+    private String image4Url;
+    
+    @Size(max = 256, message = "Image5 URL must be less than 256 characters")
+    private String image5Url;
+    
+    @Size(max = 256, message = "Banner URL must be less than 256 characters")
+    private String banner;
+    
+    @Size(max = 256, message = "Thumbnail URL must be less than 256 characters")
+    private String thumbnail;
+    
+    private String metadata;
+    
     private Long categoryId;
 }

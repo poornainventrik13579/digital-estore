@@ -42,6 +42,14 @@ public class ProductServiceImpl implements ProductService {
             product.getDescription(),
             product.getDefaultPrice(),
             product.getDefaultCurrency(),
+            product.getImage1Url(),
+            product.getImage2Url(),
+            product.getImage3Url(),
+            product.getImage4Url(),
+            product.getImage5Url(),
+            product.getBanner(),
+            product.getThumbnail(),
+            product.getMetadata(),
             product.getCategoryId(),
             product.getStatus(),
             product.getCreated(),
@@ -91,6 +99,14 @@ public class ProductServiceImpl implements ProductService {
         product.setDescription(productRequest.getDescription());
         product.setDefaultPrice(productRequest.getDefaultPrice());
         product.setDefaultCurrency(productRequest.getDefaultCurrency());
+        product.setImage1Url(productRequest.getImage1Url());
+        product.setImage2Url(productRequest.getImage2Url());
+        product.setImage3Url(productRequest.getImage3Url());
+        product.setImage4Url(productRequest.getImage4Url());
+        product.setImage5Url(productRequest.getImage5Url());
+        product.setBanner(productRequest.getBanner());
+        product.setThumbnail(productRequest.getThumbnail());
+        product.setMetadata(productRequest.getMetadata());
         
         // Set category if provided
         if (productRequest.getCategoryId() != null) {
@@ -131,6 +147,30 @@ public class ProductServiceImpl implements ProductService {
         }
         if (updateRequest.getDefaultCurrency() != null) {
             product.setDefaultCurrency(updateRequest.getDefaultCurrency());
+        }
+        if (updateRequest.getImage1Url() != null) {
+            product.setImage1Url(updateRequest.getImage1Url());
+        }
+        if (updateRequest.getImage2Url() != null) {
+            product.setImage2Url(updateRequest.getImage2Url());
+        }
+        if (updateRequest.getImage3Url() != null) {
+            product.setImage3Url(updateRequest.getImage3Url());
+        }
+        if (updateRequest.getImage4Url() != null) {
+            product.setImage4Url(updateRequest.getImage4Url());
+        }
+        if (updateRequest.getImage5Url() != null) {
+            product.setImage5Url(updateRequest.getImage5Url());
+        }
+        if (updateRequest.getBanner() != null) {
+            product.setBanner(updateRequest.getBanner());
+        }
+        if (updateRequest.getThumbnail() != null) {
+            product.setThumbnail(updateRequest.getThumbnail());
+        }
+        if (updateRequest.getMetadata() != null) {
+            product.setMetadata(updateRequest.getMetadata());
         }
         if (updateRequest.getCategoryId() != null) {
             // First verify the category exists
