@@ -129,12 +129,9 @@ public class StripePaymentService implements PaymentService {
                     try {
                         Map<String, Object> params = new HashMap<>();
                         params.put("currency", paymentRequest.getCurrency().toLowerCase());
-                        // Convert to cents with proper precision handling
-                        BigDecimal amountInCents = paymentRequest.getAmount().multiply(BigDecimal.valueOf(100));
-                        if (amountInCents.scale() > 0) {
-                            throw new PaymentProcessingException("Payment amount has too many decimal places for currency conversion", false);
-                        }
-                        params.put("amount", amountInCents.longValueExact());
+                        // Use amount as-is (assuming it's already in the correct format for Stripe)
+                        long amountLong = paymentRequest.getAmount().setScale(0, BigDecimal.ROUND_HALF_UP).longValue();
+                        params.put("amount", amountLong);
                         params.put("description", "Payment for order #" + paymentRequest.getOrderId());
                         params.put("capture_method", "automatic");
                         

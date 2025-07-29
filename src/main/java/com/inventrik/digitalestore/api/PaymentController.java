@@ -41,7 +41,7 @@ public class PaymentController {
     }
     
     @GetMapping("/{paymentId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Get a payment by ID")
     public ResponseEntity<PaymentResponse> getPayment(
             @PathVariable Integer tenantId,
@@ -62,21 +62,8 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPayment);
     }
     
-    @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Create a new payment (Form)")
-    public ResponseEntity<PaymentResponse> createPayment(
-            @PathVariable Integer tenantId,
-            @Valid @ModelAttribute PaymentRequest paymentRequest,
-            Authentication authentication) {
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
-        PaymentResponse createdPayment = paymentService.createPayment(tenantId, username, paymentRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdPayment);
-    }
-    
     @PostMapping("/{paymentId}/confirm")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Confirm a payment")
     public ResponseEntity<PaymentResponse> confirmPayment(
             @PathVariable Integer tenantId,
@@ -90,7 +77,7 @@ public class PaymentController {
     }
     
     @PostMapping("/{paymentId}/cancel")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Cancel a payment")
     public ResponseEntity<PaymentResponse> cancelPayment(
             @PathVariable Integer tenantId,
