@@ -169,7 +169,7 @@ public class OrderController {
     }
     
     @PostMapping("/{orderId}/complete")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Complete an order")
     public ResponseEntity<OrderResponse> completeOrder(
             @Parameter(description = "Tenant ID", required = true) 
@@ -186,6 +186,7 @@ public class OrderController {
     }
     
     @PostMapping("/{orderId}/cancel")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Cancel an order")
     public ResponseEntity<OrderResponse> cancelOrder(
             @Parameter(description = "Tenant ID", required = true) 
@@ -202,6 +203,7 @@ public class OrderController {
     }
     
     @PostMapping("/{orderId}/refund")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Refund an order")
     public ResponseEntity<OrderResponse> refundOrder(
             @Parameter(description = "Tenant ID", required = true) 

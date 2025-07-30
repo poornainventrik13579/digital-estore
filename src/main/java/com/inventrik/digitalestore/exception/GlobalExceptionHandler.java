@@ -3,6 +3,9 @@ package com.inventrik.digitalestore.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,6 +19,45 @@ import java.util.Map;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<AuthorizationErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        log.warn("Access denied: {}", ex.getMessage());
+        
+        // Get current user's authentication details
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = auth != null ? auth.getName() : "anonymous";
+        String currentRoles = auth != null ? auth.getAuthorities().toString() : "[]";
+        
+        // Extract role information from the exception message if available
+        String detailedMessage = "Access denied. Your current role does not have permission to access this resource.";
+        String requiredRole = "Unknown";
+        
+        if (ex.getMessage() != null && ex.getMessage().contains("hasRole")) {
+            // Try to extract required role from the exception message
+            String exceptionMsg = ex.getMessage();
+            if (exceptionMsg.contains("ROLE_ADMIN")) {
+                detailedMessage = "Access denied. This operation requires ADMIN privileges.";
+                requiredRole = "ROLE_ADMIN";
+            } else if (exceptionMsg.contains("ROLE_USER")) {
+                detailedMessage = "Access denied. This operation requires USER privileges.";
+                requiredRole = "ROLE_USER";
+            } else if (exceptionMsg.contains("ROLE_MANAGER")) {
+                detailedMessage = "Access denied. This operation requires MANAGER privileges.";
+                requiredRole = "ROLE_MANAGER";
+            }
+        }
+        
+        AuthorizationErrorResponse errorResponse = new AuthorizationErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                detailedMessage,
+                LocalDateTime.now(),
+                currentUser,
+                currentRoles,
+                requiredRole);
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+    
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -104,6 +146,33 @@ public class GlobalExceptionHandler {
         
         public Map<String, String> getFieldErrors() {
             return fieldErrors;
+        }
+    }
+    
+    // Error response for authorization failures with role details
+    public static class AuthorizationErrorResponse extends ErrorResponse {
+        private String currentUser;
+        private String currentRoles;
+        private String requiredRole;
+        
+        public AuthorizationErrorResponse(int status, String message, LocalDateTime timestamp, 
+                                        String currentUser, String currentRoles, String requiredRole) {
+            super(status, message, timestamp);
+            this.currentUser = currentUser;
+            this.currentRoles = currentRoles;
+            this.requiredRole = requiredRole;
+        }
+        
+        public String getCurrentUser() {
+            return currentUser;
+        }
+        
+        public String getCurrentRoles() {
+            return currentRoles;
+        }
+        
+        public String getRequiredRole() {
+            return requiredRole;
         }
     }
 

@@ -1,5 +1,6 @@
 package com.inventrik.digitalestore;
 
+import com.inventrik.digitalestore.util.TestUtils;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -77,7 +78,7 @@ public class SimpleEndpointTest {
         
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
             String responseBody = response.body();
-            return extractAccessToken(responseBody);
+            return TestUtils.extractAccessToken(responseBody);
         } else {
             throw new RuntimeException("Failed to get OAuth2 token. Status: " + response.statusCode());
         }
@@ -191,18 +192,5 @@ public class SimpleEndpointTest {
         System.out.println("Basic Auth Test - Status: " + response.statusCode());
         System.out.println("Response: " + response.body());
     }
-    
-    private static String extractAccessToken(String responseBody) {
-        String searchStr = "\"access_token\":\"";
-        int startIndex = responseBody.indexOf(searchStr);
-        if (startIndex == -1) {
-            throw new RuntimeException("access_token not found in response");
-        }
-        startIndex += searchStr.length();
-        int endIndex = responseBody.indexOf("\"", startIndex);
-        if (endIndex == -1) {
-            throw new RuntimeException("access_token end not found in response");
-        }
-        return responseBody.substring(startIndex, endIndex);
-    }
+
 } 

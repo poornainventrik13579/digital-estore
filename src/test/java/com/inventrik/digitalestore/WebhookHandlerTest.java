@@ -1,5 +1,6 @@
 package com.inventrik.digitalestore;
 
+import com.inventrik.digitalestore.util.TestUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
@@ -37,7 +38,7 @@ public class WebhookHandlerTest {
     public static void main(String[] args) {
         try {
             // Load API key and webhook secret
-            String apiKey = loadStripeApiKey();
+            String apiKey = TestUtils.loadStripeApiKey();
             String webhookSecret = loadWebhookSecret();
             
             Stripe.apiKey = apiKey;
@@ -64,35 +65,7 @@ public class WebhookHandlerTest {
             e.printStackTrace();
         }
     }
-    
-    private static String loadStripeApiKey() {
-        Properties props = new Properties();
-        try {
-            // Try loading from application.properties
-            InputStream input = new FileInputStream("src/main/resources/application.properties");
-            props.load(input);
-            String apiKey = props.getProperty("stripe.api.key");
-            
-            if (apiKey != null && !apiKey.isEmpty() && !apiKey.equals("your_stripe_test_key")) {
-                System.out.println("Successfully loaded API key from properties");
-                return apiKey;
-            }
-            
-            // If key not found or is default placeholder, try environment
-            apiKey = System.getenv("STRIPE_API_KEY");
-            if (apiKey != null && !apiKey.isEmpty()) {
-                System.out.println("Successfully loaded API key from environment");
-                return apiKey;
-            }
-            
-            System.out.println("Warning: Using default API key. Set a valid key in application.properties");
-            return DEFAULT_API_KEY;
-        } catch (IOException e) {
-            System.out.println("Could not load properties file: " + e.getMessage());
-            System.out.println("Using default API key");
-            return DEFAULT_API_KEY;
-        }
-    }
+
     
     private static String loadWebhookSecret() {
         Properties props = new Properties();
