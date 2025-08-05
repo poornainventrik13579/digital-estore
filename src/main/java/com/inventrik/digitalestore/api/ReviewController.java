@@ -93,7 +93,6 @@ public class ReviewController {
     }
     
     @DeleteMapping("/{reviewId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete review", description = "Delete a review")
     public ResponseEntity<Void> deleteReview(
             @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,

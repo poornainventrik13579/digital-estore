@@ -9,6 +9,7 @@ import com.inventrik.digitalestore.exception.ValidationException;
 import com.inventrik.digitalestore.repository.ReviewRepository;
 import com.inventrik.digitalestore.service.order.OrderService;
 import com.inventrik.digitalestore.service.user.UserService;
+import com.inventrik.digitalestore.service.IdGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserService userService;
     private final OrderService orderService;
+    private final IdGeneratorService idGeneratorService;
     
     @Override
     public ReviewResponse createReview(Integer tenantId, String username, ReviewRequest reviewRequest) {
@@ -47,7 +49,7 @@ public class ReviewServiceImpl implements ReviewService {
         // Verify user purchased this product
         boolean hasPurchased = orderService.hasUserPurchasedProduct(tenantId, user.getUserId(), reviewRequest.getProductId());
         
-        Long reviewId = generateReviewId(tenantId);
+        Long reviewId = idGeneratorService.generateId(tenantId, "ORDER");
         
         Review review = new Review();
         review.setTenantId(tenantId);
@@ -209,10 +211,7 @@ public class ReviewServiceImpl implements ReviewService {
         return mapToResponse(verifiedReview, user.getUsername());
     }
     
-    private Long generateReviewId(Integer tenantId) {
-        Long maxId = reviewRepository.findMaxReviewId(tenantId);
-        return maxId != null ? maxId + 1 : 1000000001L;
-    }
+
     
 
     
