@@ -1593,17 +1593,13 @@
 							{
 								"key": "Content-Type",
 								"value": "application/json"
-							},
-							{
-								"key": "X-Tenant-ID",
-								"value": "{{tenant_id}}"
 							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"productId\": 1,\n    \"rating\": 5,\n    \"comment\": \"Excellent product! Highly recommended by {{username}}!\"\n}"
 						},
-						"url": "{{base_url}}/api/v1/reviews"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews"
 					}
 				},
 				{
@@ -1612,11 +1608,11 @@
 						"method": "GET",
 						"header": [
 							{
-								"key": "X-Tenant-ID",
-								"value": "{{tenant_id}}"
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/reviews/product/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/product/1"
 					}
 				},
 				{
@@ -1627,13 +1623,9 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-Tenant-ID",
-								"value": "{{tenant_id}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/reviews/user/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/user/1"
 					}
 				},
 				{
@@ -1642,11 +1634,11 @@
 						"method": "GET",
 						"header": [
 							{
-								"key": "X-Tenant-ID",
-								"value": "{{tenant_id}}"
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/reviews/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1"
 					}
 				},
 				{
@@ -1655,11 +1647,11 @@
 						"method": "GET",
 						"header": [
 							{
-								"key": "X-Tenant-ID",
-								"value": "{{tenant_id}}"
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/reviews/product/1/rating"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/product/1/rating"
 					}
 				},
 				{
@@ -1674,17 +1666,13 @@
 							{
 								"key": "Content-Type",
 								"value": "application/json"
-							},
-							{
-								"key": "X-Tenant-ID",
-								"value": "{{tenant_id}}"
 							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"rating\": 4,\n    \"comment\": \"Updated review: Good product with minor issues.\"\n}"
 						},
-						"url": "{{base_url}}/api/v1/reviews/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1"
 					}
 				},
 				{
@@ -1695,13 +1683,9 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-Tenant-ID",
-								"value": "{{tenant_id}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/reviews/1"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1"
 					}
 				},
 				{
@@ -1710,11 +1694,11 @@
 						"method": "GET",
 						"header": [
 							{
-								"key": "X-Tenant-ID",
-								"value": "{{tenant_id}}"
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/reviews/verified"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/verified"
 					}
 				},
 				{
@@ -1725,13 +1709,9 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-Tenant-ID",
-								"value": "{{tenant_id}}"
 							}
 						],
-						"url": "{{base_url}}/api/v1/reviews/1/verify"
+						"url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1/verify"
 					}
 				}
 			]
@@ -2134,6 +2114,43 @@
 								"method": "GET",
 								"header": [],
 								"url": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/categories/{{category_id}}"
+							}
+						}
+					]
+				},
+				{
+					"name": "Public Reviews",
+					"item": [
+						{
+							"name": "Get Product Reviews (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/reviews/product/1"
+							}
+						},
+						{
+							"name": "Get Product Rating (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/reviews/product/1/rating"
+							}
+						},
+						{
+							"name": "Get Verified Reviews (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/reviews/verified"
+							}
+						},
+						{
+							"name": "Get Review by ID (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/reviews/1"
 							}
 						}
 					]

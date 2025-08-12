@@ -19,7 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/reviews")
+@RequestMapping("/api/v1/tenants/{tenantId}/reviews")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Reviews", description = "Review management operations")
@@ -31,7 +31,7 @@ public class ReviewController {
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Create a new review", description = "Create a review for a product")
     public ResponseEntity<ReviewResponse> createReview(
-            @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Valid @RequestBody ReviewRequest reviewRequest,
             Authentication authentication) {
         
@@ -44,7 +44,7 @@ public class ReviewController {
     @GetMapping("/product/{productId}")
     @Operation(summary = "Get product reviews", description = "Get all reviews for a specific product")
     public ResponseEntity<List<ReviewResponse>> getProductReviews(
-            @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Parameter(description = "Product ID", required = true) @PathVariable Long productId) {
         
         log.info("Fetching reviews for product: {}", productId);
@@ -56,7 +56,7 @@ public class ReviewController {
     @GetMapping("/user/{userId}")
     @Operation(summary = "Get user reviews", description = "Get all reviews by a specific user")
     public ResponseEntity<List<ReviewResponse>> getUserReviews(
-            @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
         
         log.info("Fetching reviews for user: {}", userId);
@@ -68,7 +68,7 @@ public class ReviewController {
     @GetMapping("/{reviewId}")
     @Operation(summary = "Get review by ID", description = "Get a specific review by its ID")
     public ResponseEntity<ReviewResponse> getReview(
-            @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Parameter(description = "Review ID", required = true) @PathVariable Long reviewId) {
         
         log.info("Fetching review: {}", reviewId);
@@ -81,7 +81,7 @@ public class ReviewController {
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Update review", description = "Update an existing review")
     public ResponseEntity<ReviewResponse> updateReview(
-            @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Parameter(description = "Review ID", required = true) @PathVariable Long reviewId,
             @Valid @RequestBody ReviewRequest reviewRequest,
             Authentication authentication) {
@@ -95,7 +95,7 @@ public class ReviewController {
     @DeleteMapping("/{reviewId}")
     @Operation(summary = "Delete review", description = "Delete a review")
     public ResponseEntity<Void> deleteReview(
-            @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Parameter(description = "Review ID", required = true) @PathVariable Long reviewId,
             Authentication authentication) {
         
@@ -108,7 +108,7 @@ public class ReviewController {
     @GetMapping("/product/{productId}/rating")
     @Operation(summary = "Get product rating statistics", description = "Get average rating and distribution for a product")
     public ResponseEntity<ProductRatingResponse> getProductRating(
-            @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Parameter(description = "Product ID", required = true) @PathVariable Long productId) {
         
         log.info("Fetching rating statistics for product: {}", productId);
@@ -120,7 +120,7 @@ public class ReviewController {
     @GetMapping("/verified")
     @Operation(summary = "Get verified reviews", description = "Get all verified reviews")
     public ResponseEntity<List<ReviewResponse>> getVerifiedReviews(
-            @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId) {
+            @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId) {
         
         log.info("Fetching verified reviews for tenant: {}", tenantId);
         
@@ -132,7 +132,7 @@ public class ReviewController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Verify review", description = "Mark a review as verified (admin only)")
     public ResponseEntity<ReviewResponse> verifyReview(
-            @Parameter(description = "Tenant ID", required = true) @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Parameter(description = "Review ID", required = true) @PathVariable Long reviewId,
             Authentication authentication) {
         
