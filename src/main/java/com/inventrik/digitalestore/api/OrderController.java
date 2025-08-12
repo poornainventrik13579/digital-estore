@@ -61,10 +61,8 @@ public class OrderController {
             @Valid @ModelAttribute OrderFormRequest formRequest,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
         
-        // Convert form request to regular OrderRequest
         OrderRequest orderRequest = formRequest.toOrderRequest();
         
         OrderResponse createdOrder = orderService.createOrder(tenantId, username, orderRequest);
@@ -82,7 +80,6 @@ public class OrderController {
             @Valid @RequestBody OrderRequest orderRequest,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
         
         OrderResponse createdOrder = orderService.createOrder(tenantId, username, orderRequest);
@@ -100,7 +97,6 @@ public class OrderController {
             @Valid @RequestBody OrderUpdateRequest updateRequest,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
         
         OrderResponse updatedOrder = orderService.updateOrder(tenantId, orderId, username, updateRequest);
@@ -118,7 +114,6 @@ public class OrderController {
             @Valid @ModelAttribute OrderUpdateRequest updateRequest,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
         
         OrderResponse updatedOrder = orderService.updateOrder(tenantId, orderId, username, updateRequest);
@@ -178,7 +173,6 @@ public class OrderController {
             @PathVariable Long orderId,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
         
         OrderResponse completedOrder = orderService.completeOrder(tenantId, orderId, username);
@@ -195,7 +189,6 @@ public class OrderController {
             @PathVariable Long orderId,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
         
         OrderResponse cancelledOrder = orderService.cancelOrder(tenantId, orderId, username);
@@ -212,7 +205,6 @@ public class OrderController {
             @PathVariable Long orderId,
             Authentication authentication) {
         
-        // Get username from authentication or use a default
         String username = (authentication != null) ? authentication.getName() : "system";
         
         OrderResponse refundedOrder = orderService.refundOrder(tenantId, orderId, username);

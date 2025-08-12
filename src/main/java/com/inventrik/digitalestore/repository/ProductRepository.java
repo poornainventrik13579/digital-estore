@@ -4,6 +4,8 @@ import com.inventrik.digitalestore.domain.product.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -32,4 +34,21 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     
     // Delete product by tenant and product ID
     void deleteByTenantIdAndProductId(Integer tenantId, Long productId);
+    
+    // Search products by keyword (name or description)
+    @Query("SELECT p FROM Product p WHERE p.tenantId = :tenantId " +
+           "AND (LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Product> searchByKeyword(@Param("tenantId") Integer tenantId, 
+                                 @Param("keyword") String keyword, 
+                                 Pageable pageable);
+    
+    // Search active products by keyword
+    @Query("SELECT p FROM Product p WHERE p.tenantId = :tenantId " +
+           "AND p.status = '0' " +
+           "AND (LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Product> searchActiveByKeyword(@Param("tenantId") Integer tenantId, 
+                                       @Param("keyword") String keyword, 
+                                       Pageable pageable);
 }

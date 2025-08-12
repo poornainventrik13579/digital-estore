@@ -560,6 +560,46 @@
 					}
 				},
 				{
+					"name": "Search Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/search?keyword=laptop&page=0&size=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tenants",
+								"{{tenant_id}}",
+								"products",
+								"search"
+							],
+							"query": [
+								{
+									"key": "keyword",
+									"value": "laptop"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						}
+					}
+				},
+				{
 					"name": "Get Products by Category",
 					"request": {
 						"method": "GET",
@@ -1979,7 +2019,129 @@
 			]
 		},
 		{
-			"name": "12. Webhooks",
+			"name": "12. Public APIs (No Auth Required)",
+			"item": [
+				{
+					"name": "Public Products",
+					"item": [
+						{
+							"name": "Get All Products (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/products?page=0&size=20",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"public",
+										"tenants",
+										"{{tenant_id}}",
+										"products"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "size",
+											"value": "20"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Get Product by ID (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/products/1"
+							}
+						},
+						{
+							"name": "Get Products by Category (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/products/category/{{category_id}}"
+							}
+						},
+						{
+							"name": "Get Active Products (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/products/active"
+							}
+						},
+						{
+							"name": "Search Products (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/products/search?keyword=laptop&page=0&size=20",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"public",
+										"tenants",
+										"{{tenant_id}}",
+										"products",
+										"search"
+									],
+									"query": [
+										{
+											"key": "keyword",
+											"value": "laptop"
+										},
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "size",
+											"value": "20"
+										}
+									]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Public Categories",
+					"item": [
+						{
+							"name": "Get All Categories (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/categories"
+							}
+						},
+						{
+							"name": "Get Category by ID (Public)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/categories/{{category_id}}"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "13. Webhooks",
 			"item": [
 				{
 					"name": "Stripe Payment Webhook",

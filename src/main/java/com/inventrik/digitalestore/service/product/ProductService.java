@@ -32,4 +32,7 @@ public interface ProductService {
     
     // Get active products
     List<ProductResponse> getActiveProducts(Integer tenantId);
+    
+    // Search products by keyword with pagination
+    PagedResponse<ProductResponse> searchProducts(Integer tenantId, String keyword, int page, int size);
 }

@@ -120,7 +120,6 @@ public class AuthController {
                 "email", request.getEmail()
             ));
         } catch (Exception e) {
-            // For security reasons, always return success message
             return ResponseEntity.ok(Map.of(
                 "message", "If an account with that email exists, we've sent a password reset link.",
                 "email", request.getEmail()

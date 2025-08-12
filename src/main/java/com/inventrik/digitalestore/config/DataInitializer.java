@@ -19,7 +19,6 @@ public class DataInitializer {
         return args -> {
             log.info("***** RESETTING ADMIN USER *****");
             
-            // Find admin or create if doesn't exist
             User admin = userRepository.findByUsername("admin")
                     .orElseGet(() -> {
                         User newAdmin = new User();
@@ -39,7 +38,6 @@ public class DataInitializer {
                         return newAdmin;
                     });
                     
-            // ALWAYS update password to ensure it's correct
             admin.setPasswordHash(passwordEncoder.encode("admin"));
             userRepository.save(admin);
             

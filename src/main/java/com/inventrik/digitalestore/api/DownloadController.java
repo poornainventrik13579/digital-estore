@@ -69,7 +69,6 @@ public class DownloadController {
         return ResponseEntity.ok(history);
     }
     
-    // Digital Product Details Management
     @PostMapping("/tenants/{tenantId}/digital-product-details")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create digital product details")

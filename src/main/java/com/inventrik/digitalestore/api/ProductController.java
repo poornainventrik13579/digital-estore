@@ -125,4 +125,15 @@ public class ProductController {
     public ResponseEntity<List<ProductResponse>> getActiveProducts(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(productService.getActiveProducts(tenantId));
     }
+    
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @Operation(summary = "Search products by keyword")
+    public ResponseEntity<PagedResponse<ProductResponse>> searchProducts(
+            @PathVariable Integer tenantId,
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(productService.searchProducts(tenantId, keyword, page, size));
+    }
 }

@@ -217,4 +217,17 @@ public class ProductServiceImpl implements ProductService {
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
+    
+    @Override
+    @Cacheable(value = "products", key = "#tenantId + ':search:' + #keyword + ':' + #page + ':' + #size")
+    public PagedResponse<ProductResponse> searchProducts(Integer tenantId, String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("created").descending());
+        Page<Product> productPage = productRepository.searchByKeyword(tenantId, keyword, pageable);
+        
+        List<ProductResponse> products = productPage.getContent().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+                
+        return PagedResponse.of(products, page, size, productPage.getTotalElements());
+    }
 }

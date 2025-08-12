@@ -93,13 +93,29 @@ public class AuthServerConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .anyRequest().permitAll()
             );
-            // No JWT resource server configuration for auth endpoints
             
         return http.build();
     }
 
     @Bean
     @Order(3)
+    public SecurityFilterChain publicApiSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/v1/public/**")
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authorizeHttpRequests(authorize -> authorize
+                .anyRequest().permitAll()
+            );
+            
+        return http.build();
+    }
+
+    @Bean
+    @Order(4)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher("/api/v1/**")
@@ -128,7 +144,7 @@ public class AuthServerConfig {
     }
 
     @Bean
-    @Order(4)
+    @Order(5)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authorize -> authorize
