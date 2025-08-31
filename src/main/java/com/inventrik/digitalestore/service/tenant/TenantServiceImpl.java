@@ -118,7 +118,7 @@ public class TenantServiceImpl implements TenantService {
     
     @Override
     public TenantResponse getTenant(Integer tenantId) {
-        Tenant tenant = tenantRepository.findByTenantId(tenantId)
+        Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
         return mapToDTO(tenant);
     }
@@ -134,7 +134,7 @@ public class TenantServiceImpl implements TenantService {
     @Override
     @Transactional
     public TenantResponse updateTenant(Integer tenantId, String username, TenantUpdateRequest updateRequest) {
-        Tenant tenant = tenantRepository.findByTenantId(tenantId)
+        Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
         
         updateEntityFromRequest(tenant, updateRequest, username);
@@ -145,7 +145,7 @@ public class TenantServiceImpl implements TenantService {
     @Override
     @Transactional
     public void deleteTenant(Integer tenantId) {
-        Tenant tenant = tenantRepository.findByTenantId(tenantId)
+        Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
         tenantRepository.delete(tenant);
     }
