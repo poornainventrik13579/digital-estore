@@ -24,6 +24,11 @@ public class IdGeneratorService {
         return generateId(1, "GENERIC");
     }
     
+    public Integer generateTenantId() {
+        Long id = generateUnpredictable12DigitId();
+        return id.intValue();
+    }
+    
     private Long generateUnpredictable12DigitId() {
         // Clear cache periodically to prevent memory growth
         if (usedIds.size() > 100000) {
