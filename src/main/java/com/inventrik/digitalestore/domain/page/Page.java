@@ -70,18 +70,6 @@ public class Page {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (status == null) {
-            status = PageStatus.DRAFT;
-        }
-        if (visibility == null) {
-            visibility = PageVisibility.PUBLIC;
-        }
-        if (isDefault == null) {
-            isDefault = false;
-        }
-        if (language == null) {
-            language = "en";
-        }
     }
     
     @PreUpdate

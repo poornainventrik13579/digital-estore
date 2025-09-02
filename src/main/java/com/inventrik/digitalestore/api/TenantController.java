@@ -20,23 +20,23 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/tenants")
+@RequestMapping("/api/tenants")
 @RequiredArgsConstructor
 @Tag(name = "Tenant Management", description = "APIs for managing tenants and store configurations")
-@SecurityRequirement(name = "oauth2")
+// @SecurityRequirement(name = "oauth2")
 public class TenantController {
 
     private final TenantService tenantService;
     
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get all tenants")
     public ResponseEntity<List<TenantResponse>> getAllTenants() {
         return ResponseEntity.ok(tenantService.getAllTenants());
     }
     
     @GetMapping("/{tenantId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get a tenant by ID")
     public ResponseEntity<TenantResponse> getTenant(
             @Parameter(description = "Tenant ID", required = true)
@@ -45,7 +45,7 @@ public class TenantController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create a new tenant (JSON)")
     public ResponseEntity<TenantResponse> createTenantJson(
             @Valid @RequestBody TenantRequest tenantRequest,
@@ -57,7 +57,7 @@ public class TenantController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create a new tenant (Form)")
     public ResponseEntity<TenantResponse> createTenant(
             @Valid @ModelAttribute TenantRequest tenantRequest,
@@ -69,7 +69,7 @@ public class TenantController {
     }
     
     @PutMapping(path = "/{tenantId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update a tenant (JSON)")
     public ResponseEntity<TenantResponse> updateTenantJson(
             @Parameter(description = "Tenant ID", required = true)
@@ -83,7 +83,7 @@ public class TenantController {
     }
     
     @PutMapping(path = "/{tenantId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update a tenant (Form)")
     public ResponseEntity<TenantResponse> updateTenant(
             @Parameter(description = "Tenant ID", required = true)
@@ -97,7 +97,7 @@ public class TenantController {
     }
     
     @DeleteMapping("/{tenantId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete a tenant")
     public ResponseEntity<Void> deleteTenant(
             @Parameter(description = "Tenant ID", required = true)
@@ -107,7 +107,7 @@ public class TenantController {
     }
     
     @GetMapping("/domain/{domainName}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get tenant by domain name")
     public ResponseEntity<TenantResponse> getTenantByDomain(
             @Parameter(description = "Domain name", required = true)
@@ -116,7 +116,7 @@ public class TenantController {
     }
     
     @GetMapping("/subdomain/{subdomain}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get tenant by subdomain")
     public ResponseEntity<TenantResponse> getTenantBySubdomain(
             @Parameter(description = "Subdomain", required = true)
@@ -125,7 +125,7 @@ public class TenantController {
     }
     
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get tenants by status")
     public ResponseEntity<List<TenantResponse>> getTenantsByStatus(
             @Parameter(description = "Status", required = true)
@@ -134,7 +134,7 @@ public class TenantController {
     }
     
     @GetMapping("/country/{countryRegion}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get tenants by country/region")
     public ResponseEntity<List<TenantResponse>> getTenantsByCountry(
             @Parameter(description = "Country/Region", required = true)
@@ -143,7 +143,7 @@ public class TenantController {
     }
     
     @GetMapping("/check/email/{email}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Check if email exists")
     public ResponseEntity<Boolean> checkEmailExists(
             @Parameter(description = "Email address", required = true)
@@ -152,7 +152,7 @@ public class TenantController {
     }
     
     @GetMapping("/check/domain/{domainName}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Check if domain exists")
     public ResponseEntity<Boolean> checkDomainExists(
             @Parameter(description = "Domain name", required = true)
@@ -161,7 +161,7 @@ public class TenantController {
     }
     
     @GetMapping("/check/subdomain/{subdomain}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Check if subdomain exists")
     public ResponseEntity<Boolean> checkSubdomainExists(
             @Parameter(description = "Subdomain", required = true)

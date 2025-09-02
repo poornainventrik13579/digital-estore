@@ -1,6 +1,7 @@
 package com.inventrik.digitalestore.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -76,6 +77,61 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now());
         
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+    
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        log.warn("Data integrity violation: {}", ex.getMessage());
+        
+        String userFriendlyMessage = "A data conflict occurred.";
+        
+        // Extract meaningful information from the exception message
+        String exceptionMessage = ex.getMessage();
+        if (exceptionMessage != null) {
+            if (exceptionMessage.contains("uk_tenants_subdomain")) {
+                userFriendlyMessage = "A tenant with this subdomain already exists. Please choose a different subdomain.";
+            } else if (exceptionMessage.contains("uk_tenants_shop_email")) {
+                userFriendlyMessage = "A tenant with this email address already exists. Please use a different email.";
+            } else if (exceptionMessage.contains("uk_tenants_domain_name")) {
+                userFriendlyMessage = "A tenant with this domain name already exists. Please choose a different domain.";
+            } else if (exceptionMessage.contains("uk_store_themes_theme_name")) {
+                userFriendlyMessage = "A theme with this name already exists for this tenant. Please choose a different theme name.";
+            } else if (exceptionMessage.contains("Duplicate entry")) {
+                // Extract the duplicate value if possible
+                if (exceptionMessage.contains("Duplicate entry '") && exceptionMessage.contains("' for key")) {
+                    String duplicateValue = extractDuplicateValue(exceptionMessage);
+                    String constraintName = extractConstraintName(exceptionMessage);
+                    userFriendlyMessage = String.format("The value '%s' is already in use. Please choose a different value.", duplicateValue);
+                }
+            }
+        }
+        
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                userFriendlyMessage,
+                LocalDateTime.now());
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+    
+    private String extractDuplicateValue(String message) {
+        try {
+            int startIndex = message.indexOf("Duplicate entry '") + 17;
+            int endIndex = message.indexOf("'", startIndex);
+            return message.substring(startIndex, endIndex);
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+    
+    private String extractConstraintName(String message) {
+        try {
+            int startIndex = message.indexOf("for key '") + 9;
+            int endIndex = message.indexOf("'", startIndex);
+            return message.substring(startIndex, endIndex);
+        } catch (Exception e) {
+            return "unknown";
+        }
     }
     
     @ExceptionHandler(MethodArgumentNotValidException.class)

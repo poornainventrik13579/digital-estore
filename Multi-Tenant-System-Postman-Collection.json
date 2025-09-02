@@ -1,0 +1,667 @@
+{
+  "info": {
+    "name": "Multi-Tenant System API Collection",
+    "description": "Complete testing collection for Tenant Management, Store Themes, Pages CMS, and Tax System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "tenant_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "theme_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "page_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tax_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Tenant Management",
+      "item": [
+        {
+          "name": "Create Tenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shopName\": \"Demo Digital Store\",\n  \"shopEmail\": \"demo@digitalstore.com\",\n  \"shopPhone\": \"+1-555-0123\",\n  \"shopLogo\": \"https://example.com/logo.png\",\n  \"domainName\": \"demo.digitalstore.com\",\n  \"subdomain\": \"demo\",\n  \"countryRegion\": \"United States\",\n  \"baseCurrency\": \"USD\",\n  \"multiCurrency\": true,\n  \"taxId\": \"US123456789\",\n  \"timezone\": \"America/New_York\",\n  \"status\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Tenants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tenant by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Tenant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shopName\": \"Updated Demo Store\",\n  \"shopPhone\": \"+1-555-9999\",\n  \"timezone\": \"America/Los_Angeles\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tenant by Domain",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/domain/demo.digitalstore.com",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "domain", "demo.digitalstore.com"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Email Exists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/check/email/demo@digitalstore.com",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "check", "email", "demo@digitalstore.com"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02. Store Theme Management",
+      "item": [
+        {
+          "name": "Create Store Theme",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"themeName\": \"Modern Blue\",\n  \"tagline\": \"Premium Digital Products for Modern Life\",\n  \"description\": \"A sleek, modern theme with blue accents perfect for digital product stores\",\n  \"bannerImage\": \"https://example.com/banners/modern-blue.jpg\",\n  \"joinCta\": \"Explore Now\",\n  \"copyrightText\": \"© 2024 Demo Digital Store. All rights reserved.\",\n  \"status\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/themes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "themes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Themes for Tenant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/themes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "themes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Theme by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/themes/{{theme_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "themes", "{{theme_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Theme",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tagline\": \"Updated: Premium Digital Products for Modern Life\",\n  \"joinCta\": \"Shop Now\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/themes/{{theme_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "themes", "{{theme_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Themes by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/themes/status/A",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "themes", "status", "A"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Theme Name Exists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/themes/check/name/Modern Blue",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "themes", "check", "name", "Modern Blue"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03. Pages CMS",
+      "item": [
+        {
+          "name": "Create Page",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Getting Started Guide\",\n  \"slug\": \"getting-started\",\n  \"content\": \"<h1>Getting Started</h1>\\n<p>Welcome to our digital store! Here's how to get started:</p>\\n<ol>\\n<li>Browse our product catalog</li>\\n<li>Add items to your cart</li>\\n<li>Complete secure checkout</li>\\n<li>Download your digital products instantly</li>\\n</ol>\",\n  \"metaTitle\": \"Getting Started Guide - Demo Digital Store\",\n  \"metaDescription\": \"Learn how to shop and download digital products from our store with this comprehensive getting started guide.\",\n  \"status\": \"DRAFT\",\n  \"visibility\": \"PUBLIC\",\n  \"isDefault\": false,\n  \"language\": \"en\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "pages"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Pages for Tenant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "pages"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Page by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages/{{page_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "pages", "{{page_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Publish Page",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages/{{page_id}}/publish",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "pages", "{{page_id}}", "publish"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Page by Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages/slug/getting-started",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "pages", "slug", "getting-started"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pages by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages/status/PUBLISHED",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "pages", "status", "PUBLISHED"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Public Pages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages/public",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "pages", "public"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Pages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages/search?keyword=getting",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "pages", "search"],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "getting"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Archive Page",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages/{{page_id}}/archive",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "pages", "{{page_id}}", "archive"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04. Tax System",
+      "item": [
+        {
+          "name": "Create Tax Rule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SALES_TAX_CA\",\n  \"description\": \"California State Sales Tax\",\n  \"value\": 8.75,\n  \"defaultFlag\": \"Y\",\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": null,\n  \"status\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Taxes for Tenant",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tax by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/{{tax_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "{{tax_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Taxes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "active"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Default Tax",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/default",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "default"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Calculate Tax",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/calculate?baseAmount=100.00",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "calculate"],
+              "query": [
+                {
+                  "key": "baseAmount",
+                  "value": "100.00"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Calculate Tax for Specific Date",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/calculate/date?baseAmount=100.00&date=2024-06-01",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "calculate", "date"],
+              "query": [
+                {
+                  "key": "baseAmount",
+                  "value": "100.00"
+                },
+                {
+                  "key": "date",
+                  "value": "2024-06-01"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Valid Taxes for Date",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/valid?date=2024-06-01",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "valid"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2024-06-01"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set Tax as Default",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/{{tax_id}}/set-default",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "{{tax_id}}", "set-default"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Taxes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/search?keyword=sales",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "search"],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "sales"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Tax Code Exists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/check/code/SALES_TAX_CA",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "check", "code", "SALES_TAX_CA"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05. Global Admin APIs",
+      "item": [
+        {
+          "name": "Get All Tenants (Global)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Themes (Global)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/themes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "themes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Pages (Global)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/pages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "pages"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Taxes (Global)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/taxes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "taxes"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06. Testing Workflow",
+      "item": [
+        {
+          "name": "1. Create Complete Tenant Setup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shopName\": \"Test E-Commerce Store\",\n  \"shopEmail\": \"test@ecommerce.com\",\n  \"shopPhone\": \"+1-555-TEST\",\n  \"shopLogo\": \"https://via.placeholder.com/200x80/0066cc/ffffff?text=LOGO\",\n  \"domainName\": \"test-store.example.com\",\n  \"subdomain\": \"teststore\",\n  \"countryRegion\": \"Canada\",\n  \"baseCurrency\": \"CAD\",\n  \"multiCurrency\": false,\n  \"taxId\": \"CA987654321\",\n  \"timezone\": \"America/Toronto\",\n  \"status\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Complete Tax Calculation Test",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/calculate?baseAmount=299.99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "calculate"],
+              "query": [
+                {
+                  "key": "baseAmount",
+                  "value": "299.99"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
