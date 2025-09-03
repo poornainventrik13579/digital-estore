@@ -99,6 +99,26 @@ public class AuthServerConfig {
 
     @Bean
     @Order(3)
+    public SecurityFilterChain tenantAuthSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/v1/tenant-auth/**")
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/api/v1/tenant-auth/signup", "/api/v1/tenant-auth/login", 
+                                "/api/v1/tenant-auth/check/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+            
+        return http.build();
+    }
+
+    @Bean
+    @Order(4)
     public SecurityFilterChain publicApiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher("/api/v1/public/**")
@@ -115,7 +135,7 @@ public class AuthServerConfig {
     }
 
     @Bean
-    @Order(4)
+    @Order(5)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher("/api/v1/**")
@@ -144,7 +164,7 @@ public class AuthServerConfig {
     }
 
     @Bean
-    @Order(5)
+    @Order(6)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authorize -> authorize

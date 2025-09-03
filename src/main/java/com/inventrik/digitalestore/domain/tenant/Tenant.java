@@ -40,7 +40,7 @@ public class Tenant {
     private String countryRegion;
     
     @Column(name = "store_password", length = 250)
-    private String storePassword;
+    private String storePassword; // BCrypt hashed password for tenant authentication
     
     @Column(name = "base_currency", length = 20)
     private String baseCurrency;

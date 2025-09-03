@@ -1,0 +1,782 @@
+{
+  "info": {
+    "name": "Multi-Tenant System with Authentication",
+    "description": "Complete API collection for Multi-Tenant Digital E-Store including Authentication, Tenant Management, Store Themes, Pages CMS, and Tax System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string",
+      "description": "JWT token from tenant login"
+    },
+    {
+      "key": "tenant_id",
+      "value": "",
+      "type": "string",
+      "description": "Current authenticated tenant ID"
+    },
+    {
+      "key": "theme_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "page_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tax_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Tenant Authentication",
+      "description": "Tenant registration, login, and profile management",
+      "item": [
+        {
+          "name": "1. Tenant Signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.accessToken);",
+                  "    pm.collectionVariables.set('tenant_id', response.tenantId);",
+                  "    console.log('✅ Tenant registered successfully! Token saved.');",
+                  "} else {",
+                  "    console.log('❌ Signup failed:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shopName\": \"{{$randomCompanyName}} Store\",\n  \"shopEmail\": \"{{$randomEmail}}\",\n  \"password\": \"SecurePassword123\",\n  \"shopPhone\": \"+1-555-{{$randomInt}}\",\n  \"shopLogo\": \"https://example.com/logo-{{$randomInt}}.png\",\n  \"domainName\": \"{{$randomDomainWord}}.example.com\",\n  \"subdomain\": \"{{$randomDomainWord}}\",\n  \"countryRegion\": \"{{$randomCountry}}\",\n  \"baseCurrency\": \"USD\",\n  \"multiCurrency\": true,\n  \"taxId\": \"TX{{$randomInt}}\",\n  \"timezone\": \"America/New_York\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenant-auth/signup",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenant-auth", "signup"]
+            },
+            "description": "Register a new tenant store and get JWT token"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Tenant Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.accessToken);",
+                  "    pm.collectionVariables.set('tenant_id', response.tenantId);",
+                  "    console.log('✅ Login successful! Token saved.');",
+                  "} else {",
+                  "    console.log('❌ Login failed:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testauth@example.com\",\n  \"password\": \"TestPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenant-auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenant-auth", "login"]
+            },
+            "description": "Login with tenant email and password"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Current Tenant Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenant-auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenant-auth", "me"]
+            },
+            "description": "Get authenticated tenant's profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Check Email Availability",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenant-auth/check/email/test@example.com",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenant-auth", "check", "email", "test@example.com"]
+            },
+            "description": "Check if an email is already registered"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Check Subdomain Availability",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenant-auth/check/subdomain/mystore",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenant-auth", "check", "subdomain", "mystore"]
+            },
+            "description": "Check if a subdomain is already taken"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Check Domain Availability",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenant-auth/check/domain/mystore.example.com",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenant-auth", "check", "domain", "mystore.example.com"]
+            },
+            "description": "Check if a domain name is already taken"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🏢 Tenant Management (Protected)",
+      "description": "Tenant CRUD operations - requires authentication",
+      "item": [
+        {
+          "name": "1. Get My Tenant Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tenants/{{tenant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tenants", "{{tenant_id}}"]
+            },
+            "description": "Get authenticated tenant's details"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Update My Tenant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shopName\": \"Updated Store Name\",\n  \"shopPhone\": \"+1-555-UPDATED\",\n  \"shopLogo\": \"https://example.com/new-logo.png\",\n  \"countryRegion\": \"Canada\",\n  \"baseCurrency\": \"CAD\",\n  \"multiCurrency\": false,\n  \"timezone\": \"America/Toronto\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tenants/{{tenant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tenants", "{{tenant_id}}"]
+            },
+            "description": "Update authenticated tenant's information"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Tenant by Domain (Public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tenants/domain/testauth.example.com",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tenants", "domain", "testauth.example.com"]
+            },
+            "description": "Public endpoint to get tenant by domain name"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎨 Store Theme Management",
+      "description": "Manage store themes for authenticated tenant",
+      "item": [
+        {
+          "name": "1. Create Theme",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('theme_id', response.themeId);",
+                  "    console.log('✅ Theme created with ID:', response.themeId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"themeName\": \"{{$randomWord}} Theme\",\n  \"tagline\": \"Your tagline here\",\n  \"bannerImage\": \"https://example.com/banner-{{$randomInt}}.jpg\",\n  \"primaryColor\": \"#{{$randomHexColor}}\",\n  \"secondaryColor\": \"#{{$randomHexColor}}\",\n  \"fontFamily\": \"Arial, sans-serif\",\n  \"customCss\": \".custom { color: #333; }\",\n  \"status\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/store-themes/{{tenant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "store-themes", "{{tenant_id}}"]
+            },
+            "description": "Create a new theme for the authenticated tenant"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get My Themes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/store-themes/{{tenant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "store-themes", "{{tenant_id}}"]
+            },
+            "description": "Get all themes for authenticated tenant"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Theme by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/store-themes/{{tenant_id}}/{{theme_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "store-themes", "{{tenant_id}}", "{{theme_id}}"]
+            },
+            "description": "Get specific theme details"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Update Theme",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"themeName\": \"Updated Theme Name\",\n  \"tagline\": \"Updated tagline\",\n  \"primaryColor\": \"#FF6B6B\",\n  \"secondaryColor\": \"#4ECDC4\",\n  \"status\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/store-themes/{{tenant_id}}/{{theme_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "store-themes", "{{tenant_id}}", "{{theme_id}}"]
+            },
+            "description": "Update existing theme"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Delete Theme",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/store-themes/{{tenant_id}}/{{theme_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "store-themes", "{{tenant_id}}", "{{theme_id}}"]
+            },
+            "description": "Delete theme"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📄 Pages CMS",
+      "description": "Content management system for authenticated tenant",
+      "item": [
+        {
+          "name": "1. Create Page",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('page_id', response.id);",
+                  "    console.log('✅ Page created with ID:', response.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"{{$randomLoremWords}} Page\",\n  \"slug\": \"{{$randomWord}}-page\",\n  \"content\": \"<h1>Welcome to our store!</h1><p>{{$randomLoremParagraphs}}</p>\",\n  \"metaTitle\": \"{{$randomLoremWords}} - SEO Title\",\n  \"metaDescription\": \"{{$randomLoremSentence}}\",\n  \"status\": \"PUBLISHED\",\n  \"visibility\": \"PUBLIC\",\n  \"languageCode\": \"en\",\n  \"isDefault\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pages/{{tenant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pages", "{{tenant_id}}"]
+            },
+            "description": "Create a new page for the authenticated tenant"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get My Pages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pages/{{tenant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pages", "{{tenant_id}}"]
+            },
+            "description": "Get all pages for authenticated tenant"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Page by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pages/{{tenant_id}}/{{page_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pages", "{{tenant_id}}", "{{page_id}}"]
+            },
+            "description": "Get specific page details"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Update Page",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Page Title\",\n  \"content\": \"<h1>Updated Content</h1><p>This page has been updated with new information.</p>\",\n  \"metaTitle\": \"Updated SEO Title\",\n  \"metaDescription\": \"Updated meta description for better SEO\",\n  \"status\": \"PUBLISHED\",\n  \"visibility\": \"PUBLIC\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pages/{{tenant_id}}/{{page_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pages", "{{tenant_id}}", "{{page_id}}"]
+            },
+            "description": "Update existing page"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Publish Page",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pages/{{tenant_id}}/{{page_id}}/publish",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pages", "{{tenant_id}}", "{{page_id}}", "publish"]
+            },
+            "description": "Publish a draft page"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Archive Page",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pages/{{tenant_id}}/{{page_id}}/archive",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pages", "{{tenant_id}}", "{{page_id}}", "archive"]
+            },
+            "description": "Archive a published page"
+          },
+          "response": []
+        },
+        {
+          "name": "7. Delete Page",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pages/{{tenant_id}}/{{page_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pages", "{{tenant_id}}", "{{page_id}}"]
+            },
+            "description": "Delete page"
+          },
+          "response": []
+        },
+        {
+          "name": "8. Search Pages by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pages/{{tenant_id}}/search?status=PUBLISHED",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pages", "{{tenant_id}}", "search"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PUBLISHED"
+                }
+              ]
+            },
+            "description": "Search pages by status"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💰 Tax System",
+      "description": "Tax management for authenticated tenant",
+      "item": [
+        {
+          "name": "1. Create Tax Rule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('tax_id', response.id);",
+                  "    console.log('✅ Tax rule created with ID:', response.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{$randomWord}}_TAX\",\n  \"description\": \"{{$randomWords}} Tax Rule\",\n  \"value\": {{$randomFloat}},\n  \"defaultFlag\": true,\n  \"startDate\": \"2025-01-01\",\n  \"endDate\": \"2025-12-31\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/taxes/{{tenant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "taxes", "{{tenant_id}}"]
+            },
+            "description": "Create a new tax rule for the authenticated tenant"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get My Tax Rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/taxes/{{tenant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "taxes", "{{tenant_id}}"]
+            },
+            "description": "Get all tax rules for authenticated tenant"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Tax Rule by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/taxes/{{tenant_id}}/{{tax_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "taxes", "{{tenant_id}}", "{{tax_id}}"]
+            },
+            "description": "Get specific tax rule details"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Update Tax Rule",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated Tax Rule Description\",\n  \"value\": 8.5,\n  \"defaultFlag\": false,\n  \"startDate\": \"2025-01-01\",\n  \"endDate\": \"2025-12-31\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/taxes/{{tenant_id}}/{{tax_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "taxes", "{{tenant_id}}", "{{tax_id}}"]
+            },
+            "description": "Update existing tax rule"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Set as Default Tax",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/taxes/{{tenant_id}}/{{tax_id}}/set-default",
+              "host": ["{{base_url}}"],
+              "path": ["api", "taxes", "{{tenant_id}}", "{{tax_id}}", "set-default"]
+            },
+            "description": "Set tax rule as default for the tenant"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Calculate Tax",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/taxes/{{tenant_id}}/calculate?amount=100.00",
+              "host": ["{{base_url}}"],
+              "path": ["api", "taxes", "{{tenant_id}}", "calculate"],
+              "query": [
+                {
+                  "key": "amount",
+                  "value": "100.00"
+                }
+              ]
+            },
+            "description": "Calculate tax for a given amount"
+          },
+          "response": []
+        },
+        {
+          "name": "7. Get Active Tax Rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/taxes/{{tenant_id}}/active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "taxes", "{{tenant_id}}", "active"]
+            },
+            "description": "Get currently active tax rules"
+          },
+          "response": []
+        },
+        {
+          "name": "8. Delete Tax Rule",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/taxes/{{tenant_id}}/{{tax_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "taxes", "{{tenant_id}}", "{{tax_id}}"]
+            },
+            "description": "Delete tax rule"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔧 Testing & Utilities",
+      "description": "Helper endpoints for testing and validation",
+      "item": [
+        {
+          "name": "1. Test JWT Token Validation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenant-auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenant-auth", "me"]
+            },
+            "description": "Test if JWT token is valid and working"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Server Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/actuator/health",
+              "host": ["{{base_url}}"],
+              "path": ["actuator", "health"]
+            },
+            "description": "Check if server is running"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set Authorization header if JWT token exists",
+          "const jwtToken = pm.collectionVariables.get('jwt_token');",
+          "if (jwtToken && pm.request.auth.type !== 'noauth') {",
+          "    pm.request.headers.add({",
+          "        key: 'Authorization',",
+          "        value: `Bearer ${jwtToken}`",
+          "    });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global response logging",
+          "console.log(`🚀 ${pm.request.method} ${pm.request.url} → ${pm.response.code} ${pm.response.status}`);",
+          "",
+          "// Auto-save important response data",
+          "if (pm.response.code < 400) {",
+          "    try {",
+          "        const response = pm.response.json();",
+          "        ",
+          "        // Save tenant ID if present",
+          "        if (response.tenantId) {",
+          "            pm.collectionVariables.set('tenant_id', response.tenantId);",
+          "        }",
+          "        ",
+          "        // Save JWT token if present",
+          "        if (response.accessToken) {",
+          "            pm.collectionVariables.set('jwt_token', response.accessToken);",
+          "        }",
+          "    } catch (e) {",
+          "        // Response might not be JSON",
+          "    }",
+          "} else {",
+          "    console.log('❌ Request failed:', pm.response.text());",
+          "}"
+        ]
+      }
+    }
+  ]
+}
