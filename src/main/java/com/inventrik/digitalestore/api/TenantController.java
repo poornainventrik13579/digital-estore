@@ -21,17 +21,14 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/tenants")
+@RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@Tag(name = "Tenant Management", description = "APIs for managing tenants and store configurations")
-@SecurityRequirement(name = "bearer-jwt")
+@Tag(name = "Admin Tenant Management", description = "Admin APIs for managing tenants across the platform")
+@SecurityRequirement(name = "oauth2")
 public class TenantController {
 
     private final TenantService tenantService;
     
-    /**
-     * Extract tenant ID from JWT token
-     */
     private Integer extractTenantIdFromJwt(Authentication authentication) {
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
             return null;
@@ -40,29 +37,24 @@ public class TenantController {
         return jwt.getClaim("tenant_id");
     }
     
-    /**
-     * Verify that the tenant ID in the JWT matches the requested tenant ID
-     */
     private boolean verifyTenantAccess(Authentication authentication, Integer requestedTenantId) {
         Integer tokenTenantId = extractTenantIdFromJwt(authentication);
         return tokenTenantId != null && tokenTenantId.equals(requestedTenantId);
     }
     
-    @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')") // Only admins can see all tenants
-    @Operation(summary = "Get all tenants (Admin only)")
+    @GetMapping("/tenants")
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
+    @Operation(summary = "Get all tenants")
     public ResponseEntity<List<TenantResponse>> getAllTenants() {
         return ResponseEntity.ok(tenantService.getAllTenants());
     }
     
-    @GetMapping("/{tenantId}")
-    @Operation(summary = "Get tenant details", description = "Get tenant details - tenant can only access their own data")
+    @GetMapping("/tenants/{tenantId}")
+    @Operation(summary = "Get tenant details")
     public ResponseEntity<TenantResponse> getTenant(
-            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             Authentication authentication) {
         
-        // Verify tenant can only access their own data
         if (!verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -70,10 +62,9 @@ public class TenantController {
         return ResponseEntity.ok(tenantService.getTenant(tenantId));
     }
     
-    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')") // Only admins can create tenants via this endpoint
-    @Operation(summary = "Create a new tenant (Admin only)", 
-               description = "Create tenant via admin API - for tenant self-registration use /api/v1/tenant-auth/signup")
+    @PostMapping("/tenants")
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
+    @Operation(summary = "Create a new tenant")
     public ResponseEntity<TenantResponse> createTenantJson(
             @Valid @RequestBody TenantRequest tenantRequest,
             Authentication authentication) {
@@ -83,10 +74,9 @@ public class TenantController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTenant);
     }
     
-    @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')") // Only admins can create tenants via this endpoint
-    @Operation(summary = "Create a new tenant (Admin Form)", 
-               description = "Create tenant via admin form API - for tenant self-registration use /api/v1/tenant-auth/signup")
+    @PostMapping(value = "/tenants", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
+    @Operation(summary = "Create a new tenant via form")
     public ResponseEntity<TenantResponse> createTenant(
             @Valid @ModelAttribute TenantRequest tenantRequest,
             Authentication authentication) {
@@ -96,10 +86,9 @@ public class TenantController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTenant);
     }
     
-    @PutMapping(path = "/{tenantId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @Operation(summary = "Update tenant details", description = "Update tenant details - tenant can only update their own data")
+    @PutMapping("/tenants/{tenantId}")
+    @Operation(summary = "Update tenant details")
     public ResponseEntity<TenantResponse> updateTenantJson(
-            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Valid @RequestBody TenantUpdateRequest updateRequest,
             Authentication authentication) {
@@ -114,15 +103,13 @@ public class TenantController {
         return ResponseEntity.ok(updatedTenant);
     }
     
-    @PutMapping(path = "/{tenantId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @Operation(summary = "Update tenant details (Form)", description = "Update tenant details via form - tenant can only update their own data")
+    @PutMapping(value = "/tenants/{tenantId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @Operation(summary = "Update tenant details via form")
     public ResponseEntity<TenantResponse> updateTenant(
-            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Valid @ModelAttribute TenantUpdateRequest updateRequest,
             Authentication authentication) {
         
-        // Verify tenant can only update their own data
         if (!verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -132,30 +119,23 @@ public class TenantController {
         return ResponseEntity.ok(updatedTenant);
     }
     
-    @DeleteMapping("/{tenantId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')") // Only admins can delete tenants
-    @Operation(summary = "Delete a tenant (Admin only)")
-    public ResponseEntity<Void> deleteTenant(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId) {
+    @DeleteMapping("/tenants/{tenantId}")
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
+    @Operation(summary = "Delete a tenant")
+    public ResponseEntity<Void> deleteTenant(@PathVariable Integer tenantId) {
         tenantService.deleteTenant(tenantId);
         return ResponseEntity.noContent().build();
     }
     
-    @GetMapping("/domain/{domainName}")
-    @Operation(summary = "Get tenant by domain name", description = "Public endpoint for domain-based tenant lookup")
-    public ResponseEntity<TenantResponse> getTenantByDomain(
-            @Parameter(description = "Domain name", required = true)
-            @PathVariable String domainName) {
+    @GetMapping("/tenants/domain/{domainName}")
+    @Operation(summary = "Get tenant by domain name")
+    public ResponseEntity<TenantResponse> getTenantByDomain(@PathVariable String domainName) {
         return ResponseEntity.ok(tenantService.getTenantByDomain(domainName));
     }
     
-    @GetMapping("/subdomain/{subdomain}")
-    // @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @GetMapping("/tenants/subdomain/{subdomain}")
     @Operation(summary = "Get tenant by subdomain")
-    public ResponseEntity<TenantResponse> getTenantBySubdomain(
-            @Parameter(description = "Subdomain", required = true)
-            @PathVariable String subdomain) {
+    public ResponseEntity<TenantResponse> getTenantBySubdomain(@PathVariable String subdomain) {
         return ResponseEntity.ok(tenantService.getTenantBySubdomain(subdomain));
     }
     

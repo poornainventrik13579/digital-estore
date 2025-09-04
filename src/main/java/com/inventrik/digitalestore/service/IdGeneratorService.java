@@ -29,6 +29,10 @@ public class IdGeneratorService {
         return id.intValue();
     }
     
+    public Long generateUserId() {
+        return generateUnpredictable12DigitId();
+    }
+    
     private Long generateUnpredictable12DigitId() {
         // Clear cache periodically to prevent memory growth
         if (usedIds.size() > 100000) {

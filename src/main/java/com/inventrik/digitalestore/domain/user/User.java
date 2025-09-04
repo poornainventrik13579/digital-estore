@@ -104,6 +104,46 @@ public class User {
         updated = LocalDateTime.now();
     }
     
+    /**
+     * Check if user belongs to the specified tenant
+     */
+    public boolean belongsToTenant(Integer tenantId) {
+        return this.tenantId != null && this.tenantId.equals(tenantId);
+    }
+    
+    /**
+     * Check if user is a tenant admin for their tenant
+     */
+    public boolean isTenantAdmin() {
+        return UserRole.TENANT_ADMIN.equals(this.userRole);
+    }
+    
+    /**
+     * Check if user is a system admin
+     */
+    public boolean isSystemAdmin() {
+        return UserRole.SYSTEM_ADMIN.equals(this.userRole);
+    }
+    
+    /**
+     * Check if user has admin privileges (either tenant admin or system admin)
+     */
+    public boolean hasAdminPrivileges() {
+        return isSystemAdmin() || isTenantAdmin();
+    }
+    
+    /**
+     * Get full name (first + last)
+     */
+    public String getFullName() {
+        if (firstName == null && lastName == null) {
+            return username;
+        }
+        return String.format("%s %s", 
+            firstName != null ? firstName : "", 
+            lastName != null ? lastName : "").trim();
+    }
+    
     public static class UserPK implements Serializable {
         private Integer tenantId;
         private Long userId;

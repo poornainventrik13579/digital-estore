@@ -3,6 +3,7 @@ package com.inventrik.digitalestore.api;
 import com.inventrik.digitalestore.dto.request.CategoryRequest;
 import com.inventrik.digitalestore.dto.request.CategoryUpdateRequest;
 import com.inventrik.digitalestore.dto.response.CategoryResponse;
+import com.inventrik.digitalestore.security.TenantAccessValidator;
 import com.inventrik.digitalestore.service.category.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -26,11 +27,19 @@ import java.util.List;
 public class CategoryController {
 
     private final CategoryService categoryService;
+    private final TenantAccessValidator tenantAccessValidator;
     
     @GetMapping
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get all categories")
-    public ResponseEntity<List<CategoryResponse>> getAllCategories(@PathVariable Integer tenantId) {
+    public ResponseEntity<List<CategoryResponse>> getAllCategories(
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(categoryService.getAllCategories(tenantId));
     }
     
@@ -39,17 +48,27 @@ public class CategoryController {
     @Operation(summary = "Get a category by ID")
     public ResponseEntity<CategoryResponse> getCategory(
             @PathVariable Integer tenantId,
-            @PathVariable Long categoryId) {
+            @PathVariable Long categoryId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(categoryService.getCategory(tenantId, categoryId));
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Create a new category (JSON)")
     public ResponseEntity<CategoryResponse> createCategoryJson(
             @PathVariable Integer tenantId,
             @Valid @RequestBody CategoryRequest categoryRequest,
             Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         String username = (authentication != null) ? authentication.getName() : "system";
         CategoryResponse createdCategory = categoryService.createCategory(tenantId, username, categoryRequest);
@@ -57,12 +76,16 @@ public class CategoryController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Create a new category (Form)")
     public ResponseEntity<CategoryResponse> createCategory(
             @PathVariable Integer tenantId,
             @Valid @ModelAttribute CategoryRequest categoryRequest,
             Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         String username = (authentication != null) ? authentication.getName() : "system";
         CategoryResponse createdCategory = categoryService.createCategory(tenantId, username, categoryRequest);
@@ -70,7 +93,7 @@ public class CategoryController {
     }
     
     @PutMapping(path = "/{categoryId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update a category (JSON)")
     public ResponseEntity<CategoryResponse> updateCategoryJson(
             @PathVariable Integer tenantId,
@@ -78,13 +101,17 @@ public class CategoryController {
             @Valid @RequestBody CategoryUpdateRequest updateRequest,
             Authentication authentication) {
         
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         String username = (authentication != null) ? authentication.getName() : "system";
         CategoryResponse updatedCategory = categoryService.updateCategory(tenantId, categoryId, username, updateRequest);
         return ResponseEntity.ok(updatedCategory);
     }
     
     @PutMapping(path = "/{categoryId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update a category (Form)")
     public ResponseEntity<CategoryResponse> updateCategory(
             @PathVariable Integer tenantId,
@@ -98,7 +125,7 @@ public class CategoryController {
     }
     
     @DeleteMapping("/{categoryId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete a category")
     public ResponseEntity<Void> deleteCategory(
             @PathVariable Integer tenantId,

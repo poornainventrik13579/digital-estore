@@ -53,7 +53,7 @@ public class TaxController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Create a new tax rule (JSON)")
     public ResponseEntity<TaxResponse> createTaxJson(
             @Parameter(description = "Tenant ID", required = true)
@@ -68,7 +68,7 @@ public class TaxController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Create a new tax rule (Form)")
     public ResponseEntity<TaxResponse> createTax(
             @Parameter(description = "Tenant ID", required = true)
@@ -83,7 +83,7 @@ public class TaxController {
     }
     
     @PutMapping(path = "/{taxId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update a tax rule (JSON)")
     public ResponseEntity<TaxResponse> updateTaxJson(
             @Parameter(description = "Tenant ID", required = true)
@@ -99,7 +99,7 @@ public class TaxController {
     }
     
     @PutMapping(path = "/{taxId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update a tax rule (Form)")
     public ResponseEntity<TaxResponse> updateTax(
             @Parameter(description = "Tenant ID", required = true)
@@ -115,7 +115,7 @@ public class TaxController {
     }
     
     @DeleteMapping("/{taxId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete a tax rule")
     public ResponseEntity<Void> deleteTax(
             @Parameter(description = "Tenant ID", required = true)
@@ -127,7 +127,7 @@ public class TaxController {
     }
     
     @PostMapping("/{taxId}/set-default")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Set tax as default for tenant")
     public ResponseEntity<TaxResponse> setAsDefaultTax(
             @Parameter(description = "Tenant ID", required = true)
@@ -228,7 +228,7 @@ public class TaxController {
     }
     
     @GetMapping("/check/code/{code}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Check if tax code exists for tenant")
     public ResponseEntity<Boolean> checkTaxCodeExists(
             @Parameter(description = "Tenant ID", required = true)
@@ -239,7 +239,7 @@ public class TaxController {
     }
     
     @GetMapping("/count")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Count active taxes for tenant")
     public ResponseEntity<Long> countActiveTaxes(
             @Parameter(description = "Tenant ID", required = true)

@@ -462,7 +462,7 @@ Step 6: Process payment for the order
 ### Useful Resources
 
 - Interactive API Documentation: http://localhost:8080/swagger-ui.html
-- Postman Collection for testing: Digital-EStore-Postman-Collection.json
+- Postman Collection for testing: Multi-Tenant-System-with-Auth-Postman-Collection.json
 - Configuration Examples: README_CONFIGURATION.md
 - Email Templates: src/main/resources/templates/email/
 

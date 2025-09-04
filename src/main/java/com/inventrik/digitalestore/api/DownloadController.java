@@ -59,7 +59,7 @@ public class DownloadController {
     }
     
     @GetMapping("/tenants/{tenantId}/users/{userId}/download-history")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get download history for user")
     public ResponseEntity<List<DownloadHistoryResponse>> getUserDownloadHistory(
             @PathVariable Integer tenantId,
@@ -70,7 +70,7 @@ public class DownloadController {
     }
     
     @PostMapping("/tenants/{tenantId}/digital-product-details")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Create digital product details")
     public ResponseEntity<DigitalProductDetailsResponse> createDigitalProductDetails(
             @PathVariable Integer tenantId,
@@ -83,7 +83,7 @@ public class DownloadController {
     }
     
     @PutMapping("/tenants/{tenantId}/digital-product-details/{productId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update digital product details")
     public ResponseEntity<DigitalProductDetailsResponse> updateDigitalProductDetails(
             @PathVariable Integer tenantId,
@@ -108,7 +108,7 @@ public class DownloadController {
     }
     
     @GetMapping("/tenants/{tenantId}/digital-product-details")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get all digital product details")
     public ResponseEntity<List<DigitalProductDetailsResponse>> getAllDigitalProductDetails(
             @PathVariable Integer tenantId) {
@@ -118,7 +118,7 @@ public class DownloadController {
     }
     
     @DeleteMapping("/tenants/{tenantId}/digital-product-details/{productId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete digital product details")
     public ResponseEntity<Void> deleteDigitalProductDetails(
             @PathVariable Integer tenantId,

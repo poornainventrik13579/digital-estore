@@ -119,6 +119,26 @@ public class AuthServerConfig {
 
     @Bean
     @Order(4)
+    public SecurityFilterChain userAuthSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/v1/auth/**")
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/api/v1/auth/*/signup", "/api/v1/auth/*/login", 
+                                "/api/v1/auth/*/check/**", "/api/v1/auth/signup", "/api/v1/auth/login").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+            
+        return http.build();
+    }
+
+    @Bean
+    @Order(5)
     public SecurityFilterChain publicApiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher("/api/v1/public/**")
@@ -135,7 +155,7 @@ public class AuthServerConfig {
     }
 
     @Bean
-    @Order(5)
+    @Order(6)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher("/api/v1/**")
@@ -164,7 +184,7 @@ public class AuthServerConfig {
     }
 
     @Bean
-    @Order(6)
+    @Order(7)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authorize -> authorize

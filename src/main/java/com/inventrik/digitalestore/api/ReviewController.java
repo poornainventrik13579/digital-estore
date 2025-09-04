@@ -129,7 +129,7 @@ public class ReviewController {
     }
     
     @PutMapping("/{reviewId}/verify")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Verify review", description = "Mark a review as verified (admin only)")
     public ResponseEntity<ReviewResponse> verifyReview(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,

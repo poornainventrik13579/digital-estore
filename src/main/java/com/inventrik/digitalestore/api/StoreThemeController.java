@@ -49,7 +49,7 @@ public class StoreThemeController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Create a new theme (JSON)")
     public ResponseEntity<StoreThemeResponse> createThemeJson(
             @Parameter(description = "Tenant ID", required = true)
@@ -64,7 +64,7 @@ public class StoreThemeController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Create a new theme (Form)")
     public ResponseEntity<StoreThemeResponse> createTheme(
             @Parameter(description = "Tenant ID", required = true)
@@ -79,7 +79,7 @@ public class StoreThemeController {
     }
     
     @PutMapping(path = "/{themeId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update a theme (JSON)")
     public ResponseEntity<StoreThemeResponse> updateThemeJson(
             @Parameter(description = "Tenant ID", required = true)
@@ -95,7 +95,7 @@ public class StoreThemeController {
     }
     
     @PutMapping(path = "/{themeId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update a theme (Form)")
     public ResponseEntity<StoreThemeResponse> updateTheme(
             @Parameter(description = "Tenant ID", required = true)
@@ -111,7 +111,7 @@ public class StoreThemeController {
     }
     
     @DeleteMapping("/{themeId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete a theme")
     public ResponseEntity<Void> deleteTheme(
             @Parameter(description = "Tenant ID", required = true)
@@ -134,7 +134,7 @@ public class StoreThemeController {
     }
     
     @GetMapping("/check/name/{themeName}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Check if theme name exists for tenant")
     public ResponseEntity<Boolean> checkThemeNameExists(
             @Parameter(description = "Tenant ID", required = true)

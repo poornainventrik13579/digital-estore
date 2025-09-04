@@ -4,6 +4,7 @@ import com.inventrik.digitalestore.dto.request.OrderFormRequest;
 import com.inventrik.digitalestore.dto.request.OrderRequest;
 import com.inventrik.digitalestore.dto.request.OrderUpdateRequest;
 import com.inventrik.digitalestore.dto.response.OrderResponse;
+import com.inventrik.digitalestore.security.TenantAccessValidator;
 import com.inventrik.digitalestore.service.order.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,13 +29,19 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final TenantAccessValidator tenantAccessValidator;
     
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get all orders")
     public ResponseEntity<List<OrderResponse>> getAllOrders(
-            @Parameter(description = "Tenant ID", required = true) 
-            @PathVariable Integer tenantId) {
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(orderService.getAllOrders(tenantId));
     }
     
@@ -42,10 +49,14 @@ public class OrderController {
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get an order by ID")
     public ResponseEntity<OrderResponse> getOrder(
-            @Parameter(description = "Tenant ID", required = true) 
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
-            @PathVariable Long orderId) {
+            @PathVariable Long orderId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(orderService.getOrder(tenantId, orderId));
     }
     
@@ -87,7 +98,7 @@ public class OrderController {
     }
     
     @PutMapping(path = "/{orderId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update an order (JSON)")
     public ResponseEntity<OrderResponse> updateOrderJson(
             @Parameter(description = "Tenant ID", required = true) 
@@ -104,7 +115,7 @@ public class OrderController {
     }
     
     @PutMapping(path = "/{orderId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update an order (Form)")
     public ResponseEntity<OrderResponse> updateOrder(
             @Parameter(description = "Tenant ID", required = true) 
@@ -121,7 +132,7 @@ public class OrderController {
     }
     
     @DeleteMapping("/{orderId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete an order")
     public ResponseEntity<Void> deleteOrder(
             @Parameter(description = "Tenant ID", required = true) 
@@ -196,7 +207,7 @@ public class OrderController {
     }
     
     @PostMapping("/{orderId}/refund")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Refund an order")
     public ResponseEntity<OrderResponse> refundOrder(
             @Parameter(description = "Tenant ID", required = true) 

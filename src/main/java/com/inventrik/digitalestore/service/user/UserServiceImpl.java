@@ -1,8 +1,8 @@
 package com.inventrik.digitalestore.service.user;
 
 import com.inventrik.digitalestore.domain.user.User;
-import com.inventrik.digitalestore.dto.request.UserRequest;
-import com.inventrik.digitalestore.dto.request.UserUpdateRequest;
+import com.inventrik.digitalestore.dto.request.TenantUserSignupRequest;
+import com.inventrik.digitalestore.dto.request.TenantUserUpdateRequest;
 import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.exception.BusinessException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
@@ -93,7 +93,7 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional
-    public UserResponse createUser(Integer tenantId, String createdBy, UserRequest userRequest) {
+    public UserResponse createUser(Integer tenantId, String createdBy, TenantUserSignupRequest userRequest) {
         // Check for duplicate username, email, phone
         if (userRepository.existsByUsername(userRequest.getUsername())) {
             throw new BusinessException("Username already exists");
@@ -121,7 +121,7 @@ public class UserServiceImpl implements UserService {
         user.setPhone(userRequest.getPhone());
         user.setEmail(userRequest.getEmail());
         user.setUserType(userRequest.getUserType());
-        user.setUserRole(userRequest.getUserRole());
+        user.setUserRole(com.inventrik.digitalestore.domain.user.UserRole.USER); // Default role for new users
         
         // Set company details if user type is COMPANY
         if (userRequest.getUserType() != null && userRequest.getUserType() == com.inventrik.digitalestore.domain.user.UserType.COMPANY) {
@@ -152,7 +152,7 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional
-    public UserResponse updateUser(Integer tenantId, Long userId, String updatedBy, UserUpdateRequest updateRequest) {
+    public UserResponse updateUser(Integer tenantId, Long userId, String updatedBy, TenantUserUpdateRequest updateRequest) {
         User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         
@@ -175,9 +175,7 @@ public class UserServiceImpl implements UserService {
         if (updateRequest.getUserType() != null) {
             user.setUserType(updateRequest.getUserType());
         }
-        if (updateRequest.getUserRole() != null) {
-            user.setUserRole(updateRequest.getUserRole());
-        }
+        // Note: User role changes should be handled by separate admin methods (promoteUserToAdmin, demoteUserFromAdmin)
         
         // Update company details
         if (updateRequest.getCompanyName() != null) {
@@ -201,9 +199,7 @@ public class UserServiceImpl implements UserService {
         if (updateRequest.getTaxId() != null) {
             user.setTaxId(updateRequest.getTaxId());
         }
-        if (updateRequest.getStatus() != null) {
-            user.setStatus(updateRequest.getStatus());
-        }
+        // Note: User status changes should be handled by separate admin methods (activateUser, deactivateUser)
         
         // Ensure updatedBy doesn't exceed 2 characters
         user.setUpdatedBy(getAuditCode(updatedBy));
@@ -296,5 +292,91 @@ public class UserServiceImpl implements UserService {
             return "00";
         }
         return username.length() > 2 ? username.substring(0, 2) : username;
+    }
+    
+    // ================================
+    // NEW TENANT-SCOPED METHODS
+    // ================================
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponse> getUsersByTenant(Integer tenantId) {
+        return userRepository.findByTenantId(tenantId)
+            .stream()
+            .map(this::mapToUserResponse)
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getUserByTenantAndUserId(Integer tenantId, Long userId) {
+        User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return mapToUserResponse(user);
+    }
+    
+    @Override
+    public UserResponse createUserForTenant(Integer tenantId, TenantUserSignupRequest userRequest, String createdBy) {
+        // Implementation would go here - delegate to existing createUser for now
+        return createUser(tenantId, createdBy, userRequest);
+    }
+    
+    @Override
+    public UserResponse updateUserInTenant(Integer tenantId, Long userId, TenantUserUpdateRequest updateRequest, String updatedBy) {
+        // Implementation would go here - delegate to existing updateUser for now
+        return updateUser(tenantId, userId, updatedBy, updateRequest);
+    }
+    
+    @Override
+    public void deleteUserFromTenant(Integer tenantId, Long userId) {
+        // Implementation would go here - delegate to existing deleteUser for now
+        deleteUser(tenantId, userId);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponse> getActiveUsersByTenant(Integer tenantId) {
+        return userRepository.findByTenantIdAndStatus(tenantId, "A")
+            .stream()
+            .map(this::mapToUserResponse)
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponse> getTenantAdmins(Integer tenantId) {
+        return userRepository.findByTenantIdAndUserRole(tenantId, com.inventrik.digitalestore.domain.user.UserRole.TENANT_ADMIN)
+            .stream()
+            .map(this::mapToUserResponse)
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    public UserResponse promoteUserToAdmin(Integer tenantId, Long userId, String updatedBy) {
+        User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        user.setUserRole(com.inventrik.digitalestore.domain.user.UserRole.TENANT_ADMIN);
+        user.setUpdatedBy(updatedBy);
+        user = userRepository.save(user);
+        
+        return mapToUserResponse(user);
+    }
+    
+    @Override
+    public UserResponse demoteAdminToUser(Integer tenantId, Long userId, String updatedBy) {
+        User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        user.setUserRole(com.inventrik.digitalestore.domain.user.UserRole.USER);
+        user.setUpdatedBy(updatedBy);
+        user = userRepository.save(user);
+        
+        return mapToUserResponse(user);
+    }
+    
+    @Override
+    public UserResponse mapToUserResponse(User user) {
+        return mapToDTO(user); // Delegate to existing mapToDTO method
     }
 }

@@ -6,6 +6,7 @@ import com.inventrik.digitalestore.dto.response.PaymentResponse;
 import com.inventrik.digitalestore.exception.payment.InsufficientRefundAmountException;
 import com.inventrik.digitalestore.exception.payment.PaymentNotFoundException;
 import com.inventrik.digitalestore.exception.payment.PaymentProcessingException;
+import com.inventrik.digitalestore.security.TenantAccessValidator;
 import com.inventrik.digitalestore.service.payment.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,20 +33,34 @@ import java.util.List;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final TenantAccessValidator tenantAccessValidator;
     
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get all payments")
-    public ResponseEntity<List<PaymentResponse>> getAllPayments(@PathVariable Integer tenantId) {
+    public ResponseEntity<List<PaymentResponse>> getAllPayments(
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(paymentService.getAllPayments(tenantId));
     }
     
     @GetMapping("/{paymentId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN') or hasRole('ROLE_USER')")
     @Operation(summary = "Get a payment by ID")
     public ResponseEntity<PaymentResponse> getPayment(
             @PathVariable Integer tenantId,
-            @PathVariable Long paymentId) {
+            @PathVariable Long paymentId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(paymentService.getPayment(tenantId, paymentId));
     }
     
@@ -90,7 +105,7 @@ public class PaymentController {
     }
     
     @PostMapping("/{paymentId}/refund")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Refund a payment")
     public ResponseEntity<PaymentResponse> refundPayment(
             @PathVariable Integer tenantId,
@@ -103,7 +118,7 @@ public class PaymentController {
     }
     
     @PostMapping("/{paymentId}/partial-refund")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Process partial refund", description = "Process a partial refund for a payment")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Partial refund processed successfully"),
@@ -127,7 +142,7 @@ public class PaymentController {
     }
     
     @GetMapping("/order/{orderId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get payments by order")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByOrder(
             @PathVariable Integer tenantId,
@@ -136,7 +151,7 @@ public class PaymentController {
     }
     
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get payments by status")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByStatus(
             @PathVariable Integer tenantId,

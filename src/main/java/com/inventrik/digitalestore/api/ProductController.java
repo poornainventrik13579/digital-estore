@@ -4,6 +4,7 @@ import com.inventrik.digitalestore.dto.request.ProductRequest;
 import com.inventrik.digitalestore.dto.request.ProductUpdateRequest;
 import com.inventrik.digitalestore.dto.response.PagedResponse;
 import com.inventrik.digitalestore.dto.response.ProductResponse;
+import com.inventrik.digitalestore.security.TenantAccessValidator;
 import com.inventrik.digitalestore.service.product.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -27,6 +28,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final TenantAccessValidator tenantAccessValidator;
     
     @GetMapping
     @PreAuthorize("hasRole('ROLE_USER')")
@@ -34,7 +36,13 @@ public class ProductController {
     public ResponseEntity<PagedResponse<ProductResponse>> getAllProducts(
             @PathVariable Integer tenantId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         PagedResponse<ProductResponse> products = productService.getAllProductsPaginated(tenantId, page, size);
         return ResponseEntity.ok(products);
     }
@@ -44,17 +52,27 @@ public class ProductController {
     @Operation(summary = "Get a product by ID")
     public ResponseEntity<ProductResponse> getProduct(
             @PathVariable Integer tenantId,
-            @PathVariable Long productId) {
+            @PathVariable Long productId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(productService.getProduct(tenantId, productId));
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Create a new product (JSON)")
     public ResponseEntity<ProductResponse> createProductJson(
             @PathVariable Integer tenantId,
             @Valid @RequestBody ProductRequest productRequest,
             Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         String username = (authentication != null) ? authentication.getName() : "system";
         ProductResponse createdProduct = productService.createProduct(tenantId, username, productRequest);
@@ -62,12 +80,16 @@ public class ProductController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Create a new product (Form)")
     public ResponseEntity<ProductResponse> createProduct(
             @PathVariable Integer tenantId,
             @Valid @ModelAttribute ProductRequest productRequest,
             Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         String username = (authentication != null) ? authentication.getName() : "system";
         ProductResponse createdProduct = productService.createProduct(tenantId, username, productRequest);
@@ -75,7 +97,7 @@ public class ProductController {
     }
     
     @PutMapping(path = "/{productId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update a product (JSON)")
     public ResponseEntity<ProductResponse> updateProductJson(
             @PathVariable Integer tenantId,
@@ -83,13 +105,17 @@ public class ProductController {
             @Valid @RequestBody ProductUpdateRequest updateRequest,
             Authentication authentication) {
         
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         String username = (authentication != null) ? authentication.getName() : "system";
         ProductResponse updatedProduct = productService.updateProduct(tenantId, productId, username, updateRequest);
         return ResponseEntity.ok(updatedProduct);
     }
     
     @PutMapping(path = "/{productId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update a product (Form)")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Integer tenantId,
@@ -97,17 +123,27 @@ public class ProductController {
             @Valid @ModelAttribute ProductUpdateRequest updateRequest,
             Authentication authentication) {
         
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         String username = (authentication != null) ? authentication.getName() : "system";
         ProductResponse updatedProduct = productService.updateProduct(tenantId, productId, username, updateRequest);
         return ResponseEntity.ok(updatedProduct);
     }
     
     @DeleteMapping("/{productId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete a product")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable Integer tenantId,
-            @PathVariable Long productId) {
+            @PathVariable Long productId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         productService.deleteProduct(tenantId, productId);
         return ResponseEntity.noContent().build();
     }
@@ -116,7 +152,13 @@ public class ProductController {
     @Operation(summary = "Get products by category")
     public ResponseEntity<List<ProductResponse>> getProductsByCategory(
             @PathVariable Integer tenantId,
-            @PathVariable Long categoryId) {
+            @PathVariable Long categoryId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(productService.getProductsByCategory(tenantId, categoryId));
     }
     

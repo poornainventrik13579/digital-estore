@@ -51,7 +51,7 @@ public class PageController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Create a new page (JSON)")
     public ResponseEntity<PageResponse> createPageJson(
             @Parameter(description = "Tenant ID", required = true)
@@ -66,7 +66,7 @@ public class PageController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Create a new page (Form)")
     public ResponseEntity<PageResponse> createPage(
             @Parameter(description = "Tenant ID", required = true)
@@ -81,7 +81,7 @@ public class PageController {
     }
     
     @PutMapping(path = "/{pageId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update a page (JSON)")
     public ResponseEntity<PageResponse> updatePageJson(
             @Parameter(description = "Tenant ID", required = true)
@@ -97,7 +97,7 @@ public class PageController {
     }
     
     @PutMapping(path = "/{pageId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update a page (Form)")
     public ResponseEntity<PageResponse> updatePage(
             @Parameter(description = "Tenant ID", required = true)
@@ -113,7 +113,7 @@ public class PageController {
     }
     
     @DeleteMapping("/{pageId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete a page")
     public ResponseEntity<Void> deletePage(
             @Parameter(description = "Tenant ID", required = true)
@@ -125,7 +125,7 @@ public class PageController {
     }
     
     @PostMapping("/{pageId}/publish")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Publish a page")
     public ResponseEntity<PageResponse> publishPage(
             @Parameter(description = "Tenant ID", required = true)
@@ -140,7 +140,7 @@ public class PageController {
     }
     
     @PostMapping("/{pageId}/archive")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Archive a page")
     public ResponseEntity<PageResponse> archivePage(
             @Parameter(description = "Tenant ID", required = true)
@@ -227,7 +227,7 @@ public class PageController {
     }
     
     @GetMapping("/check/slug/{slug}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Check if slug exists for tenant")
     public ResponseEntity<Boolean> checkSlugExists(
             @Parameter(description = "Tenant ID", required = true)
@@ -238,7 +238,7 @@ public class PageController {
     }
     
     @GetMapping("/check/title/{title}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Check if title exists for tenant")
     public ResponseEntity<Boolean> checkTitleExists(
             @Parameter(description = "Tenant ID", required = true)

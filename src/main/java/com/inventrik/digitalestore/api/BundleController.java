@@ -2,6 +2,7 @@ package com.inventrik.digitalestore.api;
 
 import com.inventrik.digitalestore.dto.request.BundleRequest;
 import com.inventrik.digitalestore.dto.response.BundleResponse;
+import com.inventrik.digitalestore.security.TenantAccessValidator;
 import com.inventrik.digitalestore.service.bundle.BundleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,6 +30,7 @@ import java.util.List;
 public class BundleController {
     
     private final BundleService bundleService;
+    private final TenantAccessValidator tenantAccessValidator;
     
     @GetMapping
     @Operation(summary = "Get all bundles", description = "Retrieve all product bundles for a tenant")
@@ -39,7 +41,12 @@ public class BundleController {
     })
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<BundleResponse>> getAllBundles(
-            @Parameter(description = "Tenant ID") @PathVariable Integer tenantId) {
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Getting all bundles for tenant: {}", tenantId);
         List<BundleResponse> bundles = bundleService.getAllBundles(tenantId);
@@ -55,7 +62,12 @@ public class BundleController {
     })
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<BundleResponse>> getActiveBundles(
-            @Parameter(description = "Tenant ID") @PathVariable Integer tenantId) {
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Getting active bundles for tenant: {}", tenantId);
         List<BundleResponse> bundles = bundleService.getActiveBundles(tenantId);
@@ -88,7 +100,7 @@ public class BundleController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     public ResponseEntity<BundleResponse> createBundle(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Valid @RequestBody BundleRequest bundleRequest,
@@ -109,7 +121,8 @@ public class BundleController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     public ResponseEntity<BundleResponse> updateBundle(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Parameter(description = "Bundle ID") @PathVariable Long bundleId,
@@ -130,7 +143,7 @@ public class BundleController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     public ResponseEntity<Void> deleteBundle(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Parameter(description = "Bundle ID") @PathVariable Long bundleId,
@@ -202,7 +215,7 @@ public class BundleController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     public ResponseEntity<BundleResponse> addProductToBundle(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Parameter(description = "Bundle ID") @PathVariable Long bundleId,
@@ -226,7 +239,7 @@ public class BundleController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     public ResponseEntity<BundleResponse> removeProductFromBundle(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Parameter(description = "Bundle ID") @PathVariable Long bundleId,
@@ -249,7 +262,7 @@ public class BundleController {
         @ApiResponse(responseCode = "403", description = "Access denied"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     public ResponseEntity<BundleResponse> updateProductQuantityInBundle(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Parameter(description = "Bundle ID") @PathVariable Long bundleId,
