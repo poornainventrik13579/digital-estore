@@ -16,7 +16,7 @@ import java.util.Properties;
 public class StripeTokenTest {
     
     public static void main(String[] args) {
-        // Load API key from properties
+        
                     String apiKey = TestUtils.loadStripeApiKey();
         Stripe.apiKey = apiKey;
         
@@ -30,7 +30,6 @@ public class StripeTokenTest {
         }
     }
 
-    
     private static PaymentIntent createPaymentIntent(String paymentMethod, String currency, int amount) 
             throws StripeException {
         PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()

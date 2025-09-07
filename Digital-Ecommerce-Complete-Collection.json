@@ -1,0 +1,2173 @@
+{
+  "info": {
+    "name": "Digital Ecommerce Complete Collection",
+    "description": "Complete API collection for Digital E-Store with proper tenant and user management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string",
+      "description": "JWT token from authentication"
+    },
+    {
+      "key": "tenant_id",
+      "value": "1",
+      "type": "string",
+      "description": "Tenant ID"
+    },
+    {
+      "key": "user_id",
+      "value": "1",
+      "type": "string",
+      "description": "User ID"
+    },
+    {
+      "key": "subdomain",
+      "value": "teststore",
+      "type": "string",
+      "description": "Store subdomain"
+    }
+  ],
+  "item": [
+    {
+      "name": "Digital Ecommerce",
+      "item": [
+        {
+          "name": "Tenant",
+          "item": [
+            {
+              "name": "Authentication",
+              "item": [
+                {
+                  "name": "Tenant Signup",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"shopName\": \"Test Store\",\n  \"shopEmail\": \"admin@teststore.com\",\n  \"domainName\": \"teststore\",\n  \"storePassword\": \"securePassword123\",\n  \"phoneNumber\": \"+1234567890\",\n  \"address\": \"123 Test Street\",\n  \"city\": \"Test City\",\n  \"state\": \"Test State\",\n  \"country\": \"Test Country\",\n  \"postalCode\": \"12345\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenant-auth/signup",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenant-auth", "signup"]
+                    },
+                    "description": "Register a new tenant store"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "if (pm.response.code === 201) {",
+                          "    const response = pm.response.json();",
+                          "    pm.collectionVariables.set('jwt_token', response.token);",
+                          "    pm.collectionVariables.set('tenant_id', response.tenantId);",
+                          "    console.log('Tenant signup successful');",
+                          "}"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Tenant Login",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"email\": \"admin@teststore.com\",\n  \"storePassword\": \"securePassword123\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenant-auth/login",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenant-auth", "login"]
+                    },
+                    "description": "Login as tenant admin"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "if (pm.response.code === 200) {",
+                          "    const response = pm.response.json();",
+                          "    pm.collectionVariables.set('jwt_token', response.token);",
+                          "    pm.collectionVariables.set('tenant_id', response.tenantId);",
+                          "    console.log('Tenant login successful');",
+                          "}"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Get Current Tenant Profile",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenant-auth/me",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenant-auth", "me"]
+                    },
+                    "description": "Get current tenant profile"
+                  }
+                },
+                {
+                  "name": "Check Email Exists",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenant-auth/check/email/test@example.com",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenant-auth", "check", "email", "test@example.com"]
+                    },
+                    "description": "Check if email exists"
+                  }
+                },
+                {
+                  "name": "Check Subdomain Exists",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenant-auth/check/subdomain/teststore",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenant-auth", "check", "subdomain", "teststore"]
+                    },
+                    "description": "Check if subdomain exists"
+                  }
+                },
+                {
+                  "name": "Check Domain Exists",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenant-auth/check/domain/teststore.com",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenant-auth", "check", "domain", "teststore.com"]
+                    },
+                    "description": "Check if domain exists"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Management",
+              "item": [
+                {
+                  "name": "Get All Tenants",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tenants",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tenants"]
+                    },
+                    "description": "Get all tenants (SYSTEM_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Tenant by ID",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tenants/{{tenant_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tenants", "{{tenant_id}}"]
+                    },
+                    "description": "Get tenant details"
+                  }
+                },
+                {
+                  "name": "Create Tenant",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"shopName\": \"New Store\",\n  \"shopEmail\": \"admin@newstore.com\",\n  \"domainName\": \"newstore\",\n  \"storePassword\": \"password123\",\n  \"phoneNumber\": \"+1234567890\",\n  \"address\": \"123 Main St\",\n  \"city\": \"City\",\n  \"state\": \"State\",\n  \"country\": \"Country\",\n  \"postalCode\": \"12345\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tenants",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tenants"]
+                    },
+                    "description": "Create a new tenant (SYSTEM_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Update Tenant",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"shopName\": \"Updated Store Name\",\n  \"phoneNumber\": \"+1234567891\",\n  \"address\": \"456 Updated St\",\n  \"city\": \"Updated City\",\n  \"state\": \"Updated State\",\n  \"country\": \"Updated Country\",\n  \"postalCode\": \"54321\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tenants/{{tenant_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tenants", "{{tenant_id}}"]
+                    },
+                    "description": "Update tenant details"
+                  }
+                },
+                {
+                  "name": "Delete Tenant",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tenants/{{tenant_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tenants", "{{tenant_id}}"]
+                    },
+                    "description": "Delete a tenant (SYSTEM_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Tenant by Domain",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tenants/domain/teststore.com",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tenants", "domain", "teststore.com"]
+                    },
+                    "description": "Get tenant by domain name"
+                  }
+                },
+                {
+                  "name": "Get Tenant by Subdomain",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/admin/tenants/subdomain/teststore",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "admin", "tenants", "subdomain", "teststore"]
+                    },
+                    "description": "Get tenant by subdomain"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Products",
+              "item": [
+                {
+                  "name": "Get All Products",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products?page=0&size=20",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "products"],
+                      "query": [
+                        {
+                          "key": "page",
+                          "value": "0"
+                        },
+                        {
+                          "key": "size",
+                          "value": "20"
+                        }
+                      ]
+                    },
+                    "description": "Get all products with pagination"
+                  }
+                },
+                {
+                  "name": "Get Product by ID",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "products", "1"]
+                    },
+                    "description": "Get a product by ID"
+                  }
+                },
+                {
+                  "name": "Create Product",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Test Product\",\n  \"description\": \"A test product\",\n  \"price\": 99.99,\n  \"categoryId\": 1,\n  \"isActive\": true,\n  \"stockQuantity\": 100,\n  \"sku\": \"TEST-001\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "products"]
+                    },
+                    "description": "Create a new product (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Update Product",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Updated Product\",\n  \"description\": \"An updated product\",\n  \"price\": 149.99,\n  \"isActive\": true,\n  \"stockQuantity\": 150\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "products", "1"]
+                    },
+                    "description": "Update a product (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Delete Product",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "products", "1"]
+                    },
+                    "description": "Delete a product (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Products by Category",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/category/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "products", "category", "1"]
+                    },
+                    "description": "Get products by category"
+                  }
+                },
+                {
+                  "name": "Get Active Products",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/active",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "products", "active"]
+                    },
+                    "description": "Get active products"
+                  }
+                },
+                {
+                  "name": "Search Products",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/search?keyword=test&page=0&size=20",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "products", "search"],
+                      "query": [
+                        {
+                          "key": "keyword",
+                          "value": "test"
+                        },
+                        {
+                          "key": "page",
+                          "value": "0"
+                        },
+                        {
+                          "key": "size",
+                          "value": "20"
+                        }
+                      ]
+                    },
+                    "description": "Search products by keyword"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Orders",
+              "item": [
+                {
+                  "name": "Get All Orders",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders"]
+                    },
+                    "description": "Get all orders (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Order by ID",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "1"]
+                    },
+                    "description": "Get order by ID"
+                  }
+                },
+                {
+                  "name": "Create Order (JSON)",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"customerEmail\": \"customer@example.com\",\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 2\n    }\n  ],\n  \"shippingAddress\": {\n    \"street\": \"123 Customer St\",\n    \"city\": \"Customer City\",\n    \"state\": \"Customer State\",\n    \"country\": \"Customer Country\",\n    \"postalCode\": \"12345\"\n  }\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders"]
+                    },
+                    "description": "Create a new order with multiple items (JSON)"
+                  }
+                },
+                {
+                  "name": "Create Order (Form)",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/x-www-form-urlencoded"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "urlencoded",
+                      "urlencoded": [
+                        {
+                          "key": "productId",
+                          "value": "1"
+                        },
+                        {
+                          "key": "quantity",
+                          "value": "2"
+                        },
+                        {
+                          "key": "customerEmail",
+                          "value": "customer@example.com"
+                        }
+                      ]
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders"]
+                    },
+                    "description": "Create a new order with single product item (Form)"
+                  }
+                },
+                {
+                  "name": "Update Order (JSON)",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"status\": \"Processing\",\n  \"shippingAddress\": {\n    \"street\": \"456 Updated St\",\n    \"city\": \"Updated City\",\n    \"state\": \"Updated State\",\n    \"country\": \"Updated Country\",\n    \"postalCode\": \"54321\"\n  }\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "1"]
+                    },
+                    "description": "Update an order (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Delete Order",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "1"]
+                    },
+                    "description": "Delete an order (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Orders by User",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/user/{{user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "user", "{{user_id}}"]
+                    },
+                    "description": "Get orders by user"
+                  }
+                },
+                {
+                  "name": "Get Orders by Status",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/status/Pending",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "status", "Pending"]
+                    },
+                    "description": "Get orders by status (Pending, Processing, Completed, Cancelled, Refunded, Partially Refunded)"
+                  }
+                },
+                {
+                  "name": "Complete Order",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1/complete",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "1", "complete"]
+                    },
+                    "description": "Complete an order"
+                  }
+                },
+                {
+                  "name": "Cancel Order",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1/cancel",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "1", "cancel"]
+                    },
+                    "description": "Cancel an order"
+                  }
+                },
+                {
+                  "name": "Refund Order",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1/refund",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "1", "refund"]
+                    },
+                    "description": "Refund an order (TENANT_ADMIN only)"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Payments",
+              "item": [
+                {
+                  "name": "Get All Payments",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "payments"]
+                    },
+                    "description": "Get all payments (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Payment by ID",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "1"]
+                    },
+                    "description": "Get payment by ID"
+                  }
+                },
+                {
+                  "name": "Create Payment",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"orderId\": 1,\n  \"amount\": 99.99,\n  \"currency\": \"USD\",\n  \"paymentMethodId\": \"pm_test_card\",\n  \"customerEmail\": \"customer@example.com\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "payments"]
+                    },
+                    "description": "Create a new payment"
+                  }
+                },
+                {
+                  "name": "Confirm Payment",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1/confirm?transactionId=txn_123456",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "1", "confirm"],
+                      "query": [
+                        {
+                          "key": "transactionId",
+                          "value": "txn_123456"
+                        }
+                      ]
+                    },
+                    "description": "Confirm a payment"
+                  }
+                },
+                {
+                  "name": "Cancel Payment",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1/cancel",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "1", "cancel"]
+                    },
+                    "description": "Cancel a payment"
+                  }
+                },
+                {
+                  "name": "Refund Payment",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1/refund",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "1", "refund"]
+                    },
+                    "description": "Refund a payment (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Partial Refund Payment",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"amount\": 50.00,\n  \"reason\": \"Customer requested partial refund\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1/partial-refund",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "1", "partial-refund"]
+                    },
+                    "description": "Process partial refund (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Payments by Order",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/order/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "order", "1"]
+                    },
+                    "description": "Get payments by order (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Payments by Status",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/status/completed",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "status", "completed"]
+                    },
+                    "description": "Get payments by status (TENANT_ADMIN only)"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Categories",
+              "item": [
+                {
+                  "name": "Get All Categories",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "categories"]
+                    },
+                    "description": "Get all categories"
+                  }
+                },
+                {
+                  "name": "Get Category by ID",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "categories", "1"]
+                    },
+                    "description": "Get category by ID"
+                  }
+                },
+                {
+                  "name": "Create Category (JSON)",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Electronic devices and accessories\",\n  \"isActive\": true\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "categories"]
+                    },
+                    "description": "Create a new category (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Update Category (JSON)",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Updated Electronics\",\n  \"description\": \"Updated electronic devices and accessories\",\n  \"isActive\": true\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "categories", "1"]
+                    },
+                    "description": "Update a category (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Delete Category",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "categories", "1"]
+                    },
+                    "description": "Delete a category (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Active Categories",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/active",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "categories", "active"]
+                    },
+                    "description": "Get active categories"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Reviews",
+              "item": [
+                {
+                  "name": "Create Review",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"productId\": 1,\n  \"rating\": 5,\n  \"comment\": \"Excellent product, highly recommended!\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "reviews"]
+                    },
+                    "description": "Create a new review"
+                  }
+                },
+                {
+                  "name": "Get Product Reviews",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/product/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "reviews", "product", "1"]
+                    },
+                    "description": "Get all reviews for a product"
+                  }
+                },
+                {
+                  "name": "Get User Reviews",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/user/{{user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "reviews", "user", "{{user_id}}"]
+                    },
+                    "description": "Get all reviews by a user"
+                  }
+                },
+                {
+                  "name": "Get Review by ID",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "reviews", "1"]
+                    },
+                    "description": "Get a specific review by ID"
+                  }
+                },
+                {
+                  "name": "Update Review",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Updated review - Good product with minor issues\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "reviews", "1"]
+                    },
+                    "description": "Update an existing review"
+                  }
+                },
+                {
+                  "name": "Delete Review",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "reviews", "1"]
+                    },
+                    "description": "Delete a review"
+                  }
+                },
+                {
+                  "name": "Get Product Rating Statistics",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/product/1/rating",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "reviews", "product", "1", "rating"]
+                    },
+                    "description": "Get average rating and distribution for a product"
+                  }
+                },
+                {
+                  "name": "Get Verified Reviews",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/verified",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "reviews", "verified"]
+                    },
+                    "description": "Get all verified reviews"
+                  }
+                },
+                {
+                  "name": "Verify Review",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1/verify",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "reviews", "1", "verify"]
+                    },
+                    "description": "Mark a review as verified (TENANT_ADMIN only)"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Discounts",
+              "item": [
+                {
+                  "name": "Create Discount Code",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"code\": \"SAVE20\",\n  \"discountType\": \"PERCENTAGE\",\n  \"discountValue\": 20.0,\n  \"isActive\": true,\n  \"usageLimit\": 100,\n  \"validFrom\": \"2024-01-01T00:00:00\",\n  \"validUntil\": \"2024-12-31T23:59:59\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts"]
+                    },
+                    "description": "Create a new discount code (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Update Discount Code",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"code\": \"SAVE25\",\n  \"discountType\": \"PERCENTAGE\",\n  \"discountValue\": 25.0,\n  \"isActive\": true,\n  \"usageLimit\": 50\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "1"]
+                    },
+                    "description": "Update a discount code (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Discount Code by ID",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "1"]
+                    },
+                    "description": "Get discount code by ID (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Discount Code by Code",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/code/SAVE20",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "code", "SAVE20"]
+                    },
+                    "description": "Get discount code by code"
+                  }
+                },
+                {
+                  "name": "Get All Discount Codes",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts"]
+                    },
+                    "description": "Get all discount codes (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Active Discount Codes",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/active",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "active"]
+                    },
+                    "description": "Get active discount codes"
+                  }
+                },
+                {
+                  "name": "Delete Discount Code",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "1"]
+                    },
+                    "description": "Delete a discount code (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Validate Discount Code",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"code\": \"SAVE20\",\n  \"orderAmount\": 100.0\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/validate",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "validate"]
+                    },
+                    "description": "Validate a discount code against order amount"
+                  }
+                },
+                {
+                  "name": "Get Discount Usage Statistics",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1/usage",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "1", "usage"]
+                    },
+                    "description": "Get usage statistics for a discount code (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Cleanup Expired Discounts",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/cleanup-expired",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "cleanup-expired"]
+                    },
+                    "description": "Deactivate all expired discount codes (TENANT_ADMIN only)"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Bundles",
+              "item": [
+                {
+                  "name": "Get All Bundles",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles"]
+                    },
+                    "description": "Get all product bundles"
+                  }
+                },
+                {
+                  "name": "Get Active Bundles",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/active",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "active"]
+                    },
+                    "description": "Get only active product bundles"
+                  }
+                },
+                {
+                  "name": "Get Bundle by ID",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "1"]
+                    },
+                    "description": "Get a specific bundle by ID"
+                  }
+                },
+                {
+                  "name": "Create Bundle",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Electronics Bundle\",\n  \"description\": \"Complete electronics package\",\n  \"discountPercentage\": 15.0,\n  \"isActive\": true,\n  \"bundleItems\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 2\n    },\n    {\n      \"productId\": 2,\n      \"quantity\": 1\n    }\n  ]\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles"]
+                    },
+                    "description": "Create a new product bundle (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Update Bundle",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Updated Electronics Bundle\",\n  \"description\": \"Updated complete electronics package\",\n  \"discountPercentage\": 20.0,\n  \"isActive\": true\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "1"]
+                    },
+                    "description": "Update an existing bundle (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Delete Bundle",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "1"]
+                    },
+                    "description": "Delete a bundle (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Search Bundles",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/search?name=Electronics",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "search"],
+                      "query": [
+                        {
+                          "key": "name",
+                          "value": "Electronics"
+                        }
+                      ]
+                    },
+                    "description": "Search bundles by name"
+                  }
+                },
+                {
+                  "name": "Calculate Bundle Price",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "[\n  {\n    \"productId\": 1,\n    \"quantity\": 2\n  },\n  {\n    \"productId\": 2,\n    \"quantity\": 1\n  }\n]"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/calculate-price",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "calculate-price"]
+                    },
+                    "description": "Calculate total price for bundle items"
+                  }
+                },
+                {
+                  "name": "Get Bundles Containing Product",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/product/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "product", "1"]
+                    },
+                    "description": "Get all bundles that contain a specific product"
+                  }
+                },
+                {
+                  "name": "Add Product to Bundle",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1/products/2?quantity=3",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "1", "products", "2"],
+                      "query": [
+                        {
+                          "key": "quantity",
+                          "value": "3"
+                        }
+                      ]
+                    },
+                    "description": "Add a product to an existing bundle (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Remove Product from Bundle",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1/products/2",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "1", "products", "2"]
+                    },
+                    "description": "Remove a product from a bundle (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Update Product Quantity in Bundle",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1/products/2/quantity?quantity=5",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "1", "products", "2", "quantity"],
+                      "query": [
+                        {
+                          "key": "quantity",
+                          "value": "5"
+                        }
+                      ]
+                    },
+                    "description": "Update product quantity in a bundle (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Bundle Count",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/count",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "count"]
+                    },
+                    "description": "Get the count of active bundles"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Global Admin APIs",
+              "item": [
+                {
+                  "name": "Get All Pages (Global)",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/pages",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "pages"]
+                    },
+                    "description": "Get all pages across all tenants (ROLE_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get All Themes (Global)",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/themes",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "themes"]
+                    },
+                    "description": "Get all store themes across all tenants (ROLE_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Themes by Name (Global)",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/themes/name/default-theme",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "themes", "name", "default-theme"]
+                    },
+                    "description": "Get themes by name across all tenants (ROLE_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get All Taxes (Global)",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/taxes",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "taxes"]
+                    },
+                    "description": "Get all taxes across all tenants (ROLE_ADMIN only)"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "User",
+          "item": [
+            {
+              "name": "Authentication",
+              "item": [
+                {
+                  "name": "User Signup to Store",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"user@teststore.com\",\n  \"password\": \"userPassword123\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"phone\": \"+1234567890\",\n  \"userType\": \"CUSTOMER\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/{{subdomain}}/auth/users/signup",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "{{subdomain}}", "auth", "users", "signup"]
+                    },
+                    "description": "Register user to specific store (Shopify-style)"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "if (pm.response.code === 201) {",
+                          "    const response = pm.response.json();",
+                          "    pm.collectionVariables.set('jwt_token', response.token);",
+                          "    pm.collectionVariables.set('user_id', response.userId);",
+                          "    pm.collectionVariables.set('tenant_id', response.tenantId);",
+                          "    console.log('User signup successful');",
+                          "}"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "User Login to Store",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"email\": \"user@teststore.com\",\n  \"password\": \"userPassword123\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/{{subdomain}}/auth/users/login",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "{{subdomain}}", "auth", "users", "login"]
+                    },
+                    "description": "Login user to specific store (Shopify-style)"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "if (pm.response.code === 200) {",
+                          "    const response = pm.response.json();",
+                          "    pm.collectionVariables.set('jwt_token', response.token);",
+                          "    pm.collectionVariables.set('user_id', response.userId);",
+                          "    pm.collectionVariables.set('tenant_id', response.tenantId);",
+                          "    console.log('User login successful');",
+                          "}"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Get User Profile",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/auth/users/profile",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "auth", "users", "profile"]
+                    },
+                    "description": "Get current user profile"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Management",
+              "item": [
+                {
+                  "name": "Get All Users in Tenant",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "users"]
+                    },
+                    "description": "Get all users in authenticated tenant (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get User by ID",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "users", "{{user_id}}"]
+                    },
+                    "description": "Get user details (user can access own data, admins can access any user)"
+                  }
+                },
+                {
+                  "name": "Create User in Tenant",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"newuser@teststore.com\",\n  \"password\": \"password123\",\n  \"firstName\": \"New\",\n  \"lastName\": \"User\",\n  \"phone\": \"+1234567890\",\n  \"userType\": \"CUSTOMER\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "users"]
+                    },
+                    "description": "Add new user to tenant (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Update User",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"firstName\": \"Updated\",\n  \"lastName\": \"User\",\n  \"phone\": \"+1234567891\",\n  \"isActive\": true\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "users", "{{user_id}}"]
+                    },
+                    "description": "Update user details (user can update own data, admins can update any user)"
+                  }
+                },
+                {
+                  "name": "Delete User from Tenant",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "users", "{{user_id}}"]
+                    },
+                    "description": "Delete user from tenant (TENANT_ADMIN only, cannot delete self)"
+                  }
+                },
+                {
+                  "name": "Get Active Users in Tenant",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/users/active",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "users", "active"]
+                    },
+                    "description": "Get all active users in tenant (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Get Tenant Admins",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/users/admins",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "users", "admins"]
+                    },
+                    "description": "Get all tenant admins (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Promote User to Tenant Admin",
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/users/{{user_id}}/promote",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "users", "{{user_id}}", "promote"]
+                    },
+                    "description": "Promote user to tenant admin role (TENANT_ADMIN only)"
+                  }
+                },
+                {
+                  "name": "Demote Admin to Regular User",
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{jwt_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/api/v1/users/{{user_id}}/demote",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "v1", "users", "{{user_id}}", "demote"]
+                    },
+                    "description": "Demote tenant admin to regular user (TENANT_ADMIN only, cannot demote self)"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Shopping",
+              "item": [
+                {
+                  "name": "Browse Public Products",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/public/{{subdomain}}/products",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "public", "{{subdomain}}", "products"]
+                    },
+                    "description": "Browse public products (no auth required)"
+                  }
+                },
+                {
+                  "name": "Get Public Product Details",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/public/{{subdomain}}/products/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "public", "{{subdomain}}", "products", "1"]
+                    },
+                    "description": "Get public product details (no auth required)"
+                  }
+                },
+                {
+                  "name": "Browse Public Categories",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/public/{{subdomain}}/categories",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "public", "{{subdomain}}", "categories"]
+                    },
+                    "description": "Browse public categories (no auth required)"
+                  }
+                },
+                {
+                  "name": "Get Public Category Details",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/public/{{subdomain}}/categories/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "public", "{{subdomain}}", "categories", "1"]
+                    },
+                    "description": "Get public category details (no auth required)"
+                  }
+                },
+                {
+                  "name": "Get Public Reviews",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{base_url}}/api/public/{{subdomain}}/reviews/product/1",
+                      "host": ["{{base_url}}"],
+                      "path": ["api", "public", "{{subdomain}}", "reviews", "product", "1"]
+                    },
+                    "description": "Get public product reviews (no auth required)"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

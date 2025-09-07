@@ -211,9 +211,10 @@ public class AuthServerConfig {
 
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
+        String clientSecret = System.getenv().getOrDefault("OAUTH_CLIENT_SECRET", "web-secret");
         RegisteredClient webClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("web-client")
-                .clientSecret(passwordEncoder().encode("web-secret"))
+                .clientSecret(passwordEncoder().encode(clientSecret))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -223,8 +224,8 @@ public class AuthServerConfig {
                 .scope("read")
                 .scope("write")
                 .tokenSettings(TokenSettings.builder()
-                        .accessTokenTimeToLive(Duration.ofHours(1))
-                        .refreshTokenTimeToLive(Duration.ofDays(7))
+                        .accessTokenTimeToLive(Duration.ofMinutes(30))
+                        .refreshTokenTimeToLive(Duration.ofHours(24))
                         .build())
                 .clientSettings(ClientSettings.builder()
                         .requireAuthorizationConsent(false)
@@ -275,13 +276,13 @@ public class AuthServerConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(Arrays.asList("http://localhost:*", "https://localhost:*"));
+        config.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://localhost:3000"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
         config.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/api/**", config);
         return source;
     }
 }

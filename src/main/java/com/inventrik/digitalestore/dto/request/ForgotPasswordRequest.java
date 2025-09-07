@@ -6,9 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Request DTO for forgot password functionality.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

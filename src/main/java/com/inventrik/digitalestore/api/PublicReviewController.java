@@ -3,11 +3,13 @@ package com.inventrik.digitalestore.api;
 import com.inventrik.digitalestore.dto.response.ProductRatingResponse;
 import com.inventrik.digitalestore.dto.response.ReviewResponse;
 import com.inventrik.digitalestore.service.review.ReviewService;
+import com.inventrik.digitalestore.service.tenant.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,12 +23,26 @@ import java.util.List;
 public class PublicReviewController {
     
     private final ReviewService reviewService;
+    private final TenantService tenantService;
+    
+    private boolean validateTenant(Integer tenantId) {
+        try {
+            var tenant = tenantService.getTenant(tenantId);
+            return "A".equals(tenant.getStatus());
+        } catch (Exception e) {
+            return false;
+        }
+    }
     
     @GetMapping("/product/{productId}")
     @Operation(summary = "Get product reviews")
     public ResponseEntity<List<ReviewResponse>> getProductReviews(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Parameter(description = "Product ID") @PathVariable Long productId) {
+        
+        if (!validateTenant(tenantId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         
         log.info("Fetching reviews for product: {}", productId);
         
@@ -40,6 +56,10 @@ public class PublicReviewController {
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Parameter(description = "Product ID") @PathVariable Long productId) {
         
+        if (!validateTenant(tenantId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        
         log.info("Fetching rating statistics for product: {}", productId);
         
         ProductRatingResponse rating = reviewService.getProductRating(tenantId, productId);
@@ -50,6 +70,10 @@ public class PublicReviewController {
     @Operation(summary = "Get verified reviews")
     public ResponseEntity<List<ReviewResponse>> getVerifiedReviews(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId) {
+        
+        if (!validateTenant(tenantId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         
         log.info("Fetching verified reviews for tenant: {}", tenantId);
         
@@ -62,6 +86,10 @@ public class PublicReviewController {
     public ResponseEntity<ReviewResponse> getReview(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Parameter(description = "Review ID") @PathVariable Long reviewId) {
+        
+        if (!validateTenant(tenantId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         
         log.info("Fetching review: {}", reviewId);
         

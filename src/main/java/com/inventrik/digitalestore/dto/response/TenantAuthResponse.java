@@ -13,7 +13,7 @@ public class TenantAuthResponse {
     
     private String accessToken;
     private String tokenType = "Bearer";
-    private int expiresIn = 3600; // 1 hour in seconds
+    private int expiresIn = 3600; 
     private Integer tenantId;
     private String shopName;
     private String shopEmail;

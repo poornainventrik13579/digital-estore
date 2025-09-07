@@ -26,7 +26,6 @@ public class TenantUserUpdateRequest {
     
     private UserType userType;
     
-    // Company details (optional for BUSINESS users)
     @Size(max = 100, message = "Company name must be less than 100 characters")
     private String companyName;
     

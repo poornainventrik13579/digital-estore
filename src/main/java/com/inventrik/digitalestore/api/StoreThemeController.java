@@ -63,20 +63,6 @@ public class StoreThemeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTheme);
     }
     
-    @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Create a new theme (Form)")
-    public ResponseEntity<StoreThemeResponse> createTheme(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Valid @ModelAttribute StoreThemeRequest themeRequest,
-            Authentication authentication) {
-        
-        themeRequest.setTenantId(tenantId);
-        String username = (authentication != null) ? authentication.getName() : "system";
-        StoreThemeResponse createdTheme = storeThemeService.createTheme(username, themeRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdTheme);
-    }
     
     @PutMapping(path = "/{themeId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
@@ -94,21 +80,6 @@ public class StoreThemeController {
         return ResponseEntity.ok(updatedTheme);
     }
     
-    @PutMapping(path = "/{themeId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Update a theme (Form)")
-    public ResponseEntity<StoreThemeResponse> updateTheme(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Theme ID", required = true)
-            @PathVariable Integer themeId,
-            @Valid @ModelAttribute StoreThemeUpdateRequest updateRequest,
-            Authentication authentication) {
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
-        StoreThemeResponse updatedTheme = storeThemeService.updateTheme(tenantId, themeId, username, updateRequest);
-        return ResponseEntity.ok(updatedTheme);
-    }
     
     @DeleteMapping("/{themeId}")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")

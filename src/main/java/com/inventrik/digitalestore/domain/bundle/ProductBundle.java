@@ -46,13 +46,13 @@ public class ProductBundle {
     @Column(name = "status", nullable = false, length = 2)
     private String status = "0";
     
-    @Column(name = "created_by", nullable = false, length = 2)
+    @Column(name = "created_by", nullable = false, length = 50)
     private String createdBy;
     
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
     
-    @Column(name = "updated_by", nullable = false, length = 2)
+    @Column(name = "updated_by", nullable = false, length = 50)
     private String updatedBy;
     
     @Column(name = "updated", nullable = false)

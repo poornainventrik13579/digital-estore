@@ -32,5 +32,4 @@ public class TaxResponse {
     private String updatedBy;
     private LocalDateTime updated;
     
-
 }

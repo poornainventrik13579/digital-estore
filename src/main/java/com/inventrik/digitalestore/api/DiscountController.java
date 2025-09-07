@@ -117,7 +117,12 @@ public class DiscountController {
     })
     public ResponseEntity<DiscountCodeResponse> getDiscountCodeByCode(
             @PathVariable Integer tenantId,
-            @PathVariable String code) {
+            @PathVariable String code,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         DiscountCodeResponse response = discountService.getDiscountCodeByCode(tenantId, code);
         return ResponseEntity.ok(response);
@@ -127,7 +132,14 @@ public class DiscountController {
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get all discount codes", description = "Retrieve all discount codes for the tenant")
     @ApiResponse(responseCode = "200", description = "List of discount codes")
-    public ResponseEntity<List<DiscountCodeResponse>> getAllDiscountCodes(@PathVariable Integer tenantId) {
+    public ResponseEntity<List<DiscountCodeResponse>> getAllDiscountCodes(
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         List<DiscountCodeResponse> response = discountService.getAllDiscountCodes(tenantId);
         return ResponseEntity.ok(response);
     }
@@ -136,7 +148,14 @@ public class DiscountController {
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get active discount codes", description = "Retrieve all currently active discount codes")
     @ApiResponse(responseCode = "200", description = "List of active discount codes")
-    public ResponseEntity<List<DiscountCodeResponse>> getActiveDiscountCodes(@PathVariable Integer tenantId) {
+    public ResponseEntity<List<DiscountCodeResponse>> getActiveDiscountCodes(
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         List<DiscountCodeResponse> response = discountService.getActiveDiscountCodes(tenantId);
         return ResponseEntity.ok(response);
     }
@@ -153,6 +172,10 @@ public class DiscountController {
             @PathVariable Long discountId,
             Authentication authentication) {
         
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         discountService.deleteDiscountCode(tenantId, discountId, authentication.getName());
         return ResponseEntity.noContent().build();
     }
@@ -166,7 +189,12 @@ public class DiscountController {
     })
     public ResponseEntity<DiscountValidationResponse> validateDiscountCode(
             @PathVariable Integer tenantId,
-            @Valid @RequestBody ValidateDiscountRequest request) {
+            @Valid @RequestBody ValidateDiscountRequest request,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         DiscountValidationResponse response = discountService.validateDiscountCode(tenantId, request);
         return ResponseEntity.ok(response);
@@ -178,7 +206,12 @@ public class DiscountController {
     @ApiResponse(responseCode = "200", description = "Usage statistics")
     public ResponseEntity<Map<String, Object>> getDiscountUsageStats(
             @PathVariable Integer tenantId,
-            @PathVariable Long discountId) {
+            @PathVariable Long discountId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         long usageCount = discountService.getDiscountUsageCount(tenantId, discountId);
         BigDecimal totalAmount = discountService.getTotalDiscountAmountUsed(tenantId, discountId);
@@ -196,7 +229,14 @@ public class DiscountController {
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Cleanup expired discounts", description = "Deactivate all expired discount codes")
     @ApiResponse(responseCode = "200", description = "Cleanup completed")
-    public ResponseEntity<Map<String, String>> cleanupExpiredDiscounts(@PathVariable Integer tenantId) {
+    public ResponseEntity<Map<String, String>> cleanupExpiredDiscounts(
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         discountService.deactivateExpiredDiscounts(tenantId);
         return ResponseEntity.ok(Map.of("message", "Expired discount codes have been deactivated"));
     }

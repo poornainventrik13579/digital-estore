@@ -74,7 +74,7 @@ public class DiscountServiceImpl implements DiscountService {
             }
         }
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+        String truncatedUsername = userService.getAuditCode(username);
         
         discountCode.setCode(request.getCode().toUpperCase());
         discountCode.setDiscountType(request.getDiscountType());
@@ -128,7 +128,7 @@ public class DiscountServiceImpl implements DiscountService {
         DiscountCode discountCode = discountCodeRepository.findById(new DiscountCode.DiscountCodePK(tenantId, discountId))
                 .orElseThrow(() -> new ResourceNotFoundException("Discount code not found with id: " + discountId));
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+        String truncatedUsername = userService.getAuditCode(username);
         discountCode.setStatus("-1");
         discountCode.setUpdatedBy(truncatedUsername);
         
@@ -181,25 +181,19 @@ public class DiscountServiceImpl implements DiscountService {
             throw new IllegalArgumentException("Order amount must be at least " + discount.getMinOrderAmount());
         }
         
-        // Check if discount has reached max uses limit (thread-safe check)
-        if (discount.getMaxUses() > 0 && discount.getUsedCount() >= discount.getMaxUses()) {
-            throw new IllegalArgumentException("Discount code has reached its usage limit");
-        }
-        
         BigDecimal discountAmount = discount.calculateDiscount(orderAmount);
         if (discountAmount.compareTo(orderAmount) > 0) {
             discountAmount = orderAmount;
         }
         
-        recordDiscountUsage(tenantId, discount.getDiscountId(), orderId, userId, discountAmount, username);
-        
-        // Atomic increment using database-level update
         int updatedRows = discountCodeRepository.incrementUsedCount(tenantId, discount.getDiscountId(), 
-            username.length() > 2 ? username.substring(0, 2) : username);
+            userService.getAuditCode(username));
         
         if (updatedRows == 0) {
-            throw new IllegalStateException("Failed to update discount usage - discount may have been modified concurrently");
+            throw new IllegalArgumentException("Discount code has reached its usage limit or is no longer valid");
         }
+        
+        recordDiscountUsage(tenantId, discount.getDiscountId(), orderId, userId, discountAmount, username);
         
         log.info("Applied discount {} to order {}, amount: {}", discountCode, orderId, discountAmount);
         
@@ -251,8 +245,8 @@ public class DiscountServiceImpl implements DiscountService {
     @Override
     @Transactional(readOnly = true)
     public BigDecimal getTotalDiscountAmountUsed(Integer tenantId, Long discountId) {
-        Double total = discountUsageRepository.getTotalDiscountAmountUsed(tenantId, discountId, "0");
-        return total != null ? BigDecimal.valueOf(total) : BigDecimal.ZERO;
+        BigDecimal total = discountUsageRepository.getTotalDiscountAmountUsed(tenantId, discountId, "0");
+        return total != null ? total : BigDecimal.ZERO;
     }
     
     private DiscountCodeResponse mapToResponse(DiscountCode discountCode) {

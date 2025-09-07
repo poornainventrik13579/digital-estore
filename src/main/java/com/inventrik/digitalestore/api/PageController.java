@@ -5,6 +5,7 @@ import com.inventrik.digitalestore.domain.page.PageVisibility;
 import com.inventrik.digitalestore.dto.request.PageRequest;
 import com.inventrik.digitalestore.dto.request.PageUpdateRequest;
 import com.inventrik.digitalestore.dto.response.PageResponse;
+import com.inventrik.digitalestore.security.TenantAccessValidator;
 import com.inventrik.digitalestore.service.page.PageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,13 +30,20 @@ import java.util.List;
 public class PageController {
 
     private final PageService pageService;
+    private final TenantAccessValidator tenantAccessValidator;
     
     @GetMapping
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get all pages for a tenant")
     public ResponseEntity<List<PageResponse>> getPagesByTenant(
             @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId) {
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(pageService.getPagesByTenant(tenantId));
     }
     
@@ -46,7 +54,13 @@ public class PageController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Page ID", required = true)
-            @PathVariable Long pageId) {
+            @PathVariable Long pageId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(pageService.getPage(pageId));
     }
     
@@ -59,26 +73,16 @@ public class PageController {
             @Valid @RequestBody PageRequest pageRequest,
             Authentication authentication) {
         
-        pageRequest.setTenantId(tenantId);
-        String username = (authentication != null) ? authentication.getName() : "system";
-        PageResponse createdPage = pageService.createPage(username, pageRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdPage);
-    }
-    
-    @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Create a new page (Form)")
-    public ResponseEntity<PageResponse> createPage(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Valid @ModelAttribute PageRequest pageRequest,
-            Authentication authentication) {
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         pageRequest.setTenantId(tenantId);
         String username = (authentication != null) ? authentication.getName() : "system";
         PageResponse createdPage = pageService.createPage(username, pageRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPage);
     }
+    
     
     @PutMapping(path = "/{pageId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
@@ -91,26 +95,15 @@ public class PageController {
             @Valid @RequestBody PageUpdateRequest updateRequest,
             Authentication authentication) {
         
-        String username = (authentication != null) ? authentication.getName() : "system";
-        PageResponse updatedPage = pageService.updatePage(pageId, username, updateRequest);
-        return ResponseEntity.ok(updatedPage);
-    }
-    
-    @PutMapping(path = "/{pageId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Update a page (Form)")
-    public ResponseEntity<PageResponse> updatePage(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Page ID", required = true)
-            @PathVariable Long pageId,
-            @Valid @ModelAttribute PageUpdateRequest updateRequest,
-            Authentication authentication) {
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         String username = (authentication != null) ? authentication.getName() : "system";
         PageResponse updatedPage = pageService.updatePage(pageId, username, updateRequest);
         return ResponseEntity.ok(updatedPage);
     }
+    
     
     @DeleteMapping("/{pageId}")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
@@ -119,7 +112,13 @@ public class PageController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Page ID", required = true)
-            @PathVariable Long pageId) {
+            @PathVariable Long pageId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         pageService.deletePage(pageId);
         return ResponseEntity.noContent().build();
     }
@@ -133,6 +132,10 @@ public class PageController {
             @Parameter(description = "Page ID", required = true)
             @PathVariable Long pageId,
             Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         String username = (authentication != null) ? authentication.getName() : "system";
         PageResponse publishedPage = pageService.publishPage(pageId, username);
@@ -149,6 +152,10 @@ public class PageController {
             @PathVariable Long pageId,
             Authentication authentication) {
         
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         String username = (authentication != null) ? authentication.getName() : "system";
         PageResponse archivedPage = pageService.archivePage(pageId, username);
         return ResponseEntity.ok(archivedPage);
@@ -161,7 +168,13 @@ public class PageController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Page slug", required = true)
-            @PathVariable String slug) {
+            @PathVariable String slug,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(pageService.getPageBySlug(tenantId, slug));
     }
     
@@ -172,7 +185,13 @@ public class PageController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Page status", required = true)
-            @PathVariable PageStatus status) {
+            @PathVariable PageStatus status,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(pageService.getPagesByTenantAndStatus(tenantId, status));
     }
     
@@ -183,7 +202,13 @@ public class PageController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Page visibility", required = true)
-            @PathVariable PageVisibility visibility) {
+            @PathVariable PageVisibility visibility,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(pageService.getPagesByTenantAndVisibility(tenantId, visibility));
     }
     
@@ -194,7 +219,13 @@ public class PageController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Language code", required = true)
-            @PathVariable String language) {
+            @PathVariable String language,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(pageService.getPagesByTenantAndLanguage(tenantId, language));
     }
     
@@ -203,7 +234,13 @@ public class PageController {
     @Operation(summary = "Get default template pages")
     public ResponseEntity<List<PageResponse>> getDefaultPages(
             @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId) {
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(pageService.getDefaultPages(tenantId));
     }
     
@@ -222,7 +259,13 @@ public class PageController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Search keyword", required = true)
-            @RequestParam String keyword) {
+            @RequestParam String keyword,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(pageService.searchPages(tenantId, keyword));
     }
     
@@ -233,7 +276,13 @@ public class PageController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Page slug", required = true)
-            @PathVariable String slug) {
+            @PathVariable String slug,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(pageService.existsByTenantAndSlug(tenantId, slug));
     }
     
@@ -244,7 +293,13 @@ public class PageController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Page title", required = true)
-            @PathVariable String title) {
+            @PathVariable String title,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(pageService.existsByTenantAndTitle(tenantId, title));
     }
 }

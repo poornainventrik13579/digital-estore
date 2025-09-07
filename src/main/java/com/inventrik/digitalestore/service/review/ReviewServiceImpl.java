@@ -38,7 +38,6 @@ public class ReviewServiceImpl implements ReviewService {
         
         var user = userService.findByUsername(username);
         
-        // Check if user already reviewed this product
         Optional<Review> existingReview = reviewRepository.findByTenantIdAndUserIdAndProductIdAndStatus(
             tenantId, user.getUserId(), reviewRequest.getProductId(), "0");
         
@@ -46,7 +45,6 @@ public class ReviewServiceImpl implements ReviewService {
             throw new ValidationException("User has already reviewed this product");
         }
         
-        // Verify user purchased this product
         boolean hasPurchased = orderService.hasUserPurchasedProduct(tenantId, user.getUserId(), reviewRequest.getProductId());
         
         Long reviewId = idGeneratorService.generateId(tenantId, "ORDER");
@@ -60,8 +58,8 @@ public class ReviewServiceImpl implements ReviewService {
         review.setComment(reviewRequest.getComment());
         review.setVerified(hasPurchased);
         review.setStatus("0");
-        review.setCreatedBy(username.length() > 2 ? username.substring(0, 2) : username);
-        review.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        review.setCreatedBy(userService.getAuditCode(username));
+        review.setUpdatedBy(userService.getAuditCode(username));
         
         Review savedReview = reviewRepository.save(review);
         
@@ -121,7 +119,6 @@ public class ReviewServiceImpl implements ReviewService {
         
         var user = userService.findByUsername(username);
         
-        // Only allow user to update their own review
         if (!review.getUserId().equals(user.getUserId())) {
             throw new ValidationException("User can only update their own reviews");
         }
@@ -145,7 +142,6 @@ public class ReviewServiceImpl implements ReviewService {
         
         var user = userService.findByUsername(username);
         
-        // Only allow user to delete their own review
         if (!review.getUserId().equals(user.getUserId())) {
             throw new ValidationException("User can only delete their own reviews");
         }
@@ -210,10 +206,6 @@ public class ReviewServiceImpl implements ReviewService {
         log.info("Review verified successfully: {}", reviewId);
         return mapToResponse(verifiedReview, user.getUsername());
     }
-    
-
-    
-
     
     private ReviewResponse mapToResponse(Review review, String username) {
         return new ReviewResponse(

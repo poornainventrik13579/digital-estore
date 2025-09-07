@@ -75,22 +75,6 @@ public class CategoryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
     }
     
-    @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Create a new category (Form)")
-    public ResponseEntity<CategoryResponse> createCategory(
-            @PathVariable Integer tenantId,
-            @Valid @ModelAttribute CategoryRequest categoryRequest,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
-        CategoryResponse createdCategory = categoryService.createCategory(tenantId, username, categoryRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
-    }
     
     @PutMapping(path = "/{categoryId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
@@ -110,26 +94,19 @@ public class CategoryController {
         return ResponseEntity.ok(updatedCategory);
     }
     
-    @PutMapping(path = "/{categoryId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Update a category (Form)")
-    public ResponseEntity<CategoryResponse> updateCategory(
-            @PathVariable Integer tenantId,
-            @PathVariable Long categoryId,
-            @Valid @ModelAttribute CategoryUpdateRequest updateRequest,
-            Authentication authentication) {
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
-        CategoryResponse updatedCategory = categoryService.updateCategory(tenantId, categoryId, username, updateRequest);
-        return ResponseEntity.ok(updatedCategory);
-    }
     
     @DeleteMapping("/{categoryId}")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete a category")
     public ResponseEntity<Void> deleteCategory(
             @PathVariable Integer tenantId,
-            @PathVariable Long categoryId) {
+            @PathVariable Long categoryId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         categoryService.deleteCategory(tenantId, categoryId);
         return ResponseEntity.noContent().build();
     }
@@ -137,7 +114,14 @@ public class CategoryController {
     @GetMapping("/active")
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get active categories")
-    public ResponseEntity<List<CategoryResponse>> getActiveCategories(@PathVariable Integer tenantId) {
+    public ResponseEntity<List<CategoryResponse>> getActiveCategories(
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(categoryService.getActiveCategories(tenantId));
     }
 }

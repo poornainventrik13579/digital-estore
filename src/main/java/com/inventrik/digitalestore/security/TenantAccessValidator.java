@@ -7,9 +7,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class TenantAccessValidator {
     
-    /**
-     * Extract tenant ID from JWT token
-     */
     public Integer extractTenantIdFromJwt(Authentication authentication) {
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
             return null;
@@ -18,17 +15,11 @@ public class TenantAccessValidator {
         return jwt.getClaim("tenant_id");
     }
     
-    /**
-     * Verify that the tenant ID in the JWT matches the requested tenant ID
-     */
     public boolean verifyTenantAccess(Authentication authentication, Integer requestedTenantId) {
         Integer tokenTenantId = extractTenantIdFromJwt(authentication);
         return tokenTenantId != null && tokenTenantId.equals(requestedTenantId);
     }
     
-    /**
-     * Check if current user has system admin privileges
-     */
     public boolean isSystemAdmin(Authentication authentication) {
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
             return false;
@@ -38,9 +29,6 @@ public class TenantAccessValidator {
         return "SYSTEM_ADMIN".equals(userRole);
     }
     
-    /**
-     * Check if current user has tenant admin privileges for the requested tenant
-     */
     public boolean isTenantAdmin(Authentication authentication, Integer requestedTenantId) {
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
             return false;

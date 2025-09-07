@@ -9,12 +9,10 @@ import com.itextpdf.text.pdf.PdfWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-// import org.thymeleaf.context.Context;
-// import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
-// import java.time.LocalDateTime;
+
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
@@ -23,8 +21,6 @@ import java.util.UUID;
 @Slf4j
 public class PdfInvoiceService implements InvoiceService {
 
-    // private final SpringTemplateEngine templateEngine;
-    
     @Override
     public byte[] generateInvoice(Order order, User user) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
@@ -33,22 +29,16 @@ public class PdfInvoiceService implements InvoiceService {
             
             document.open();
             
-            // Add company header
             addCompanyHeader(document);
             
-            // Add invoice details
             addInvoiceDetails(document, order);
             
-            // Add customer details
             addCustomerDetails(document, user);
             
-            // Add items table
             addItemsTable(document, order);
             
-            // Add total
             addTotal(document, order);
             
-            // Add footer
             addFooter(document);
             
             document.close();
@@ -62,8 +52,7 @@ public class PdfInvoiceService implements InvoiceService {
     
     @Override
     public String storeInvoice(Order order, byte[] invoiceData) {
-        // In a real implementation, this would store the invoice data
-        // in a database or file system
+        
         String invoiceId = "INV-" + order.getOrderId() + "-" + UUID.randomUUID().toString().substring(0, 8);
         log.info("Storing invoice {} for order {}", invoiceId, order.getOrderId());
         return invoiceId;
@@ -71,8 +60,7 @@ public class PdfInvoiceService implements InvoiceService {
     
     @Override
     public byte[] getInvoice(String invoiceId) {
-        // In a real implementation, this would retrieve the invoice data
-        // from a database or file system
+        
         log.info("Retrieving invoice {}", invoiceId);
         throw new UnsupportedOperationException("Invoice retrieval not implemented");
     }
@@ -138,7 +126,6 @@ public class PdfInvoiceService implements InvoiceService {
         table.setWidthPercentage(100);
         table.setWidths(new float[]{6, 2, 2});
         
-        // Add table header
         PdfPCell cell = new PdfPCell(new Phrase("Description", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD)));
         cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
         cell.setPadding(5);
@@ -156,25 +143,21 @@ public class PdfInvoiceService implements InvoiceService {
         cell.setPadding(5);
         table.addCell(cell);
         
-        // Add items
         Font itemFont = new Font(Font.FontFamily.HELVETICA, 10);
         
         for (int i = 0; i < order.getOrderItems().size(); i++) {
             var item = order.getOrderItems().get(i);
             
-            // Description
             cell = new PdfPCell(new Phrase("Digital Product ID: " + item.getProductId(), itemFont));
             cell.setPadding(5);
             table.addCell(cell);
             
-            // Price
             String formattedPrice = formatCurrency(item.getPriceAtPurchase(), order.getCurrency());
             cell = new PdfPCell(new Phrase(formattedPrice, itemFont));
             cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             cell.setPadding(5);
             table.addCell(cell);
             
-            // Amount (same as price for single items)
             cell = new PdfPCell(new Phrase(formattedPrice, itemFont));
             cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             cell.setPadding(5);
@@ -191,7 +174,6 @@ public class PdfInvoiceService implements InvoiceService {
         table.setWidths(new float[]{1, 1});
         table.setSpacingBefore(10);
         
-        // Add subtotal (same as total for now)
         PdfPCell cell = new PdfPCell(new Phrase("Subtotal:", new Font(Font.FontFamily.HELVETICA, 10)));
         cell.setBorder(Rectangle.NO_BORDER);
         cell.setPadding(5);
@@ -205,7 +187,6 @@ public class PdfInvoiceService implements InvoiceService {
         cell.setHorizontalAlignment(Element.ALIGN_RIGHT);
         table.addCell(cell);
         
-        // Add total
         cell = new PdfPCell(new Phrase("Total:", new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD)));
         cell.setBorder(Rectangle.NO_BORDER);
         cell.setPadding(5);

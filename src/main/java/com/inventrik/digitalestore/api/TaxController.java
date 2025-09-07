@@ -67,20 +67,6 @@ public class TaxController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTax);
     }
     
-    @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Create a new tax rule (Form)")
-    public ResponseEntity<TaxResponse> createTax(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Valid @ModelAttribute TaxRequest taxRequest,
-            Authentication authentication) {
-        
-        taxRequest.setTenantId(tenantId);
-        String username = (authentication != null) ? authentication.getName() : "system";
-        TaxResponse createdTax = taxService.createTax(username, taxRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdTax);
-    }
     
     @PutMapping(path = "/{taxId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
@@ -98,21 +84,6 @@ public class TaxController {
         return ResponseEntity.ok(updatedTax);
     }
     
-    @PutMapping(path = "/{taxId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Update a tax rule (Form)")
-    public ResponseEntity<TaxResponse> updateTax(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Tax ID", required = true)
-            @PathVariable Integer taxId,
-            @Valid @ModelAttribute TaxUpdateRequest updateRequest,
-            Authentication authentication) {
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
-        TaxResponse updatedTax = taxService.updateTax(tenantId, taxId, username, updateRequest);
-        return ResponseEntity.ok(updatedTax);
-    }
     
     @DeleteMapping("/{taxId}")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")

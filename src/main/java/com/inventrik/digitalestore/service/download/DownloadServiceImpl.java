@@ -73,11 +73,10 @@ public class DownloadServiceImpl implements DownloadService {
     @Override
     @Transactional
     public DigitalProductDetailsResponse createDigitalProductDetails(Integer tenantId, String username, DigitalProductDetailsRequest request) {
-        // Verify product exists
+        
         productRepository.findByTenantIdAndProductId(tenantId, request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + request.getProductId()));
         
-        // Check if digital details already exist
         if (digitalProductDetailsRepository.existsByTenantIdAndProductId(tenantId, request.getProductId())) {
             throw new ResourceNotFoundException("Digital product details already exist for product: " + request.getProductId());
         }
@@ -92,7 +91,7 @@ public class DownloadServiceImpl implements DownloadService {
         digitalDetails.setVersion(request.getVersion());
         digitalDetails.setStatus(request.getStatus() != null ? request.getStatus() : "0");
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+        String truncatedUsername = userService.getAuditCode(username);
         digitalDetails.setCreatedBy(truncatedUsername);
         digitalDetails.setUpdatedBy(truncatedUsername);
         digitalDetails.setCreated(LocalDateTime.now());
@@ -108,7 +107,6 @@ public class DownloadServiceImpl implements DownloadService {
         DigitalProductDetails digitalDetails = digitalProductDetailsRepository.findByTenantIdAndProductId(tenantId, productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Digital product details not found for product: " + productId));
         
-        // Update fields
         if (request.getFileUrl() != null) digitalDetails.setFileUrl(request.getFileUrl());
         if (request.getFileSize() != null) digitalDetails.setFileSize(request.getFileSize());
         if (request.getFileFormat() != null) digitalDetails.setFileFormat(request.getFileFormat());
@@ -116,7 +114,7 @@ public class DownloadServiceImpl implements DownloadService {
         if (request.getVersion() != null) digitalDetails.setVersion(request.getVersion());
         if (request.getStatus() != null) digitalDetails.setStatus(request.getStatus());
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+        String truncatedUsername = userService.getAuditCode(username);
         digitalDetails.setUpdatedBy(truncatedUsername);
         digitalDetails.setUpdated(LocalDateTime.now());
         

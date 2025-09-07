@@ -4,6 +4,7 @@ import com.inventrik.digitalestore.domain.user.UserRole;
 import com.inventrik.digitalestore.dto.request.TenantUserSignupRequest;
 import com.inventrik.digitalestore.dto.request.TenantUserUpdateRequest;
 import com.inventrik.digitalestore.dto.response.UserResponse;
+import com.inventrik.digitalestore.security.TenantAccessValidator;
 import com.inventrik.digitalestore.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/api/v1/tenants/{tenantId}/users")
 @RequiredArgsConstructor
 @Tag(name = "Tenant User Management", description = "Inventrik tenant-scoped user management APIs")
 @SecurityRequirement(name = "oauth2")
@@ -30,52 +31,18 @@ import java.util.List;
 public class TenantUserManagementController {
     
     private final UserService userService;
+    private final TenantAccessValidator tenantAccessValidator;
     
-    /**
-     * Extract tenant ID from JWT token
-     */
-    private Integer extractTenantIdFromJwt(Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-            return null;
-        }
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        return jwt.getClaim("tenant_id");
-    }
-    
-    /**
-     * Extract user ID from JWT token
-     */
-    private Long extractUserIdFromJwt(Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-            return null;
-        }
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        return jwt.getClaim("user_id");
-    }
-    
-    /**
-     * Check if current user has admin privileges in their tenant
-     */
-    private boolean hasAdminPrivileges(Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-            return false;
-        }
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        String userRole = jwt.getClaim("user_role");
-        return UserRole.TENANT_ADMIN.name().equals(userRole) || UserRole.SYSTEM_ADMIN.name().equals(userRole);
-    }
     
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get all users in tenant", 
                description = "Get all users in the authenticated user's tenant (Admin only)")
-    public ResponseEntity<List<UserResponse>> getTenantUsers(Authentication authentication) {
+    public ResponseEntity<List<UserResponse>> getTenantUsers(
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
         
-        Integer tenantId = extractTenantIdFromJwt(authentication);
-        if (tenantId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        
-        if (!hasAdminPrivileges(authentication)) {
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
@@ -87,22 +54,16 @@ public class TenantUserManagementController {
     }
     
     @GetMapping("/{userId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get user details", 
                description = "Get user details within tenant (user can access own data, admins can access any user)")
     public ResponseEntity<UserResponse> getUser(
+            @PathVariable Integer tenantId,
             @Parameter(description = "User ID", required = true)
             @PathVariable Long userId,
             Authentication authentication) {
         
-        Integer tenantId = extractTenantIdFromJwt(authentication);
-        Long currentUserId = extractUserIdFromJwt(authentication);
-        
-        if (tenantId == null || currentUserId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        
-        // User can access their own data, or admin can access any user in their tenant
-        if (!userId.equals(currentUserId) && !hasAdminPrivileges(authentication)) {
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
@@ -114,18 +75,15 @@ public class TenantUserManagementController {
     }
     
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Add user to tenant", 
                description = "Add new user to tenant (Tenant Admin only)")
     public ResponseEntity<UserResponse> createUser(
+            @PathVariable Integer tenantId,
             @Valid @RequestBody TenantUserSignupRequest userRequest,
             Authentication authentication) {
         
-        Integer tenantId = extractTenantIdFromJwt(authentication);
-        if (tenantId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        
-        if (!hasAdminPrivileges(authentication)) {
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
@@ -139,23 +97,17 @@ public class TenantUserManagementController {
     }
     
     @PutMapping("/{userId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Update user", 
                description = "Update user details (user can update own data, admins can update any user)")
     public ResponseEntity<UserResponse> updateUser(
+            @PathVariable Integer tenantId,
             @Parameter(description = "User ID", required = true)
             @PathVariable Long userId,
             @Valid @RequestBody TenantUserUpdateRequest updateRequest,
             Authentication authentication) {
         
-        Integer tenantId = extractTenantIdFromJwt(authentication);
-        Long currentUserId = extractUserIdFromJwt(authentication);
-        
-        if (tenantId == null || currentUserId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        
-        // User can update their own data, or admin can update any user in their tenant
-        if (!userId.equals(currentUserId) && !hasAdminPrivileges(authentication)) {
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
@@ -169,27 +121,17 @@ public class TenantUserManagementController {
     }
     
     @DeleteMapping("/{userId}")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete user from tenant", 
                description = "Delete user from tenant (Tenant Admin only, cannot delete self)")
     public ResponseEntity<Void> deleteUser(
+            @PathVariable Integer tenantId,
             @Parameter(description = "User ID", required = true)
             @PathVariable Long userId,
             Authentication authentication) {
         
-        Integer tenantId = extractTenantIdFromJwt(authentication);
-        Long currentUserId = extractUserIdFromJwt(authentication);
-        
-        if (tenantId == null || currentUserId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        
-        if (!hasAdminPrivileges(authentication)) {
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        // Prevent admin from deleting themselves
-        if (userId.equals(currentUserId)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         
         log.info("Delete user request for user: {} in tenant: {}", userId, tenantId);
@@ -200,16 +142,14 @@ public class TenantUserManagementController {
     }
     
     @GetMapping("/active")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get active users in tenant", 
                description = "Get all active users in tenant (Admin only)")
-    public ResponseEntity<List<UserResponse>> getActiveTenantUsers(Authentication authentication) {
+    public ResponseEntity<List<UserResponse>> getActiveTenantUsers(
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
         
-        Integer tenantId = extractTenantIdFromJwt(authentication);
-        if (tenantId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        
-        if (!hasAdminPrivileges(authentication)) {
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
@@ -219,84 +159,34 @@ public class TenantUserManagementController {
         
         return ResponseEntity.ok(users);
     }
-    
-    @GetMapping("/admins")
-    @Operation(summary = "Get tenant admins", 
-               description = "Get all tenant admins (Admin only)")
-    public ResponseEntity<List<UserResponse>> getTenantAdmins(Authentication authentication) {
-        
-        Integer tenantId = extractTenantIdFromJwt(authentication);
-        if (tenantId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        
-        if (!hasAdminPrivileges(authentication)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        log.info("Get tenant admins request for tenant: {}", tenantId);
-        
-        List<UserResponse> admins = userService.getTenantAdmins(tenantId);
-        
-        return ResponseEntity.ok(admins);
-    }
-    
-    @PatchMapping("/{userId}/promote")
-    @Operation(summary = "Promote user to tenant admin", 
-               description = "Promote user to tenant admin role (Tenant Admin only)")
-    public ResponseEntity<UserResponse> promoteToAdmin(
-            @Parameter(description = "User ID", required = true)
-            @PathVariable Long userId,
+
+    @GetMapping("/email/{email}")
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN') or @userService.isUserWithEmail(#email, authentication.name)")
+    @Operation(summary = "Find user by email")
+    public ResponseEntity<UserResponse> findByEmail(
+            @PathVariable Integer tenantId,
+            @PathVariable String email,
             Authentication authentication) {
         
-        Integer tenantId = extractTenantIdFromJwt(authentication);
-        if (tenantId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        
-        if (!hasAdminPrivileges(authentication)) {
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
-        String updatedBy = authentication.getName();
-        
-        log.info("Promote user to admin request for user: {} in tenant: {}", userId, tenantId);
-        
-        UserResponse promotedUser = userService.promoteUserToAdmin(tenantId, userId, updatedBy);
-        
-        return ResponseEntity.ok(promotedUser);
+        return ResponseEntity.ok(userService.findByEmail(email));
     }
     
-    @PatchMapping("/{userId}/demote")
-    @Operation(summary = "Demote admin to regular user", 
-               description = "Demote tenant admin to regular user (Tenant Admin only)")
-    public ResponseEntity<UserResponse> demoteFromAdmin(
-            @Parameter(description = "User ID", required = true)
-            @PathVariable Long userId,
+    @GetMapping("/me")
+    @Operation(summary = "Get current user details")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<UserResponse> getCurrentUser(
+            @PathVariable Integer tenantId,
             Authentication authentication) {
         
-        Integer tenantId = extractTenantIdFromJwt(authentication);
-        Long currentUserId = extractUserIdFromJwt(authentication);
-        
-        if (tenantId == null || currentUserId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        
-        if (!hasAdminPrivileges(authentication)) {
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
-        // Prevent admin from demoting themselves
-        if (userId.equals(currentUserId)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-        
-        String updatedBy = authentication.getName();
-        
-        log.info("Demote admin to user request for user: {} in tenant: {}", userId, tenantId);
-        
-        UserResponse demotedUser = userService.demoteAdminToUser(tenantId, userId, updatedBy);
-        
-        return ResponseEntity.ok(demotedUser);
+        String username = authentication.getName();
+        return ResponseEntity.ok(userService.findByUsername(username));
     }
 }

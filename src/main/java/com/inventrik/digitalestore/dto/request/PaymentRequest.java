@@ -34,7 +34,6 @@ public class PaymentRequest {
     @NotNull(message = "Payment method is required")
     private String paymentMethod;
     
-    // For Stripe integration
     @Schema(description = "Stripe token or payment method ID", example = "pm_card_visa")
     private String paymentToken;
 }

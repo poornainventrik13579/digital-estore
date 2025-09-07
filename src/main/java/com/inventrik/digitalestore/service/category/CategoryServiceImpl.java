@@ -25,7 +25,6 @@ public class CategoryServiceImpl implements CategoryService {
     private final IdGeneratorService idGeneratorService;
     private final UserService userService;
     
-    // Utility method to convert Entity to DTO
     private CategoryResponse mapToDTO(Category category) {
         return new CategoryResponse(
             category.getCategoryId(),
@@ -55,7 +54,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public CategoryResponse createCategory(Integer tenantId, String username, CategoryRequest categoryRequest) {
-        // Generate a new category ID
+        
         Long newCategoryId = idGeneratorService.generateId(tenantId, "CATEGORY");
         
         Category category = new Category();
@@ -63,10 +62,9 @@ public class CategoryServiceImpl implements CategoryService {
         category.setCategoryId(newCategoryId);
         category.setCategoryName(categoryRequest.getCategoryName());
         category.setDescription(categoryRequest.getDescription());
-        category.setStatus("0"); // Active status
-        category.setProducts(new ArrayList<>()); // Initialize empty products list
+        category.setStatus("0"); 
+        category.setProducts(new ArrayList<>()); 
         
-        // Ensure username is truncated to 2 characters as per DB schema
         category.setCreatedBy(userService.getAuditCode(username));
         category.setUpdatedBy(userService.getAuditCode(username));
         category.setCreated(LocalDateTime.now());
@@ -93,8 +91,7 @@ public class CategoryServiceImpl implements CategoryService {
             category.setStatus(updateRequest.getStatus());
         }
         
-        // Ensure username is truncated to 2 characters as per DB schema
-        category.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        category.setUpdatedBy(userService.getAuditCode(username));
         category.setUpdated(LocalDateTime.now());
         
         Category updatedCategory = categoryRepository.save(category);
@@ -105,7 +102,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void deleteCategory(Integer tenantId, Long categoryId) {
-        // Check if category exists
+        
         if (!categoryRepository.findByTenantIdAndCategoryId(tenantId, categoryId).isPresent()) {
             throw new ResourceNotFoundException("Category not found with id: " + categoryId);
         }

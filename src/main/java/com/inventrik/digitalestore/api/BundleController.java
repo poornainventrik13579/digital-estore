@@ -85,7 +85,12 @@ public class BundleController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<BundleResponse> getBundle(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
-            @Parameter(description = "Bundle ID") @PathVariable Long bundleId) {
+            @Parameter(description = "Bundle ID") @PathVariable Long bundleId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Getting bundle {} for tenant: {}", bundleId, tenantId);
         BundleResponse bundle = bundleService.getBundle(tenantId, bundleId);
@@ -165,7 +170,12 @@ public class BundleController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<BundleResponse>> searchBundles(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
-            @Parameter(description = "Search term") @RequestParam String name) {
+            @Parameter(description = "Search term") @RequestParam String name,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Searching bundles: name={}, tenantId={}", name, tenantId);
         List<BundleResponse> bundles = bundleService.searchBundles(tenantId, name);
@@ -183,7 +193,12 @@ public class BundleController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<BigDecimal> calculateBundlePrice(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
-            @Valid @RequestBody List<BundleRequest.BundleItemRequest> bundleItems) {
+            @Valid @RequestBody List<BundleRequest.BundleItemRequest> bundleItems,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Calculating bundle price: tenantId={}", tenantId);
         BigDecimal price = bundleService.calculateBundlePrice(tenantId, bundleItems);
@@ -200,7 +215,12 @@ public class BundleController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<BundleResponse>> getBundlesContainingProduct(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
-            @Parameter(description = "Product ID") @PathVariable Long productId) {
+            @Parameter(description = "Product ID") @PathVariable Long productId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Getting bundles containing product: productId={}, tenantId={}", productId, tenantId);
         List<BundleResponse> bundles = bundleService.getBundlesContainingProduct(tenantId, productId);
@@ -287,7 +307,12 @@ public class BundleController {
     })
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Long> getBundleCount(
-            @Parameter(description = "Tenant ID") @PathVariable Integer tenantId) {
+            @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Getting bundle count for tenant: {}", tenantId);
         Long count = bundleService.getBundleCount(tenantId);

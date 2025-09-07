@@ -4,20 +4,12 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Properties;
 
-/**
- * Utility class for test-related operations
- */
 public class TestUtils {
 
     private TestUtils() {
-        // Utility class - prevent instantiation
+        
     }
 
-    /**
-     * Extract access token from authentication response body
-     * @param responseBody the JSON response body from authentication
-     * @return the access token
-     */
     public static String extractAccessToken(String responseBody) {
         String searchStr = "\"access_token\":\"";
         int startIndex = responseBody.indexOf(searchStr);
@@ -32,14 +24,10 @@ public class TestUtils {
         return responseBody.substring(startIndex, endIndex);
     }
 
-    /**
-     * Load Stripe API key from application.properties or environment variable
-     * @return the Stripe API key
-     */
     public static String loadStripeApiKey() {
         Properties props = new Properties();
         try {
-            // Try loading from application.properties
+            
             InputStream input = new FileInputStream("src/main/resources/application.properties");
             props.load(input);
             String apiKey = props.getProperty("stripe.api.key");
@@ -53,7 +41,6 @@ public class TestUtils {
             System.out.println("Could not load from properties: " + e.getMessage());
         }
         
-        // Try environment variable as fallback
         String envApiKey = System.getenv("STRIPE_TEST_KEY");
         if (envApiKey != null && !envApiKey.isEmpty()) {
             System.out.println("Successfully loaded API key from environment variable");

@@ -10,10 +10,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Generic API response wrapper for consistent response format.
- * Provides success/error status, data, messages and metadata.
- */
 @Data
 @Builder
 @NoArgsConstructor

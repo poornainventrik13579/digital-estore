@@ -2,9 +2,11 @@ package com.inventrik.digitalestore.api;
 
 import com.inventrik.digitalestore.dto.response.CategoryResponse;
 import com.inventrik.digitalestore.service.category.CategoryService;
+import com.inventrik.digitalestore.service.tenant.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,10 +19,23 @@ import java.util.List;
 public class PublicCategoryController {
 
     private final CategoryService categoryService;
+    private final TenantService tenantService;
+    
+    private boolean validateTenant(Integer tenantId) {
+        try {
+            var tenant = tenantService.getTenant(tenantId);
+            return "A".equals(tenant.getStatus());
+        } catch (Exception e) {
+            return false;
+        }
+    }
     
     @GetMapping
     @Operation(summary = "Get all categories")
     public ResponseEntity<List<CategoryResponse>> getAllCategories(@PathVariable Integer tenantId) {
+        if (!validateTenant(tenantId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         return ResponseEntity.ok(categoryService.getAllCategories(tenantId));
     }
     
@@ -29,6 +44,9 @@ public class PublicCategoryController {
     public ResponseEntity<CategoryResponse> getCategory(
             @PathVariable Integer tenantId,
             @PathVariable Long categoryId) {
+        if (!validateTenant(tenantId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         return ResponseEntity.ok(categoryService.getCategory(tenantId, categoryId));
     }
 } 

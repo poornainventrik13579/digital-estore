@@ -1,6 +1,5 @@
 package com.inventrik.digitalestore.event;
 
-// import com.inventrik.digitalestore.domain.order.Order;
 import com.inventrik.digitalestore.service.notification.EmailNotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

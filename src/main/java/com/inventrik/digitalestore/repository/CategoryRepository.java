@@ -12,19 +12,14 @@ import java.util.Optional;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     
-    // Find category by tenant and category ID
     Optional<Category> findByTenantIdAndCategoryId(Integer tenantId, Long categoryId);
     
-    // Find all categories for a tenant
     List<Category> findByTenantId(Integer tenantId);
     
-    // Find active categories for a tenant
     List<Category> findByTenantIdAndStatus(Integer tenantId, String status);
     
-    // Delete category by tenant and category ID
     void deleteByTenantIdAndCategoryId(Integer tenantId, Long categoryId);
     
-    // Fetch categories with products efficiently (prevents N+1 query)
     @Query("SELECT DISTINCT c FROM Category c LEFT JOIN FETCH c.products WHERE c.tenantId = :tenantId")
     List<Category> findByTenantIdWithProducts(@Param("tenantId") Integer tenantId);
 }

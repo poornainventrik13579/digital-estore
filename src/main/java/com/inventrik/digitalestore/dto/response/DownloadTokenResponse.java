@@ -13,5 +13,5 @@ public class DownloadTokenResponse {
     private String token;
     private LocalDateTime expiryDate;
     private String downloadUrl;
-    private Integer remainingDownloads; // -1 for unlimited
+    private Integer remainingDownloads; 
 }

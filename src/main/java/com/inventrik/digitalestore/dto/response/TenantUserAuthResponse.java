@@ -15,9 +15,8 @@ public class TenantUserAuthResponse {
     
     private String accessToken;
     private String tokenType = "Bearer";
-    private int expiresIn = 3600; // 1 hour in seconds
+    private int expiresIn = 3600; 
     
-    // User information
     private Long userId;
     private String username;
     private String email;
@@ -27,13 +26,11 @@ public class TenantUserAuthResponse {
     private UserRole userRole;
     private UserType userType;
     
-    // Tenant information
     private Integer tenantId;
     private String shopName;
     private String subdomain;
     private String domainName;
     
-    // Metadata
     private LocalDateTime loginTime;
     
     public TenantUserAuthResponse(String accessToken, Long userId, String username, String email,

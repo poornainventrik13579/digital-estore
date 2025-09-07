@@ -7,9 +7,6 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-/**
- * Entity for storing payment audit events.
- */
 @Entity
 @Table(name = "payment_audit_log")
 @Data

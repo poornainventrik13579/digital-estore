@@ -26,6 +26,5 @@ public class PaymentResponse {
     private LocalDateTime created;
     private LocalDateTime updated;
     
-    // For Stripe client-side integration
     private String clientSecret;
 }

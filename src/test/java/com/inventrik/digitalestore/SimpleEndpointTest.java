@@ -17,36 +17,28 @@ public class SimpleEndpointTest {
         try {
             System.out.println("=== Digital E-Store API Testing ===");
             
-            // Test 1: OAuth2 Authentication
             System.out.println("\n1. Testing OAuth2 Authentication...");
             String accessToken = getOAuth2Token("web-client", "web-secret");
             System.out.println("✓ OAuth2 Authentication successful");
             
-            // Test 2: Categories Endpoint
             System.out.println("\n2. Testing Categories Endpoint...");
             testCategoriesEndpoint(accessToken);
             
-            // Test 3: Products Endpoint
             System.out.println("\n3. Testing Products Endpoint...");
             testProductsEndpoint(accessToken);
             
-            // Test 4: Users Endpoint
             System.out.println("\n4. Testing Users Endpoint...");
             testUsersEndpoint(accessToken);
             
-            // Test 5: Orders Endpoint
             System.out.println("\n5. Testing Orders Endpoint...");
             testOrdersEndpoint(accessToken);
             
-            // Test 6: Payments Endpoint
             System.out.println("\n6. Testing Payments Endpoint...");
             testPaymentsEndpoint(accessToken);
             
-            // Test 7: Downloads Endpoint
             System.out.println("\n7. Testing Downloads Endpoint...");
             testDownloadsEndpoint(accessToken);
             
-            // Test 8: Basic Authentication
             System.out.println("\n8. Testing Basic Authentication...");
             testBasicAuth();
             

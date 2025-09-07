@@ -31,11 +31,26 @@ public class Order {
     @Column(name = "user_id")
     private Long userId;
     
+    @Column(name = "order_number", length = 50, nullable = false)
+    private String orderNumber;
+    
     @Column(name = "order_date", nullable = false)
     private LocalDateTime orderDate;
     
-    @Column(name = "currency", length = 3)
-    private String currency;
+    @Column(name = "currency_code", length = 3, nullable = false)
+    private String currencyCode;
+    
+    @Column(name = "subtotal", nullable = false, precision = 10, scale = 2)
+    private BigDecimal subtotal;
+    
+    @Column(name = "tax_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal taxAmount = BigDecimal.ZERO;
+    
+    @Column(name = "shipping_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal shippingAmount = BigDecimal.ZERO;
+    
+    @Column(name = "discount_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
     
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
@@ -84,6 +99,14 @@ public class Order {
         orderItems.remove(orderItem);
         orderItem.setOrder(null);
         orderItem.setOrderId(null);
+    }
+    
+    public String getCurrency() {
+        return this.currencyCode;
+    }
+    
+    public void setCurrency(String currency) {
+        this.currencyCode = currency;
     }
     
     public static class OrderPK implements Serializable {

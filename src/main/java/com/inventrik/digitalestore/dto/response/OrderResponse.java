@@ -15,8 +15,13 @@ public class OrderResponse {
     private Long orderId;
     private Integer tenantId;
     private Long userId;
+    private String orderNumber;
     private LocalDateTime orderDate;
-    private String currency;
+    private String currencyCode;
+    private BigDecimal subtotal;
+    private BigDecimal taxAmount;
+    private BigDecimal shippingAmount;
+    private BigDecimal discountAmount;
     private BigDecimal totalAmount;
     private BigDecimal exchangeRate;
     private String status;

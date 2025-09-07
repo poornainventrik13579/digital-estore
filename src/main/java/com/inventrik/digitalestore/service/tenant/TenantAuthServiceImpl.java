@@ -36,7 +36,6 @@ public class TenantAuthServiceImpl implements TenantAuthService {
     public TenantAuthResponse signup(TenantSignupRequest signupRequest) {
         log.info("Processing tenant signup for email: {}", signupRequest.getShopEmail());
         
-        // Validate uniqueness
         if (emailExists(signupRequest.getShopEmail())) {
             throw new BusinessException("A tenant with this email already exists");
         }
@@ -49,7 +48,6 @@ public class TenantAuthServiceImpl implements TenantAuthService {
             throw new BusinessException("A tenant with this domain name already exists");
         }
         
-        // Create new tenant
         Tenant tenant = new Tenant();
         tenant.setTenantId(idGeneratorService.generateTenantId());
         tenant.setShopName(signupRequest.getShopName());
@@ -63,20 +61,17 @@ public class TenantAuthServiceImpl implements TenantAuthService {
         tenant.setMultiCurrency(signupRequest.getMultiCurrency());
         tenant.setTaxId(signupRequest.getTaxId());
         tenant.setTimezone(signupRequest.getTimezone());
-        tenant.setStatus("A"); // Active
+        tenant.setStatus("A"); 
         tenant.setCreatedBy("tenant-self");
         tenant.setUpdatedBy("tenant-self");
         
-        // Hash password
         String hashedPassword = passwordEncoder.encode(signupRequest.getPassword());
         tenant.setStorePassword(hashedPassword);
         
-        // Save tenant
         tenant = tenantRepository.save(tenant);
         
         log.info("Tenant created successfully with ID: {}", tenant.getTenantId());
         
-        // Generate JWT token
         String token = generateJwtToken(tenant);
         
         return new TenantAuthResponse(
@@ -93,16 +88,13 @@ public class TenantAuthServiceImpl implements TenantAuthService {
     public TenantAuthResponse login(TenantLoginRequest loginRequest) {
         log.info("Processing tenant login for email: {}", loginRequest.getEmail());
         
-        // Find tenant by email
         Tenant tenant = tenantRepository.findByShopEmail(loginRequest.getEmail())
             .orElseThrow(() -> new BusinessException("Invalid email or password"));
         
-        // Check if tenant is active
         if (!"A".equals(tenant.getStatus())) {
             throw new BusinessException("Tenant account is not active");
         }
         
-        // Verify password
         if (tenant.getStorePassword() == null || 
             !passwordEncoder.matches(loginRequest.getPassword(), tenant.getStorePassword())) {
             throw new BusinessException("Invalid email or password");
@@ -110,7 +102,6 @@ public class TenantAuthServiceImpl implements TenantAuthService {
         
         log.info("Tenant login successful for ID: {}", tenant.getTenantId());
         
-        // Generate JWT token
         String token = generateJwtToken(tenant);
         
         return new TenantAuthResponse(

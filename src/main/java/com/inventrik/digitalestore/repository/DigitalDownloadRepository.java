@@ -12,22 +12,16 @@ import java.util.List;
 @Repository
 public interface DigitalDownloadRepository extends JpaRepository<DigitalDownload, Long> {
     
-    // Find downloads by tenant and order item
     List<DigitalDownload> findByTenantIdAndOrderItemId(Integer tenantId, Long orderItemId);
     
-    // Find all downloads for a tenant
     List<DigitalDownload> findByTenantId(Integer tenantId);
     
-    // Find downloads by IP address
     List<DigitalDownload> findByIpAddress(String ipAddress);
     
-    // Find downloads by date range
     List<DigitalDownload> findByDownloadDateBetween(LocalDateTime startDate, LocalDateTime endDate);
     
-    // Find downloads by tenant and status
     List<DigitalDownload> findByTenantIdAndStatus(Integer tenantId, String status);
     
-    // Find downloads by user through proper join query
     @Query("""
         SELECT dd FROM DigitalDownload dd 
         WHERE dd.tenantId = :tenantId 

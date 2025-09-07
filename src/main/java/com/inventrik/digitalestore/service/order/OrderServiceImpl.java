@@ -43,7 +43,6 @@ public class OrderServiceImpl implements OrderService {
     private final IdGeneratorService idGeneratorService;
     private final UserService userService;
     
-    // Utility method to convert Order entity to OrderResponse DTO
     private OrderResponse mapToDTO(Order order) {
         List<OrderItemResponse> orderItemResponses = order.getOrderItems().stream()
                 .map(this::mapToOrderItemDTO)
@@ -53,8 +52,13 @@ public class OrderServiceImpl implements OrderService {
             order.getOrderId(),
             order.getTenantId(),
             order.getUserId(),
+            order.getOrderNumber(),
             order.getOrderDate(),
-            order.getCurrency(),
+            order.getCurrencyCode(),
+            order.getSubtotal(),
+            order.getTaxAmount(),
+            order.getShippingAmount(),
+            order.getDiscountAmount(),
             order.getTotalAmount(),
             order.getExchangeRate(),
             order.getStatus(),
@@ -64,7 +68,6 @@ public class OrderServiceImpl implements OrderService {
         );
     }
     
-    // Utility method to convert OrderItem entity to OrderItemResponse DTO
     private OrderItemResponse mapToOrderItemDTO(OrderItem orderItem) {
         return new OrderItemResponse(
             orderItem.getOrderItemId(),
@@ -95,16 +98,15 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public OrderResponse createOrder(Integer tenantId, String username, OrderRequest orderRequest) {
-        // Verify user exists first
+        
         userRepository.findByTenantIdAndUserId(tenantId, orderRequest.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + orderRequest.getUserId()));
         
-        // Validate discount code before generating order ID
         BigDecimal finalAmount = orderRequest.getTotalAmount();
         BigDecimal discountAmount = BigDecimal.ZERO;
         
         if (orderRequest.getDiscountCode() != null && !orderRequest.getDiscountCode().trim().isEmpty()) {
-            // Validate discount code without applying it yet
+            
             DiscountValidationResponse validation = discountService.validateDiscountCode(tenantId, 
                 new ValidateDiscountRequest(orderRequest.getDiscountCode().trim(), orderRequest.getTotalAmount(), orderRequest.getUserId()));
             
@@ -115,10 +117,8 @@ public class OrderServiceImpl implements OrderService {
             finalAmount = validation.getFinalAmount();
         }
         
-        // Generate order ID only after all validations pass
         Long newOrderId = idGeneratorService.generateId(tenantId, "ORDER");
         
-        // Now apply the discount if valid
         if (orderRequest.getDiscountCode() != null && !orderRequest.getDiscountCode().trim().isEmpty()) {
             try {
                 discountAmount = discountService.applyDiscountToOrder(
@@ -140,7 +140,10 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderId(newOrderId);
         order.setUserId(orderRequest.getUserId());
         order.setOrderDate(LocalDateTime.now());
-        order.setCurrency(orderRequest.getCurrency());
+        order.setCurrencyCode(orderRequest.getCurrency());
+        order.setOrderNumber("ORD-" + newOrderId);
+        order.setSubtotal(orderRequest.getTotalAmount());
+        order.setDiscountAmount(discountAmount);
         order.setTotalAmount(finalAmount);
         order.setExchangeRate(orderRequest.getExchangeRate());
         order.setStatus(OrderStatus.PENDING.getDisplayName());
@@ -148,13 +151,11 @@ public class OrderServiceImpl implements OrderService {
         order.setCreatedBy(userService.getAuditCode(username));
         order.setUpdatedBy(userService.getAuditCode(username));
         
-        // Save order first to get the ID
         Order savedOrder = orderRepository.save(order);
         
-        // Set order items
         List<OrderItem> orderItems = new ArrayList<>();
         for (OrderItemRequest itemRequest : orderRequest.getOrderItems()) {
-            // Verify product exists
+            
             productRepository.findByTenantIdAndProductId(tenantId, itemRequest.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
             
@@ -173,23 +174,30 @@ public class OrderServiceImpl implements OrderService {
             orderItems.add(orderItem);
         }
         
-        // Add items to the order
+        BigDecimal itemsTotal = orderItems.stream()
+                .map(OrderItem::getPriceAtPurchase)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        if (itemsTotal.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("Order items total must be greater than zero");
+        }
+        
+        savedOrder.setSubtotal(itemsTotal);
+        
         for (OrderItem item : orderItems) {
             savedOrder.getOrderItems().add(item);
             item.setOrder(savedOrder);
         }
         
-        // Save again with items
         savedOrder = orderRepository.save(savedOrder);
         
-        // Publish order created event (optional)
         eventPublisher.publishEvent(new OrderStatusChangeEvent(savedOrder, null, savedOrder.getStatus()));
         
         return mapToDTO(savedOrder);
     }
     
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public OrderResponse updateOrder(Integer tenantId, Long orderId, String username, OrderUpdateRequest updateRequest) {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
@@ -205,13 +213,11 @@ public class OrderServiceImpl implements OrderService {
             }
         }
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
-        order.setUpdatedBy(truncatedUsername);
+        order.setUpdatedBy(userService.getAuditCode(username));
         order.setUpdated(LocalDateTime.now());
         
         Order updatedOrder = orderRepository.save(order);
         
-        // If status has changed, publish an event
         if (!oldStatus.equals(updatedOrder.getStatus())) {
             eventPublisher.publishEvent(new OrderStatusChangeEvent(updatedOrder, oldStatus, updatedOrder.getStatus()));
         }
@@ -220,7 +226,7 @@ public class OrderServiceImpl implements OrderService {
     }
     
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public void deleteOrder(Integer tenantId, Long orderId) {
         if (!orderRepository.findByTenantIdAndOrderId(tenantId, orderId).isPresent()) {
             throw new ResourceNotFoundException("Order not found with id: " + orderId);
@@ -257,13 +263,11 @@ public class OrderServiceImpl implements OrderService {
         String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.COMPLETED.getDisplayName());
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
-        order.setUpdatedBy(truncatedUsername);
+        order.setUpdatedBy(userService.getAuditCode(username));
         order.setUpdated(LocalDateTime.now());
         
         Order updatedOrder = orderRepository.save(order);
         
-        // Publish status change event
         eventPublisher.publishEvent(new OrderStatusChangeEvent(updatedOrder, oldStatus, updatedOrder.getStatus()));
         
         return mapToDTO(updatedOrder);
@@ -284,13 +288,11 @@ public class OrderServiceImpl implements OrderService {
         String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.CANCELLED.getDisplayName());
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
-        order.setUpdatedBy(truncatedUsername);
+        order.setUpdatedBy(userService.getAuditCode(username));
         order.setUpdated(LocalDateTime.now());
         
         Order updatedOrder = orderRepository.save(order);
         
-        // Publish status change event
         eventPublisher.publishEvent(new OrderStatusChangeEvent(updatedOrder, oldStatus, updatedOrder.getStatus()));
         
         return mapToDTO(updatedOrder);
@@ -309,13 +311,11 @@ public class OrderServiceImpl implements OrderService {
         String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.REFUNDED.getDisplayName());
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
-        order.setUpdatedBy(truncatedUsername);
+        order.setUpdatedBy(userService.getAuditCode(username));
         order.setUpdated(LocalDateTime.now());
         
         Order updatedOrder = orderRepository.save(order);
         
-        // Publish status change event
         eventPublisher.publishEvent(new OrderStatusChangeEvent(updatedOrder, oldStatus, updatedOrder.getStatus()));
         
         return mapToDTO(updatedOrder);

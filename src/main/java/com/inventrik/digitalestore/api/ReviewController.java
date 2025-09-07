@@ -3,6 +3,7 @@ package com.inventrik.digitalestore.api;
 import com.inventrik.digitalestore.dto.request.ReviewRequest;
 import com.inventrik.digitalestore.dto.response.ProductRatingResponse;
 import com.inventrik.digitalestore.dto.response.ReviewResponse;
+import com.inventrik.digitalestore.security.TenantAccessValidator;
 import com.inventrik.digitalestore.service.review.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,6 +27,7 @@ import java.util.List;
 public class ReviewController {
     
     private final ReviewService reviewService;
+    private final TenantAccessValidator tenantAccessValidator;
     
     @PostMapping
     @PreAuthorize("hasRole('ROLE_USER')")
@@ -35,6 +37,10 @@ public class ReviewController {
             @Valid @RequestBody ReviewRequest reviewRequest,
             Authentication authentication) {
         
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         log.info("Creating review for product {} by user {}", reviewRequest.getProductId(), authentication.getName());
         
         ReviewResponse response = reviewService.createReview(tenantId, authentication.getName(), reviewRequest);
@@ -42,10 +48,16 @@ public class ReviewController {
     }
     
     @GetMapping("/product/{productId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get product reviews", description = "Get all reviews for a specific product")
     public ResponseEntity<List<ReviewResponse>> getProductReviews(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
-            @Parameter(description = "Product ID", required = true) @PathVariable Long productId) {
+            @Parameter(description = "Product ID", required = true) @PathVariable Long productId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Fetching reviews for product: {}", productId);
         
@@ -54,10 +66,16 @@ public class ReviewController {
     }
     
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get user reviews", description = "Get all reviews by a specific user")
     public ResponseEntity<List<ReviewResponse>> getUserReviews(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
-            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
+            @Parameter(description = "User ID", required = true) @PathVariable Long userId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Fetching reviews for user: {}", userId);
         
@@ -66,10 +84,16 @@ public class ReviewController {
     }
     
     @GetMapping("/{reviewId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get review by ID", description = "Get a specific review by its ID")
     public ResponseEntity<ReviewResponse> getReview(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
-            @Parameter(description = "Review ID", required = true) @PathVariable Long reviewId) {
+            @Parameter(description = "Review ID", required = true) @PathVariable Long reviewId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Fetching review: {}", reviewId);
         
@@ -86,6 +110,10 @@ public class ReviewController {
             @Valid @RequestBody ReviewRequest reviewRequest,
             Authentication authentication) {
         
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         log.info("Updating review {} by user {}", reviewId, authentication.getName());
         
         ReviewResponse response = reviewService.updateReview(tenantId, reviewId, reviewRequest, authentication.getName());
@@ -94,10 +122,15 @@ public class ReviewController {
     
     @DeleteMapping("/{reviewId}")
     @Operation(summary = "Delete review", description = "Delete a review")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Void> deleteReview(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Parameter(description = "Review ID", required = true) @PathVariable Long reviewId,
             Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Deleting review {} by user {}", reviewId, authentication.getName());
         
@@ -106,10 +139,16 @@ public class ReviewController {
     }
     
     @GetMapping("/product/{productId}/rating")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get product rating statistics", description = "Get average rating and distribution for a product")
     public ResponseEntity<ProductRatingResponse> getProductRating(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
-            @Parameter(description = "Product ID", required = true) @PathVariable Long productId) {
+            @Parameter(description = "Product ID", required = true) @PathVariable Long productId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Fetching rating statistics for product: {}", productId);
         
@@ -118,9 +157,15 @@ public class ReviewController {
     }
     
     @GetMapping("/verified")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get verified reviews", description = "Get all verified reviews")
     public ResponseEntity<List<ReviewResponse>> getVerifiedReviews(
-            @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId) {
+            @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Fetching verified reviews for tenant: {}", tenantId);
         
@@ -135,6 +180,10 @@ public class ReviewController {
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Parameter(description = "Review ID", required = true) @PathVariable Long reviewId,
             Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         log.info("Verifying review {} by admin {}", reviewId, authentication.getName());
         

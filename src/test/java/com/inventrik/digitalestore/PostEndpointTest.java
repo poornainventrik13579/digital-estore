@@ -17,11 +17,9 @@ public class PostEndpointTest {
         try {
             System.out.println("=== Digital E-Store POST Operations Testing ===");
             
-            // Get OAuth2 token
             String accessToken = getOAuth2Token("web-client", "web-secret");
             System.out.println("✓ OAuth2 Authentication successful");
             
-            // Test POST operations
             System.out.println("\n1. Testing POST Category...");
             testCreateCategory(accessToken);
             

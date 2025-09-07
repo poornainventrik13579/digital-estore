@@ -3,9 +3,11 @@ package com.inventrik.digitalestore.api;
 import com.inventrik.digitalestore.dto.response.PagedResponse;
 import com.inventrik.digitalestore.dto.response.ProductResponse;
 import com.inventrik.digitalestore.service.product.ProductService;
+import com.inventrik.digitalestore.service.tenant.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +20,16 @@ import java.util.List;
 public class PublicProductController {
 
     private final ProductService productService;
+    private final TenantService tenantService;
+    
+    private boolean validateTenant(Integer tenantId) {
+        try {
+            var tenant = tenantService.getTenant(tenantId);
+            return "A".equals(tenant.getStatus());
+        } catch (Exception e) {
+            return false;
+        }
+    }
     
     @GetMapping
     @Operation(summary = "Get all products with pagination")
@@ -25,6 +37,9 @@ public class PublicProductController {
             @PathVariable Integer tenantId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        if (!validateTenant(tenantId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size));
     }
     
@@ -33,6 +48,9 @@ public class PublicProductController {
     public ResponseEntity<ProductResponse> getProduct(
             @PathVariable Integer tenantId,
             @PathVariable Long productId) {
+        if (!validateTenant(tenantId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         return ResponseEntity.ok(productService.getProduct(tenantId, productId));
     }
     
@@ -41,12 +59,18 @@ public class PublicProductController {
     public ResponseEntity<List<ProductResponse>> getProductsByCategory(
             @PathVariable Integer tenantId,
             @PathVariable Long categoryId) {
+        if (!validateTenant(tenantId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         return ResponseEntity.ok(productService.getProductsByCategory(tenantId, categoryId));
     }
     
     @GetMapping("/active")
     @Operation(summary = "Get active products")
     public ResponseEntity<List<ProductResponse>> getActiveProducts(@PathVariable Integer tenantId) {
+        if (!validateTenant(tenantId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         return ResponseEntity.ok(productService.getActiveProducts(tenantId));
     }
     
@@ -57,6 +81,9 @@ public class PublicProductController {
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        if (!validateTenant(tenantId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         return ResponseEntity.ok(productService.searchProducts(tenantId, keyword, page, size));
     }
 } 

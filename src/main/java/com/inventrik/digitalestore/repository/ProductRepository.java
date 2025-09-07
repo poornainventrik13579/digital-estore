@@ -14,28 +14,20 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     
-    // Find product by tenant and product ID
     Optional<Product> findByTenantIdAndProductId(Integer tenantId, Long productId);
     
-    // Find product by tenant, product ID and status
     Optional<Product> findByTenantIdAndProductIdAndStatus(Integer tenantId, Long productId, String status);
     
-    // Find all products for a tenant
     List<Product> findByTenantId(Integer tenantId);
     
-    // Find all products for a tenant with pagination
     Page<Product> findByTenantId(Integer tenantId, Pageable pageable);
     
-    // Find active products for a tenant
     List<Product> findByTenantIdAndStatus(Integer tenantId, String status);
     
-    // Find products by category for a tenant
     List<Product> findByTenantIdAndCategoryId(Integer tenantId, Long categoryId);
     
-    // Delete product by tenant and product ID
     void deleteByTenantIdAndProductId(Integer tenantId, Long productId);
     
-    // Search products by keyword (name or description)
     @Query("SELECT p FROM Product p WHERE p.tenantId = :tenantId " +
            "AND (LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
@@ -43,7 +35,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                  @Param("keyword") String keyword, 
                                  Pageable pageable);
     
-    // Search active products by keyword
     @Query("SELECT p FROM Product p WHERE p.tenantId = :tenantId " +
            "AND p.status = '0' " +
            "AND (LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +

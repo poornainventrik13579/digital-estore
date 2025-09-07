@@ -72,6 +72,10 @@ public class PaymentController {
             @Valid @RequestBody PaymentRequest paymentRequest,
             Authentication authentication) {
         
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         String username = (authentication != null) ? authentication.getName() : "system";
         PaymentResponse createdPayment = paymentService.createPayment(tenantId, username, paymentRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPayment);
@@ -86,6 +90,10 @@ public class PaymentController {
             @RequestParam String transactionId,
             Authentication authentication) {
         
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         String username = (authentication != null) ? authentication.getName() : "system";
         PaymentResponse confirmedPayment = paymentService.confirmPayment(tenantId, paymentId, transactionId, username);
         return ResponseEntity.ok(confirmedPayment);
@@ -99,6 +107,10 @@ public class PaymentController {
             @PathVariable Long paymentId,
             Authentication authentication) {
         
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         String username = (authentication != null) ? authentication.getName() : "system";
         PaymentResponse cancelledPayment = paymentService.cancelPayment(tenantId, paymentId, username);
         return ResponseEntity.ok(cancelledPayment);
@@ -111,6 +123,10 @@ public class PaymentController {
             @PathVariable Integer tenantId,
             @PathVariable Long paymentId,
             Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         String username = (authentication != null) ? authentication.getName() : "system";
         PaymentResponse refundedPayment = paymentService.refundPayment(tenantId, paymentId, username);
@@ -131,6 +147,10 @@ public class PaymentController {
             @Valid @RequestBody PartialRefundRequest refundRequest,
             Authentication authentication) {
         
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         try {
             PaymentResponse response = paymentService.partialRefundPayment(tenantId, paymentId, refundRequest, authentication.getName());
             return ResponseEntity.ok(response);
@@ -146,7 +166,13 @@ public class PaymentController {
     @Operation(summary = "Get payments by order")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByOrder(
             @PathVariable Integer tenantId,
-            @PathVariable Long orderId) {
+            @PathVariable Long orderId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(paymentService.getPaymentsByOrder(tenantId, orderId));
     }
     
@@ -155,7 +181,13 @@ public class PaymentController {
     @Operation(summary = "Get payments by status")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByStatus(
             @PathVariable Integer tenantId,
-            @PathVariable String status) {
+            @PathVariable String status,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(paymentService.getPaymentsByStatus(tenantId, status));
     }
 }
