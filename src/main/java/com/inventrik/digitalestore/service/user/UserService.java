@@ -16,29 +16,33 @@ public interface UserService {
     UserResponse createUserForTenant(Integer tenantId, TenantUserSignupRequest userRequest, String createdBy);
     
     UserResponse updateUserInTenant(Integer tenantId, Long userId, TenantUserUpdateRequest updateRequest, String updatedBy);
-    
-    void deleteUserFromTenant(Integer tenantId, Long userId);
-    
+
+    void deleteUserFromTenant(Integer tenantId, Long userId, String username);
+
     List<UserResponse> getActiveUsersByTenant(Integer tenantId);
     
     List<UserResponse> getTenantAdmins(Integer tenantId);
     
     List<UserResponse> getAllUsers(Integer tenantId);
-    
+
     UserResponse getUser(Integer tenantId, Long userId);
-    
+
     UserResponse createUser(Integer tenantId, String createdBy, TenantUserSignupRequest userRequest);
     
     UserResponse updateUser(Integer tenantId, Long userId, String updatedBy, TenantUserUpdateRequest updateRequest);
-    
-    void deleteUser(Integer tenantId, Long userId);
-    
+
+    void deleteUser(Integer tenantId, Long userId, String username);
+
     List<UserResponse> getActiveUsers(Integer tenantId);
     
     UserResponse findByUsername(String username);
-    
+
+    UserResponse findByTenantIdAndUsername(Integer tenantId, String username);
+
+    UserResponse findByTenantIdAndEmail(Integer tenantId, String email);
+
     UserResponse mapToUserResponse(User user);
-    
+
     UserResponse findByEmail(String email);
     boolean isCurrentUser(Integer tenantId, Long userId, String username);
     boolean isUserWithEmail(String email, String username);

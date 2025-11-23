@@ -19,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import java.util.List;
 
 @RestController
@@ -53,12 +54,22 @@ public class OrderController {
             @PathVariable Integer tenantId,
             @PathVariable Long orderId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        return ResponseEntity.ok(orderService.getOrder(tenantId, orderId));
+
+        boolean isAdmin = tenantAccessValidator.isTenantAdmin(authentication, tenantId);
+        OrderResponse order = orderService.getOrder(tenantId, orderId);
+
+        if (!isAdmin) {
+            String username = authentication.getName();
+            if (!userService.isCurrentUser(tenantId, order.getUserId(), username)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
+
+        return ResponseEntity.ok(order);
     }
     
     
@@ -77,9 +88,9 @@ public class OrderController {
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
-        
+
+        String username = authentication.getName();
+
         OrderResponse createdOrder = orderService.createOrder(tenantId, username, orderRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
     }
@@ -88,19 +99,19 @@ public class OrderController {
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update an order (JSON)")
     public ResponseEntity<OrderResponse> updateOrderJson(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
+            @Parameter(description = "Order ID", required = true)
             @PathVariable Long orderId,
             @Valid @RequestBody OrderUpdateRequest updateRequest,
             Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        String username = (authentication != null) ? authentication.getName() : "system";
-        
+        String username = authentication.getName();
+
         OrderResponse updatedOrder = orderService.updateOrder(tenantId, orderId, username, updateRequest);
         return ResponseEntity.ok(updatedOrder);
     }
@@ -109,9 +120,9 @@ public class OrderController {
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete an order")
     public ResponseEntity<Void> deleteOrder(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
+            @Parameter(description = "Order ID", required = true)
             @PathVariable Long orderId,
             Authentication authentication) {
 
@@ -119,7 +130,9 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        orderService.deleteOrder(tenantId, orderId);
+        String username = authentication.getName();
+
+        orderService.deleteOrder(tenantId, orderId, username);
         return ResponseEntity.noContent().build();
     }
     
@@ -127,16 +140,24 @@ public class OrderController {
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN') or hasRole('ROLE_USER')")
     @Operation(summary = "Get orders by user")
     public ResponseEntity<List<OrderResponse>> getOrdersByUser(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "User ID", required = true) 
+            @Parameter(description = "User ID", required = true)
             @PathVariable Long userId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
+        boolean isAdmin = tenantAccessValidator.isTenantAdmin(authentication, tenantId);
+        if (!isAdmin) {
+            String username = authentication.getName();
+            if (!userService.isCurrentUser(tenantId, userId, username)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
+
         return ResponseEntity.ok(orderService.getOrdersByUser(tenantId, userId));
     }
     
@@ -148,16 +169,20 @@ public class OrderController {
                       "Pending, Processing, Completed, Cancelled, Refunded, Partially Refunded"
     )
     public ResponseEntity<List<OrderResponse>> getOrdersByStatus(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(
-                description = "Order status", 
+                description = "Order status",
                 required = true,
                 schema = @io.swagger.v3.oas.annotations.media.Schema(
                     allowableValues = {"Pending", "Processing", "Completed", "Cancelled", "Refunded", "Partially Refunded"},
                     example = "Pending"
                 )
-            ) 
+            )
+            @Pattern(
+                regexp = "^(Pending|Processing|Completed|Cancelled|Refunded|Partially Refunded)$",
+                message = "Status must be one of: Pending, Processing, Completed, Cancelled, Refunded, Partially Refunded"
+            )
             @PathVariable String status,
             Authentication authentication) {
         
@@ -172,24 +197,17 @@ public class OrderController {
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Complete an order")
     public ResponseEntity<OrderResponse> completeOrder(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
+            @Parameter(description = "Order ID", required = true)
             @PathVariable Long orderId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = authentication.getName();
-        OrderResponse existingOrder = orderService.getOrder(tenantId, orderId);
-        
-        if (!userService.isCurrentUser(tenantId, existingOrder.getUserId(), username)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        OrderResponse completedOrder = orderService.completeOrder(tenantId, orderId, username);
+
+        OrderResponse completedOrder = orderService.completeOrder(tenantId, orderId, authentication.getName());
         return ResponseEntity.ok(completedOrder);
     }
     
@@ -197,24 +215,17 @@ public class OrderController {
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Cancel an order")
     public ResponseEntity<OrderResponse> cancelOrder(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
+            @Parameter(description = "Order ID", required = true)
             @PathVariable Long orderId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = authentication.getName();
-        OrderResponse existingOrder = orderService.getOrder(tenantId, orderId);
-        
-        if (!userService.isCurrentUser(tenantId, existingOrder.getUserId(), username)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        OrderResponse cancelledOrder = orderService.cancelOrder(tenantId, orderId, username);
+
+        OrderResponse cancelledOrder = orderService.cancelOrder(tenantId, orderId, authentication.getName());
         return ResponseEntity.ok(cancelledOrder);
     }
     
@@ -222,18 +233,18 @@ public class OrderController {
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Refund an order")
     public ResponseEntity<OrderResponse> refundOrder(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
+            @Parameter(description = "Order ID", required = true)
             @PathVariable Long orderId,
             Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        String username = (authentication != null) ? authentication.getName() : "system";
-        
+        String username = authentication.getName();
+
         OrderResponse refundedOrder = orderService.refundOrder(tenantId, orderId, username);
         return ResponseEntity.ok(refundedOrder);
     }

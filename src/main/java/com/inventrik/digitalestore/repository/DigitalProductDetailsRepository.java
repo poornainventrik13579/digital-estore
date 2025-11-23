@@ -11,9 +11,7 @@ import java.util.Optional;
 public interface DigitalProductDetailsRepository extends JpaRepository<DigitalProductDetails, Long> {
     
     Optional<DigitalProductDetails> findByTenantIdAndProductId(Integer tenantId, Long productId);
-    
-    Optional<DigitalProductDetails> findByProductId(Long productId);
-    
+
     List<DigitalProductDetails> findByTenantId(Integer tenantId);
     
     List<DigitalProductDetails> findByTenantIdAndStatus(Integer tenantId, String status);

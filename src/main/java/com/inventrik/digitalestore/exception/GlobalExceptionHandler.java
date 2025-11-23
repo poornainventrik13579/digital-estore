@@ -21,49 +21,38 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<AuthorizationErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
-        log.warn("Access denied: {}", ex.getMessage());
-        
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        // Log details for debugging, but don't expose to client
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String currentUser = auth != null ? auth.getName() : "anonymous";
-        String currentRoles = auth != null ? auth.getAuthorities().toString() : "[]";
-        
-        String detailedMessage = "Access denied. Your current role does not have permission to access this resource.";
-        String requiredRole = "Unknown";
-        
-        if (ex.getMessage() != null && ex.getMessage().contains("hasRole")) {
-            
-            String exceptionMsg = ex.getMessage();
-            if (exceptionMsg.contains("ROLE_ADMIN")) {
-                detailedMessage = "Access denied. This operation requires ADMIN privileges.";
-                requiredRole = "ROLE_ADMIN";
-            } else if (exceptionMsg.contains("ROLE_USER")) {
-                detailedMessage = "Access denied. This operation requires USER privileges.";
-                requiredRole = "ROLE_USER";
-            } else if (exceptionMsg.contains("ROLE_MANAGER")) {
-                detailedMessage = "Access denied. This operation requires MANAGER privileges.";
-                requiredRole = "ROLE_MANAGER";
-            }
-        }
-        
-        AuthorizationErrorResponse errorResponse = new AuthorizationErrorResponse(
+        log.warn("Access denied for user {}: {}", currentUser, ex.getMessage());
+
+        // Return generic message without exposing roles/user info
+        ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.FORBIDDEN.value(),
-                detailedMessage,
-                LocalDateTime.now(),
-                currentUser,
-                currentRoles,
-                requiredRole);
-        
+                "Access denied. You do not have permission to access this resource.",
+                LocalDateTime.now());
+
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
     
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                ex.getMessage(),
+                LocalDateTime.now());
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 ex.getMessage(),
                 LocalDateTime.now());
-        
+
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
     

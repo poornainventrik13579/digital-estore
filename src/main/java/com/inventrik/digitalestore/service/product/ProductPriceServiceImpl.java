@@ -42,8 +42,8 @@ public class ProductPriceServiceImpl implements ProductPriceService {
         productPrice.setCurrencyCode(currencyCode);
         productPrice.setPrice(price);
         productPrice.setStatus("0");
-        productPrice.setCreatedBy("1");
-        productPrice.setUpdatedBy("1");
+        productPrice.setCreatedBy("system");
+        productPrice.setUpdatedBy("system");
         
         return productPriceRepository.save(productPrice);
     }
@@ -52,7 +52,7 @@ public class ProductPriceServiceImpl implements ProductPriceService {
     public ProductPrice updateProductPrice(Integer tenantId, Long productId, String currencyCode, BigDecimal price) {
         ProductPrice productPrice = getProductPrice(tenantId, productId, currencyCode);
         productPrice.setPrice(price);
-        productPrice.setUpdatedBy("1");
+        productPrice.setUpdatedBy("system");
         
         return productPriceRepository.save(productPrice);
     }
@@ -61,7 +61,7 @@ public class ProductPriceServiceImpl implements ProductPriceService {
     public void deleteProductPrice(Integer tenantId, Long productId, String currencyCode) {
         ProductPrice productPrice = getProductPrice(tenantId, productId, currencyCode);
         productPrice.setStatus("-1");
-        productPrice.setUpdatedBy("1");
+        productPrice.setUpdatedBy("system");
         productPriceRepository.save(productPrice);
     }
     

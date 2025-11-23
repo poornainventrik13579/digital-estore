@@ -217,13 +217,16 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Cacheable(value = "products", key = "#tenantId + ':search:' + #keyword + ':' + #page + ':' + #size")
     public PagedResponse<ProductResponse> searchProducts(Integer tenantId, String keyword, int page, int size) {
+        // Escape LIKE wildcards to prevent SQL injection
+        String escapedKeyword = keyword.replace("%", "\\%").replace("_", "\\_");
+
         Pageable pageable = PageRequest.of(page, size, Sort.by("created").descending());
-        Page<Product> productPage = productRepository.searchByKeyword(tenantId, keyword, pageable);
-        
+        Page<Product> productPage = productRepository.searchByKeyword(tenantId, escapedKeyword, pageable);
+
         List<ProductResponse> products = productPage.getContent().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
-                
+
         return PagedResponse.of(products, page, size, productPage.getTotalElements());
     }
 }

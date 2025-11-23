@@ -17,7 +17,10 @@ public class PaymentAudit {
     @Id
     @Column(name = "audit_id")
     private String auditId;
-    
+
+    @Column(name = "tenant_id", nullable = false)
+    private Integer tenantId;
+
     @Column(name = "payment_id")
     private Long paymentId;
     

@@ -18,18 +18,14 @@ public class TaxResponse {
     private String code;
     private String description;
     private BigDecimal value;
-    private String defaultFlag;
-    private Boolean isDefault;
+    private Boolean isDefault;  // Removed redundant defaultFlag string
     private LocalDate startDate;
     private LocalDate endDate;
-    private String status;
-    private Boolean isActive;
+    private Boolean isActive;  // Removed redundant status string
     private Boolean isCurrentlyValid;
-    private LocalDateTime modified;
-    private String modifiedBy;
     private String createdBy;
     private LocalDateTime created;
     private String updatedBy;
-    private LocalDateTime updated;
+    private LocalDateTime updated;  // Removed redundant modified/modifiedBy
     
 }

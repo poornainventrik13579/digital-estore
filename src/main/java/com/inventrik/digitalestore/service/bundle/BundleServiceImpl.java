@@ -224,9 +224,9 @@ public class BundleServiceImpl implements BundleService {
         bundleItem.setProductId(productId);
         bundleItem.setQuantity(quantity);
         bundleItem.setStatus("0");
-        bundleItem.setCreatedBy("1");
-        bundleItem.setUpdatedBy("1");
-        
+        bundleItem.setCreatedBy(username);
+        bundleItem.setUpdatedBy(username);
+
         bundleItemRepository.save(bundleItem);
         
         log.info("Product added to bundle: bundleId={}, productId={}, quantity={}, tenantId={}, username={}", 
@@ -243,7 +243,7 @@ public class BundleServiceImpl implements BundleService {
                 .filter(item -> item.getProductId().equals(productId))
                 .forEach(item -> {
                     item.setStatus("-1");
-                    item.setUpdatedBy("1");
+                    item.setUpdatedBy(username);
                     bundleItemRepository.save(item);
                 });
         
@@ -263,7 +263,7 @@ public class BundleServiceImpl implements BundleService {
                 .ifPresentOrElse(
                         item -> {
                             item.setQuantity(quantity);
-                            item.setUpdatedBy("1");
+                            item.setUpdatedBy(username);
                             bundleItemRepository.save(item);
                         },
                         () -> {

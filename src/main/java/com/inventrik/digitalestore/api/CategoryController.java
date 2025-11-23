@@ -69,8 +69,8 @@ public class CategoryController {
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        String username = authentication.getName();
         CategoryResponse createdCategory = categoryService.createCategory(tenantId, username, categoryRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
     }
@@ -88,8 +88,8 @@ public class CategoryController {
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        String username = authentication.getName();
         CategoryResponse updatedCategory = categoryService.updateCategory(tenantId, categoryId, username, updateRequest);
         return ResponseEntity.ok(updatedCategory);
     }

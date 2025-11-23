@@ -25,9 +25,10 @@ import java.util.List;
 @Slf4j
 @Tag(name = "Reviews", description = "Review management operations")
 public class ReviewController {
-    
+
     private final ReviewService reviewService;
     private final TenantAccessValidator tenantAccessValidator;
+    private final com.inventrik.digitalestore.service.user.UserService userService;
     
     @PostMapping
     @PreAuthorize("hasRole('ROLE_USER')")
@@ -66,19 +67,27 @@ public class ReviewController {
     }
     
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN') or hasRole('ROLE_USER')")
     @Operation(summary = "Get user reviews", description = "Get all reviews by a specific user")
     public ResponseEntity<List<ReviewResponse>> getUserReviews(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Parameter(description = "User ID", required = true) @PathVariable Long userId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
+        boolean isAdmin = tenantAccessValidator.isTenantAdmin(authentication, tenantId);
+        if (!isAdmin) {
+            String username = authentication.getName();
+            if (!userService.isCurrentUser(tenantId, userId, username)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
+
         log.info("Fetching reviews for user: {}", userId);
-        
+
         List<ReviewResponse> reviews = reviewService.getUserReviews(tenantId, userId);
         return ResponseEntity.ok(reviews);
     }

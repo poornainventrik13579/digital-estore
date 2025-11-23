@@ -12,6 +12,7 @@ import com.inventrik.digitalestore.exception.payment.InsufficientRefundAmountExc
 import com.inventrik.digitalestore.exception.payment.PaymentNotFoundException;
 import com.inventrik.digitalestore.exception.payment.PaymentProcessingException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
+import com.inventrik.digitalestore.exception.UnauthorizedException;
 import com.inventrik.digitalestore.repository.OrderRepository;
 import com.inventrik.digitalestore.repository.PaymentRepository;
 import com.inventrik.digitalestore.repository.UserRepository;
@@ -95,7 +96,24 @@ public class StripePaymentService implements PaymentService {
                 .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
         return mapToDTO(payment);
     }
-    
+
+    @Override
+    public PaymentResponse getPayment(Integer tenantId, Long paymentId, String username, boolean isAdmin) {
+        Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
+
+        if (!isAdmin) {
+            Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+            if (!order.getCreatedBy().equals(username)) {
+                throw new UnauthorizedException("You do not have permission to view this payment");
+            }
+        }
+
+        return mapToDTO(payment);
+    }
+
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public PaymentResponse createPayment(Integer tenantId, String username, PaymentRequest paymentRequest) {
@@ -103,25 +121,29 @@ public class StripePaymentService implements PaymentService {
         
         return transactionCoordinator.executeInStrictTransaction(() -> {
             try {
-                
-                if (idempotencyKeyService.isKeyRegistered(idempotencyKey)) {
-                    
+                // Atomically register idempotency key - prevents race conditions
+                if (!idempotencyKeyService.registerKey(idempotencyKey)) {
+                    // Key already exists, return existing payment
                     List<Payment> existingPayments = paymentRepository.findByTenantIdAndOrderId(tenantId, paymentRequest.getOrderId());
                     if (!existingPayments.isEmpty()) {
                         Payment existingPayment = existingPayments.get(0);
-                        log.warn("Duplicate payment attempt detected for order {}, returning existing payment {}", 
+                        log.warn("Duplicate payment attempt detected for order {}, returning existing payment {}",
                                 paymentRequest.getOrderId(), existingPayment.getPaymentId());
                         return mapToDTO(existingPayment);
                     }
-                }
-                
-                if (!idempotencyKeyService.registerKey(idempotencyKey)) {
-                    throw new PaymentProcessingException("Duplicate payment request detected", false);
+                    throw new PaymentProcessingException("Duplicate payment request detected but payment not found", false);
                 }
                 
                 Order order = orderRepository.findByTenantIdAndOrderId(tenantId, paymentRequest.getOrderId())
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + paymentRequest.getOrderId()));
-                
+
+                // CRITICAL: Validate payment amount matches order total
+                if (paymentRequest.getAmount().compareTo(order.getTotalAmount()) != 0) {
+                    throw new PaymentProcessingException(
+                        "Payment amount mismatch. Order total: " + order.getTotalAmount() +
+                        ", Payment amount: " + paymentRequest.getAmount(), false);
+                }
+
                 Long newPaymentId = idGeneratorService.generateId(tenantId, "PAYMENT");
                 
                 PaymentIntent paymentIntent = retryService.executeWithRetry(() -> {
@@ -205,14 +227,8 @@ public class StripePaymentService implements PaymentService {
                 try {
                     PaymentIntent paymentIntent = PaymentIntent.retrieve(payment.getTransactionId());
                     
-                    if ("requires_confirmation".equals(paymentIntent.getStatus()) || 
-                        "requires_payment_method".equals(paymentIntent.getStatus())) {
-                        
-                        Map<String, Object> confirmParams = new HashMap<>();
-                        confirmParams.put("payment_method", "pm_card_visa"); 
-                        confirmParams.put("return_url", "http://localhost:8080/payment/success");
-                        
-                        paymentIntent.confirm(confirmParams);
+                    if ("requires_confirmation".equals(paymentIntent.getStatus())) {
+                        paymentIntent.confirm();
                     }
                     
                     return paymentIntent;
@@ -347,6 +363,23 @@ public class StripePaymentService implements PaymentService {
                 throw new PaymentProcessingException("Failed to cancel payment: " + e.getMessage(), e, false);
             }
         });
+    }
+
+    @Override
+    public PaymentResponse cancelPayment(Integer tenantId, Long paymentId, String username, boolean isAdmin) {
+        Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
+
+        if (!isAdmin) {
+            Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+            if (!order.getCreatedBy().equals(username)) {
+                throw new UnauthorizedException("You do not have permission to cancel this payment");
+            }
+        }
+
+        return cancelPayment(tenantId, paymentId, username);
     }
     
     @Override

@@ -30,8 +30,8 @@ public interface PageRepository extends JpaRepository<Page, Long> {
         @Param("visibility") PageVisibility visibility
     );
     
-    @Query("SELECT p FROM Page p WHERE p.tenantId = :tenantId AND p.status = 'PUBLISHED' AND p.visibility IN ('PUBLIC', 'PRIVATE')")
-    List<Page> findPublicAndPrivatePublishedPages(@Param("tenantId") Integer tenantId);
+    @Query("SELECT p FROM Page p WHERE p.tenantId = :tenantId AND p.status = :publishedStatus AND p.visibility IN (:publicVisibility, :privateVisibility)")
+    List<Page> findPublicAndPrivatePublishedPages(@Param("tenantId") Integer tenantId, @Param("publishedStatus") PageStatus publishedStatus, @Param("publicVisibility") PageVisibility publicVisibility, @Param("privateVisibility") PageVisibility privateVisibility);
     
     @Query("SELECT p FROM Page p WHERE p.tenantId = :tenantId AND p.content LIKE %:keyword%")
     List<Page> searchByContent(@Param("tenantId") Integer tenantId, @Param("keyword") String keyword);

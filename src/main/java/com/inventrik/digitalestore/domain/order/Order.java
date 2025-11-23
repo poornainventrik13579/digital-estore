@@ -3,6 +3,7 @@ package com.inventrik.digitalestore.domain.order;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
@@ -61,18 +62,19 @@ public class Order {
     @Column(name = "status", length = 20)
     private String status = "Pending";
     
-    @Column(name = "created_by", nullable = false, length = 2)
+    @Column(name = "created_by", nullable = false, length = 50)
     private String createdBy;
     
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
     
-    @Column(name = "updated_by", nullable = false, length = 2)
+    @Column(name = "updated_by", nullable = false, length = 50)
     private String updatedBy;
     
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
     

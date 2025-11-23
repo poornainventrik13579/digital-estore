@@ -22,7 +22,7 @@ public class GlobalPageController {
     private final PageService pageService;
     
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
     @Operation(summary = "Get all pages across all tenants")
     public ResponseEntity<List<PageResponse>> getAllPages() {
         return ResponseEntity.ok(pageService.getAllPages());

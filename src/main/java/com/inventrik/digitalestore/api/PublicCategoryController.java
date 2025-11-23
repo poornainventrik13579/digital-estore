@@ -1,6 +1,7 @@
 package com.inventrik.digitalestore.api;
 
 import com.inventrik.digitalestore.dto.response.CategoryResponse;
+import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.service.category.CategoryService;
 import com.inventrik.digitalestore.service.tenant.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +26,7 @@ public class PublicCategoryController {
         try {
             var tenant = tenantService.getTenant(tenantId);
             return "A".equals(tenant.getStatus());
-        } catch (Exception e) {
+        } catch (ResourceNotFoundException e) {
             return false;
         }
     }

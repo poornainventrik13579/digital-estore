@@ -9,9 +9,9 @@ import com.inventrik.digitalestore.dto.response.PageResponse;
 import java.util.List;
 
 public interface PageService {
-    
+
     List<PageResponse> getAllPages();
-    PageResponse getPage(Long pageId);
+    PageResponse getPage(Integer tenantId, Long pageId);
     List<PageResponse> getPagesByTenant(Integer tenantId);
     List<PageResponse> getPagesByTenantAndStatus(Integer tenantId, PageStatus status);
     List<PageResponse> getPagesByTenantAndVisibility(Integer tenantId, PageVisibility visibility);
@@ -19,10 +19,10 @@ public interface PageService {
     PageResponse getPageBySlug(Integer tenantId, String slug);
     List<PageResponse> getDefaultPages(Integer tenantId);
     PageResponse createPage(String username, PageRequest pageRequest);
-    PageResponse updatePage(Long pageId, String username, PageUpdateRequest updateRequest);
-    void deletePage(Long pageId);
-    PageResponse publishPage(Long pageId, String username);
-    PageResponse archivePage(Long pageId, String username);
+    PageResponse updatePage(Integer tenantId, Long pageId, String username, PageUpdateRequest updateRequest);
+    void deletePage(Integer tenantId, Long pageId);
+    PageResponse publishPage(Integer tenantId, Long pageId, String username);
+    PageResponse archivePage(Integer tenantId, Long pageId, String username);
     List<PageResponse> getPublicPages(Integer tenantId);
     List<PageResponse> searchPages(Integer tenantId, String keyword);
     boolean existsByTenantAndSlug(Integer tenantId, String slug);

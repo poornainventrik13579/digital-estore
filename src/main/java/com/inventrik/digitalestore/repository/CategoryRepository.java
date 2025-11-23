@@ -1,6 +1,8 @@
 package com.inventrik.digitalestore.repository;
 
 import com.inventrik.digitalestore.domain.category.Category;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,13 +15,15 @@ import java.util.Optional;
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     
     Optional<Category> findByTenantIdAndCategoryId(Integer tenantId, Long categoryId);
-    
+
     List<Category> findByTenantId(Integer tenantId);
-    
+    Page<Category> findByTenantId(Integer tenantId, Pageable pageable);
+
     List<Category> findByTenantIdAndStatus(Integer tenantId, String status);
-    
+    Page<Category> findByTenantIdAndStatus(Integer tenantId, String status, Pageable pageable);
+
     void deleteByTenantIdAndCategoryId(Integer tenantId, Long categoryId);
-    
+
     @Query("SELECT DISTINCT c FROM Category c LEFT JOIN FETCH c.products WHERE c.tenantId = :tenantId")
     List<Category> findByTenantIdWithProducts(@Param("tenantId") Integer tenantId);
 }

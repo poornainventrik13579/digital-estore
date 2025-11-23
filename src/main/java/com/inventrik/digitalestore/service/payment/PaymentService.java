@@ -7,16 +7,20 @@ import com.inventrik.digitalestore.dto.response.PaymentResponse;
 import java.util.List;
 
 public interface PaymentService {
-    
+
     List<PaymentResponse> getAllPayments(Integer tenantId);
-    
+
     PaymentResponse getPayment(Integer tenantId, Long paymentId);
-    
+
+    PaymentResponse getPayment(Integer tenantId, Long paymentId, String username, boolean isAdmin);
+
     PaymentResponse createPayment(Integer tenantId, String username, PaymentRequest paymentRequest);
-    
+
     PaymentResponse confirmPayment(Integer tenantId, Long paymentId, String transactionId, String username);
-    
+
     PaymentResponse cancelPayment(Integer tenantId, Long paymentId, String username);
+
+    PaymentResponse cancelPayment(Integer tenantId, Long paymentId, String username, boolean isAdmin);
     
     PaymentResponse refundPayment(Integer tenantId, Long paymentId, String username);
     

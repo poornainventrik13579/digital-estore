@@ -16,7 +16,7 @@ public interface StoreThemeRepository extends JpaRepository<StoreTheme, StoreThe
     Optional<StoreTheme> findByTenantIdAndThemeId(Integer tenantId, Integer themeId);
     List<StoreTheme> findByTenantId(Integer tenantId);
     List<StoreTheme> findByTenantIdAndStatus(Integer tenantId, String status);
-    List<StoreTheme> findByThemeName(String themeName);
+    List<StoreTheme> findByTenantIdAndThemeName(Integer tenantId, String themeName);
     boolean existsByTenantIdAndThemeName(Integer tenantId, String themeName);
     @Modifying
     @Query("DELETE FROM StoreTheme s WHERE s.tenantId = :tenantId AND s.themeId = :themeId")

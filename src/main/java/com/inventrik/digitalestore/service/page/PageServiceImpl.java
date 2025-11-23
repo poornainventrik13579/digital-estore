@@ -7,6 +7,7 @@ import com.inventrik.digitalestore.dto.request.PageRequest;
 import com.inventrik.digitalestore.dto.request.PageUpdateRequest;
 import com.inventrik.digitalestore.dto.response.PageResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
+import com.inventrik.digitalestore.exception.UnauthorizedException;
 import com.inventrik.digitalestore.repository.PageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -103,9 +104,14 @@ public class PageServiceImpl implements PageService {
     }
     
     @Override
-    public PageResponse getPage(Long pageId) {
+    public PageResponse getPage(Integer tenantId, Long pageId) {
         Page page = pageRepository.findById(pageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Page not found with id: " + pageId));
+
+        if (!page.getTenantId().equals(tenantId)) {
+            throw new UnauthorizedException("Page does not belong to the specified tenant");
+        }
+
         return mapToDTO(page);
     }
     
@@ -161,47 +167,64 @@ public class PageServiceImpl implements PageService {
     
     @Override
     @Transactional
-    public PageResponse updatePage(Long pageId, String username, PageUpdateRequest updateRequest) {
+    public PageResponse updatePage(Integer tenantId, Long pageId, String username, PageUpdateRequest updateRequest) {
         Page page = pageRepository.findById(pageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Page not found with id: " + pageId));
-        
+
+        if (!page.getTenantId().equals(tenantId)) {
+            throw new UnauthorizedException("Page does not belong to the specified tenant");
+        }
+
         updateEntityFromRequest(page, updateRequest, username);
         Page updatedPage = pageRepository.save(page);
         return mapToDTO(updatedPage);
     }
-    
+
     @Override
     @Transactional
-    public void deletePage(Long pageId) {
+    public void deletePage(Integer tenantId, Long pageId) {
         Page page = pageRepository.findById(pageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Page not found with id: " + pageId));
+
+        if (!page.getTenantId().equals(tenantId)) {
+            throw new UnauthorizedException("Page does not belong to the specified tenant");
+        }
+
         pageRepository.delete(page);
     }
-    
+
     @Override
     @Transactional
-    public PageResponse publishPage(Long pageId, String username) {
+    public PageResponse publishPage(Integer tenantId, Long pageId, String username) {
         Page page = pageRepository.findById(pageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Page not found with id: " + pageId));
-        
+
+        if (!page.getTenantId().equals(tenantId)) {
+            throw new UnauthorizedException("Page does not belong to the specified tenant");
+        }
+
         page.publish();
         page.setUpdatedBy(username);
         page.setUpdatedAt(LocalDateTime.now());
-        
+
         Page updatedPage = pageRepository.save(page);
         return mapToDTO(updatedPage);
     }
-    
+
     @Override
     @Transactional
-    public PageResponse archivePage(Long pageId, String username) {
+    public PageResponse archivePage(Integer tenantId, Long pageId, String username) {
         Page page = pageRepository.findById(pageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Page not found with id: " + pageId));
-        
+
+        if (!page.getTenantId().equals(tenantId)) {
+            throw new UnauthorizedException("Page does not belong to the specified tenant");
+        }
+
         page.archive();
         page.setUpdatedBy(username);
         page.setUpdatedAt(LocalDateTime.now());
-        
+
         Page updatedPage = pageRepository.save(page);
         return mapToDTO(updatedPage);
     }

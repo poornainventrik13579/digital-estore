@@ -18,6 +18,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import java.util.List;
 
 @RestController
@@ -50,6 +51,7 @@ public class TenantController {
     }
     
     @GetMapping("/tenants/{tenantId}")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN') or hasRole('ROLE_SYSTEM_ADMIN')")
     @Operation(summary = "Get tenant details")
     public ResponseEntity<TenantResponse> getTenant(
             @PathVariable Integer tenantId,
@@ -76,6 +78,7 @@ public class TenantController {
     
     
     @PutMapping("/tenants/{tenantId}")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update tenant details")
     public ResponseEntity<TenantResponse> updateTenantJson(
             @PathVariable Integer tenantId,
@@ -119,6 +122,10 @@ public class TenantController {
     @Operation(summary = "Get tenants by status")
     public ResponseEntity<List<TenantResponse>> getTenantsByStatus(
             @Parameter(description = "Status", required = true)
+            @Pattern(
+                regexp = "^[AI]$",
+                message = "Status must be A (Active) or I (Inactive)"
+            )
             @PathVariable String status) {
         return ResponseEntity.ok(tenantService.getTenantsByStatus(status));
     }

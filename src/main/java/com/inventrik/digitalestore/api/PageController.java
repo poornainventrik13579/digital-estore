@@ -20,11 +20,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import java.util.List;
+import org.springframework.validation.annotation.Validated;
 
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantId}/pages")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Page Management", description = "APIs for managing CMS pages and content")
 @SecurityRequirement(name = "oauth2")
 public class PageController {
@@ -60,8 +63,8 @@ public class PageController {
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        return ResponseEntity.ok(pageService.getPage(pageId));
+
+        return ResponseEntity.ok(pageService.getPage(tenantId, pageId));
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
@@ -98,9 +101,9 @@ public class PageController {
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         String username = (authentication != null) ? authentication.getName() : "system";
-        PageResponse updatedPage = pageService.updatePage(pageId, username, updateRequest);
+        PageResponse updatedPage = pageService.updatePage(tenantId, pageId, username, updateRequest);
         return ResponseEntity.ok(updatedPage);
     }
     
@@ -118,8 +121,8 @@ public class PageController {
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        pageService.deletePage(pageId);
+
+        pageService.deletePage(tenantId, pageId);
         return ResponseEntity.noContent().build();
     }
     
@@ -136,9 +139,9 @@ public class PageController {
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         String username = (authentication != null) ? authentication.getName() : "system";
-        PageResponse publishedPage = pageService.publishPage(pageId, username);
+        PageResponse publishedPage = pageService.publishPage(tenantId, pageId, username);
         return ResponseEntity.ok(publishedPage);
     }
     
@@ -155,9 +158,9 @@ public class PageController {
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         String username = (authentication != null) ? authentication.getName() : "system";
-        PageResponse archivedPage = pageService.archivePage(pageId, username);
+        PageResponse archivedPage = pageService.archivePage(tenantId, pageId, username);
         return ResponseEntity.ok(archivedPage);
     }
     
@@ -259,7 +262,7 @@ public class PageController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Search keyword", required = true)
-            @RequestParam String keyword,
+            @RequestParam @Size(max = 100) String keyword,
             Authentication authentication) {
         
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {

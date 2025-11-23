@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 @Data
@@ -24,5 +25,6 @@ public class OrderItemRequest {
     private BigDecimal priceAtPurchase;
     
     @Schema(description = "License key (optional)", example = "XXXX-YYYY-ZZZZ-AAAA")
+    @Size(max = 255, message = "License key must be less than 255 characters")
     private String licenseKey;
 }

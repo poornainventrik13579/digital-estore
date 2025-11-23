@@ -28,6 +28,7 @@ public class TenantSignupRequest {
     @Size(max = 20, message = "Phone number must be less than 20 characters")
     private String shopPhone;
     
+    @NotBlank(message = "Shop logo is required")
     @Size(max = 200, message = "Logo URL must be less than 200 characters")
     private String shopLogo;
     

@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -153,7 +152,11 @@ public class UserServiceImpl implements UserService {
     public UserResponse updateUser(Integer tenantId, Long userId, String updatedBy, TenantUserUpdateRequest updateRequest) {
         User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-        
+
+        if (!user.getUsername().equals(updatedBy)) {
+            throw new com.inventrik.digitalestore.exception.UnauthorizedException("You do not have permission to perform this action");
+        }
+
         if (updateRequest.getFirstName() != null) {
             user.setFirstName(updateRequest.getFirstName());
         }
@@ -205,11 +208,14 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional
-    public void deleteUser(Integer tenantId, Long userId) {
-        if (!userRepository.findByTenantIdAndUserId(tenantId, userId).isPresent()) {
-            throw new ResourceNotFoundException("User not found with id: " + userId);
+    public void deleteUser(Integer tenantId, Long userId, String username) {
+        User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        if (!user.getUsername().equals(username)) {
+            throw new com.inventrik.digitalestore.exception.UnauthorizedException("You do not have permission to perform this action");
         }
-        
+
         userRepository.deleteByTenantIdAndUserId(tenantId, userId);
     }
     
@@ -226,7 +232,21 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
         return mapToDTO(user);
     }
-    
+
+    @Override
+    public UserResponse findByTenantIdAndUsername(Integer tenantId, String username) {
+        User user = userRepository.findByTenantIdAndUsername(tenantId, username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username + " in tenant: " + tenantId));
+        return mapToDTO(user);
+    }
+
+    @Override
+    public UserResponse findByTenantIdAndEmail(Integer tenantId, String email) {
+        User user = userRepository.findByTenantIdAndEmail(tenantId, email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email + " in tenant: " + tenantId));
+        return mapToDTO(user);
+    }
+
     @Override
     public UserResponse findByEmail(String email) {
         User user = userRepository.findByEmail(email)
@@ -235,8 +255,8 @@ public class UserServiceImpl implements UserService {
     }
     
     private String generateOTP() {
-        Random random = new Random();
-        int otp = 100000 + random.nextInt(900000); 
+        java.security.SecureRandom random = new java.security.SecureRandom();
+        int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp);
     }
     
@@ -359,9 +379,9 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
-    public void deleteUserFromTenant(Integer tenantId, Long userId) {
-        
-        deleteUser(tenantId, userId);
+    public void deleteUserFromTenant(Integer tenantId, Long userId, String username) {
+
+        deleteUser(tenantId, userId, username);
     }
     
     @Override

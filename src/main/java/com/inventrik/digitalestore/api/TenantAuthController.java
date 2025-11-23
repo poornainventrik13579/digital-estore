@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -24,6 +27,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/tenant-auth")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Tenant Authentication", description = "APIs for tenant registration and authentication")
 @Slf4j
 public class TenantAuthController {
@@ -100,38 +104,47 @@ public class TenantAuthController {
     }
     
     @GetMapping("/check/email/{email}")
-    @Operation(summary = "Check if email exists", 
+    @Operation(summary = "Check if email exists",
                description = "Validate if a tenant email already exists")
     public ResponseEntity<Map<String, Boolean>> checkEmailExists(
             @Parameter(description = "Email to check", required = true)
-            @PathVariable String email) {
-        
+            @PathVariable
+            @Pattern(regexp = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+            @Size(max = 255)
+            String email) {
+
         boolean exists = tenantAuthService.emailExists(email);
-        
+
         return ResponseEntity.ok(Map.of("exists", exists));
     }
-    
+
     @GetMapping("/check/subdomain/{subdomain}")
-    @Operation(summary = "Check if subdomain exists", 
+    @Operation(summary = "Check if subdomain exists",
                description = "Validate if a subdomain already exists")
     public ResponseEntity<Map<String, Boolean>> checkSubdomainExists(
             @Parameter(description = "Subdomain to check", required = true)
-            @PathVariable String subdomain) {
-        
+            @PathVariable
+            @Pattern(regexp = "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
+            @Size(min = 3, max = 63)
+            String subdomain) {
+
         boolean exists = tenantAuthService.subdomainExists(subdomain);
-        
+
         return ResponseEntity.ok(Map.of("exists", exists));
     }
-    
+
     @GetMapping("/check/domain/{domainName}")
-    @Operation(summary = "Check if domain exists", 
+    @Operation(summary = "Check if domain exists",
                description = "Validate if a domain name already exists")
     public ResponseEntity<Map<String, Boolean>> checkDomainExists(
             @Parameter(description = "Domain name to check", required = true)
-            @PathVariable String domainName) {
-        
+            @PathVariable
+            @Pattern(regexp = "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$")
+            @Size(max = 253)
+            String domainName) {
+
         boolean exists = tenantAuthService.domainExists(domainName);
-        
+
         return ResponseEntity.ok(Map.of("exists", exists));
     }
 }

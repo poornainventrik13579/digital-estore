@@ -1,6 +1,8 @@
 package com.inventrik.digitalestore.api;
 
+import com.inventrik.digitalestore.dto.response.PublicStoreInfoResponse;
 import com.inventrik.digitalestore.dto.response.TenantResponse;
+import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.service.tenant.SubdomainResolverService;
 import com.inventrik.digitalestore.service.tenant.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,11 +27,22 @@ public class StoreController {
     private final SubdomainResolverService subdomainResolver;
     
     @GetMapping("/{subdomain}/store/info")
-    @Operation(summary = "Get store information")
-    public ResponseEntity<TenantResponse> getStoreInfo(@PathVariable String subdomain) {
+    @Operation(summary = "Get public store information")
+    public ResponseEntity<PublicStoreInfoResponse> getStoreInfo(@PathVariable String subdomain) {
         Integer tenantId = subdomainResolver.resolveTenantId(subdomain);
-        TenantResponse storeInfo = tenantService.getTenant(tenantId);
-        return ResponseEntity.ok(storeInfo);
+        TenantResponse tenant = tenantService.getTenant(tenantId);
+
+        PublicStoreInfoResponse publicInfo = new PublicStoreInfoResponse(
+            tenant.getShopName(),
+            tenant.getShopLogo(),
+            tenant.getSubdomain(),
+            tenant.getCountryRegion(),
+            tenant.getBaseCurrency(),
+            tenant.getMultiCurrency(),
+            tenant.getTimezone()
+        );
+
+        return ResponseEntity.ok(publicInfo);
     }
     
     @GetMapping("/check/subdomain/{subdomain}")
@@ -53,15 +66,15 @@ public class StoreController {
         try {
             Integer tenantId = subdomainResolver.resolveTenantId(subdomain);
             TenantResponse store = tenantService.getTenant(tenantId);
-            
+
             return ResponseEntity.ok(Map.of(
                 "subdomain", subdomain,
                 "status", "active",
                 "storeName", store.getShopName(),
                 "online", true
             ));
-            
-        } catch (Exception e) {
+
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.ok(Map.of(
                 "subdomain", subdomain,
                 "status", "inactive",

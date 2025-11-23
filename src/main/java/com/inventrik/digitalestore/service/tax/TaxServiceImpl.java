@@ -34,15 +34,11 @@ public class TaxServiceImpl implements TaxService {
         response.setCode(tax.getCode());
         response.setDescription(tax.getDescription());
         response.setValue(tax.getValue());
-        response.setDefaultFlag(tax.getDefaultFlag());
         response.setIsDefault("Y".equals(tax.getDefaultFlag()));
         response.setStartDate(tax.getStartDate());
         response.setEndDate(tax.getEndDate());
-        response.setStatus(tax.getStatus());
         response.setIsActive("A".equals(tax.getStatus()));
         response.setIsCurrentlyValid(tax.isCurrentlyValid());
-        response.setModified(tax.getModified());
-        response.setModifiedBy(tax.getModifiedBy());
         response.setCreatedBy(tax.getCreatedBy());
         response.setCreated(tax.getCreated());
         response.setUpdatedBy(tax.getUpdatedBy());

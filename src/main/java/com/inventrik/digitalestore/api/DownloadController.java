@@ -28,9 +28,10 @@ import java.util.List;
 @SecurityRequirement(name = "oauth2")
 @Slf4j
 public class DownloadController {
-    
+
     private final DownloadService downloadService;
     private final TenantAccessValidator tenantAccessValidator;
+    private final com.inventrik.digitalestore.service.order.OrderService orderService;
     
     @PostMapping("/tenants/{tenantId}/order-items/{orderItemId}/record-download")
     @PreAuthorize("hasRole('ROLE_USER')")
@@ -40,16 +41,20 @@ public class DownloadController {
             @PathVariable Long orderItemId,
             HttpServletRequest request,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        String username = authentication.getName();
+
+        if (!orderService.doesUserOwnOrderItem(tenantId, orderItemId, username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         String ipAddress = HttpUtils.getClientIpAddress(request);
-        
         downloadService.recordDownload(tenantId, orderItemId, ipAddress, username);
-        
+
         return ResponseEntity.ok().build();
     }
     
@@ -60,11 +65,16 @@ public class DownloadController {
             @PathVariable Integer tenantId,
             @PathVariable Long orderItemId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
+        String username = authentication.getName();
+        if (!orderService.doesUserOwnOrderItem(tenantId, orderItemId, username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         List<DownloadHistoryResponse> history = downloadService.getDownloadHistory(tenantId, orderItemId);
         return ResponseEntity.ok(history);
     }
@@ -96,8 +106,8 @@ public class DownloadController {
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        String username = authentication.getName();
         DigitalProductDetailsResponse response = downloadService.createDigitalProductDetails(tenantId, username, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -114,8 +124,8 @@ public class DownloadController {
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        String username = authentication.getName();
         DigitalProductDetailsResponse response = downloadService.updateDigitalProductDetails(tenantId, productId, username, request);
         return ResponseEntity.ok(response);
     }

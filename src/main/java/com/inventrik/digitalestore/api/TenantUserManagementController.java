@@ -66,11 +66,18 @@ public class TenantUserManagementController {
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
+        boolean isAdmin = tenantAccessValidator.isTenantAdmin(authentication, tenantId);
+        String username = authentication.getName();
+
         log.info("Get user details request for user: {} in tenant: {}", userId, tenantId);
-        
+
         UserResponse user = userService.getUserByTenantAndUserId(tenantId, userId);
-        
+
+        if (!isAdmin && !userService.isCurrentUser(tenantId, userId, username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(user);
     }
     
@@ -110,13 +117,18 @@ public class TenantUserManagementController {
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
+        boolean isAdmin = tenantAccessValidator.isTenantAdmin(authentication, tenantId);
         String updatedBy = authentication.getName();
-        
+
+        if (!isAdmin && !userService.isCurrentUser(tenantId, userId, updatedBy)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         log.info("Update user request for user: {} in tenant: {} by: {}", userId, tenantId, updatedBy);
-        
+
         UserResponse updatedUser = userService.updateUserInTenant(tenantId, userId, updateRequest, updatedBy);
-        
+
         return ResponseEntity.ok(updatedUser);
     }
     
@@ -133,11 +145,13 @@ public class TenantUserManagementController {
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         log.info("Delete user request for user: {} in tenant: {}", userId, tenantId);
-        
-        userService.deleteUserFromTenant(tenantId, userId);
-        
+
+        String username = authentication.getName();
+
+        userService.deleteUserFromTenant(tenantId, userId, username);
+
         return ResponseEntity.noContent().build();
     }
     
@@ -167,26 +181,26 @@ public class TenantUserManagementController {
             @PathVariable Integer tenantId,
             @PathVariable String email,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        return ResponseEntity.ok(userService.findByEmail(email));
+
+        return ResponseEntity.ok(userService.findByTenantIdAndEmail(tenantId, email));
     }
-    
+
     @GetMapping("/me")
     @Operation(summary = "Get current user details")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<UserResponse> getCurrentUser(
             @PathVariable Integer tenantId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         String username = authentication.getName();
-        return ResponseEntity.ok(userService.findByUsername(username));
+        return ResponseEntity.ok(userService.findByTenantIdAndUsername(tenantId, username));
     }
 }

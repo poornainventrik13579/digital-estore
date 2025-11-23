@@ -23,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import java.util.List;
 
 @RestController
@@ -56,12 +57,15 @@ public class PaymentController {
             @PathVariable Integer tenantId,
             @PathVariable Long paymentId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        return ResponseEntity.ok(paymentService.getPayment(tenantId, paymentId));
+
+        String username = authentication.getName();
+        boolean isAdmin = tenantAccessValidator.isTenantAdmin(authentication, tenantId);
+
+        return ResponseEntity.ok(paymentService.getPayment(tenantId, paymentId, username, isAdmin));
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
@@ -75,8 +79,8 @@ public class PaymentController {
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        String username = authentication.getName();
         PaymentResponse createdPayment = paymentService.createPayment(tenantId, username, paymentRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPayment);
     }
@@ -93,26 +97,28 @@ public class PaymentController {
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        String username = authentication.getName();
         PaymentResponse confirmedPayment = paymentService.confirmPayment(tenantId, paymentId, transactionId, username);
         return ResponseEntity.ok(confirmedPayment);
     }
     
     @PostMapping("/{paymentId}/cancel")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN') or hasRole('ROLE_USER')")
     @Operation(summary = "Cancel a payment")
     public ResponseEntity<PaymentResponse> cancelPayment(
             @PathVariable Integer tenantId,
             @PathVariable Long paymentId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
-        PaymentResponse cancelledPayment = paymentService.cancelPayment(tenantId, paymentId, username);
+
+        String username = authentication.getName();
+        boolean isAdmin = tenantAccessValidator.isTenantAdmin(authentication, tenantId);
+
+        PaymentResponse cancelledPayment = paymentService.cancelPayment(tenantId, paymentId, username, isAdmin);
         return ResponseEntity.ok(cancelledPayment);
     }
     
@@ -127,8 +133,8 @@ public class PaymentController {
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        String username = authentication.getName();
         PaymentResponse refundedPayment = paymentService.refundPayment(tenantId, paymentId, username);
         return ResponseEntity.ok(refundedPayment);
     }
@@ -181,6 +187,10 @@ public class PaymentController {
     @Operation(summary = "Get payments by status")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByStatus(
             @PathVariable Integer tenantId,
+            @Pattern(
+                regexp = "^(Pending|Processing|Successful|Failed|Refunded|Partially Refunded)$",
+                message = "Status must be one of: Pending, Processing, Successful, Failed, Refunded, Partially Refunded"
+            )
             @PathVariable String status,
             Authentication authentication) {
         

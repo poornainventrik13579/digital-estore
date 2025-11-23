@@ -11,13 +11,13 @@ public interface OrderService {
     List<OrderResponse> getAllOrders(Integer tenantId);
     
     OrderResponse getOrder(Integer tenantId, Long orderId);
-    
+
     OrderResponse createOrder(Integer tenantId, String username, OrderRequest orderRequest);
     
     OrderResponse updateOrder(Integer tenantId, Long orderId, String username, OrderUpdateRequest updateRequest);
-    
-    void deleteOrder(Integer tenantId, Long orderId);
-    
+
+    void deleteOrder(Integer tenantId, Long orderId, String username);
+
     List<OrderResponse> getOrdersByUser(Integer tenantId, Long userId);
     
     List<OrderResponse> getOrdersByStatus(Integer tenantId, String status);
@@ -27,6 +27,8 @@ public interface OrderService {
     OrderResponse cancelOrder(Integer tenantId, Long orderId, String username);
     
     OrderResponse refundOrder(Integer tenantId, Long orderId, String username);
-    
+
     boolean hasUserPurchasedProduct(Integer tenantId, Long userId, Long productId);
+
+    boolean doesUserOwnOrderItem(Integer tenantId, Long orderItemId, String username);
 }

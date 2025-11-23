@@ -138,12 +138,20 @@ public class StoreThemeServiceImpl implements StoreThemeService {
     }
     
     @Override
-    public List<StoreThemeResponse> getThemesByName(String themeName) {
-        return storeThemeRepository.findByThemeName(themeName).stream()
+    public List<StoreThemeResponse> getThemesByName(Integer tenantId, String themeName) {
+        return storeThemeRepository.findByTenantIdAndThemeName(tenantId, themeName).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
-    
+
+    @Override
+    public List<StoreThemeResponse> getAllThemesByName(String themeName) {
+        return storeThemeRepository.findAll().stream()
+                .filter(theme -> themeName.equals(theme.getThemeName()))
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
     @Override
     public boolean existsByTenantAndName(Integer tenantId, String themeName) {
         return storeThemeRepository.existsByTenantIdAndThemeName(tenantId, themeName);

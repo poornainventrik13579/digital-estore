@@ -4,6 +4,7 @@ import com.inventrik.digitalestore.dto.request.TaxRequest;
 import com.inventrik.digitalestore.dto.request.TaxUpdateRequest;
 import com.inventrik.digitalestore.dto.response.TaxCalculationResponse;
 import com.inventrik.digitalestore.dto.response.TaxResponse;
+import com.inventrik.digitalestore.security.TenantAccessValidator;
 import com.inventrik.digitalestore.service.tax.TaxService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,25 +20,36 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.validation.annotation.Validated;
 
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantId}/taxes")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Tax Management", description = "APIs for managing tax rules and calculations")
 @SecurityRequirement(name = "oauth2")
 public class TaxController {
 
     private final TaxService taxService;
+    private final TenantAccessValidator tenantAccessValidator;
     
     @GetMapping
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get all taxes for a tenant")
     public ResponseEntity<List<TaxResponse>> getTaxesByTenant(
             @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId) {
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(taxService.getTaxesByTenant(tenantId));
     }
     
@@ -48,7 +60,13 @@ public class TaxController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Tax ID", required = true)
-            @PathVariable Integer taxId) {
+            @PathVariable Integer taxId,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(taxService.getTax(tenantId, taxId));
     }
     
@@ -62,12 +80,12 @@ public class TaxController {
             Authentication authentication) {
         
         taxRequest.setTenantId(tenantId);
-        String username = (authentication != null) ? authentication.getName() : "system";
+        String username = authentication.getName();
         TaxResponse createdTax = taxService.createTax(username, taxRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTax);
     }
-    
-    
+
+
     @PutMapping(path = "/{taxId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update a tax rule (JSON)")
@@ -78,13 +96,13 @@ public class TaxController {
             @PathVariable Integer taxId,
             @Valid @RequestBody TaxUpdateRequest updateRequest,
             Authentication authentication) {
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        String username = authentication.getName();
         TaxResponse updatedTax = taxService.updateTax(tenantId, taxId, username, updateRequest);
         return ResponseEntity.ok(updatedTax);
     }
-    
-    
+
+
     @DeleteMapping("/{taxId}")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete a tax rule")
@@ -106,18 +124,24 @@ public class TaxController {
             @Parameter(description = "Tax ID", required = true)
             @PathVariable Integer taxId,
             Authentication authentication) {
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        String username = authentication.getName();
         TaxResponse defaultTax = taxService.setAsDefaultTax(tenantId, taxId, username);
         return ResponseEntity.ok(defaultTax);
     }
-    
+
     @GetMapping("/active")
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get active taxes for tenant")
     public ResponseEntity<List<TaxResponse>> getActiveTaxes(
             @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId) {
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(taxService.getActiveTaxesByTenant(tenantId));
     }
     
@@ -126,10 +150,16 @@ public class TaxController {
     @Operation(summary = "Get default tax for tenant")
     public ResponseEntity<TaxResponse> getDefaultTax(
             @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId) {
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(taxService.getDefaultTaxByTenant(tenantId));
     }
-    
+
     @GetMapping("/valid")
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get valid taxes for specific date")
@@ -137,10 +167,16 @@ public class TaxController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Date (YYYY-MM-DD)", required = true)
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(taxService.getValidTaxesForDate(tenantId, date));
     }
-    
+
     @GetMapping("/valid/default")
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get valid default tax for specific date")
@@ -148,10 +184,16 @@ public class TaxController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Date (YYYY-MM-DD)", required = true)
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(taxService.getValidDefaultTaxForDate(tenantId, date));
     }
-    
+
     @GetMapping("/search")
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Search taxes by keyword")
@@ -159,7 +201,13 @@ public class TaxController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Search keyword", required = true)
-            @RequestParam String keyword) {
+            @RequestParam @Size(max = 100) String keyword,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(taxService.searchTaxes(tenantId, keyword));
     }
     
@@ -170,10 +218,16 @@ public class TaxController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Base amount", required = true)
-            @RequestParam BigDecimal baseAmount) {
+            @RequestParam @Positive BigDecimal baseAmount,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(taxService.calculateTax(tenantId, baseAmount));
     }
-    
+
     @PostMapping("/calculate/date")
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Calculate tax for base amount on specific date")
@@ -181,12 +235,18 @@ public class TaxController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Base amount", required = true)
-            @RequestParam BigDecimal baseAmount,
+            @RequestParam @Positive BigDecimal baseAmount,
             @Parameter(description = "Date (YYYY-MM-DD)", required = true)
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(taxService.calculateTaxForDate(tenantId, baseAmount, date));
     }
-    
+
     @GetMapping("/calculate/default")
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Calculate default tax amount only")
@@ -194,10 +254,16 @@ public class TaxController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Base amount", required = true)
-            @RequestParam BigDecimal baseAmount) {
+            @RequestParam @Positive BigDecimal baseAmount,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(taxService.calculateDefaultTaxAmount(tenantId, baseAmount));
     }
-    
+
     @GetMapping("/check/code/{code}")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Check if tax code exists for tenant")
@@ -205,16 +271,28 @@ public class TaxController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Tax code", required = true)
-            @PathVariable String code) {
+            @PathVariable String code,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(taxService.existsByTenantAndCode(tenantId, code));
     }
-    
+
     @GetMapping("/count")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Count active taxes for tenant")
     public ResponseEntity<Long> countActiveTaxes(
             @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId) {
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(taxService.countActiveTaxesByTenant(tenantId));
     }
 }

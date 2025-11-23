@@ -5,19 +5,18 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderRequest {
+public class OrderFormRequest {
     
     @Schema(description = "User ID", example = "123456789", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "User ID is required")
@@ -39,12 +38,24 @@ public class OrderRequest {
     @DecimalMin(value = "0.01", inclusive = true, message = "Exchange rate must be greater than zero")
     private BigDecimal exchangeRate;
     
-    @Schema(description = "List of order items", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotEmpty(message = "Order must contain at least one item")
-    @Valid
-    private List<OrderItemRequest> orderItems;
+    @Schema(description = "Product ID", example = "123", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "Product ID is required")
+    private Long productId;
     
-    @Schema(description = "Discount code to apply", example = "SAVE20")
-    @Size(max = 50, message = "Discount code must be less than 50 characters")
-    private String discountCode;
+    @Schema(description = "Price at purchase", example = "29.99", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "Price is required")
+    @DecimalMin(value = "0.01", inclusive = true, message = "Price must be greater than zero")
+    private BigDecimal price;
+    
+    @Schema(description = "License key (optional)", example = "XXXX-YYYY-ZZZZ")
+    private String licenseKey;
+    
+    public OrderRequest toOrderRequest() {
+        
+        List<OrderItemRequest> items = new ArrayList<>();
+        OrderItemRequest item = new OrderItemRequest(productId, price, licenseKey);
+        items.add(item);
+        
+        return new OrderRequest(userId, currency, totalAmount, exchangeRate, items, null);
+    }
 }

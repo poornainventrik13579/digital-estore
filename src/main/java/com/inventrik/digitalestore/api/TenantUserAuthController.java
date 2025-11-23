@@ -58,13 +58,13 @@ public class TenantUserAuthController {
     public ResponseEntity<UserResponse> getCurrentUser(
             @PathVariable Integer tenantId,
             Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
+
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
         Jwt jwt = (Jwt) authentication.getPrincipal();

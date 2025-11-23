@@ -10,12 +10,12 @@ import java.util.List;
 
 @Repository
 public interface PaymentAuditRepository extends JpaRepository<PaymentAudit, String> {
-    
-    List<PaymentAudit> findByPaymentIdOrderByTimestampDesc(Long paymentId);
-    
-    List<PaymentAudit> findByEventTypeOrderByTimestampDesc(String eventType);
-    
-    List<PaymentAudit> findByPerformedByOrderByTimestampDesc(String performedBy);
-    
-    List<PaymentAudit> findByTimestampBetweenOrderByTimestampDesc(LocalDateTime startTime, LocalDateTime endTime);
+
+    List<PaymentAudit> findByTenantIdAndPaymentIdOrderByTimestampDesc(Integer tenantId, Long paymentId);
+
+    List<PaymentAudit> findByTenantIdAndEventTypeOrderByTimestampDesc(Integer tenantId, String eventType);
+
+    List<PaymentAudit> findByTenantIdAndPerformedByOrderByTimestampDesc(Integer tenantId, String performedBy);
+
+    List<PaymentAudit> findByTenantIdAndTimestampBetweenOrderByTimestampDesc(Integer tenantId, LocalDateTime startTime, LocalDateTime endTime);
 }

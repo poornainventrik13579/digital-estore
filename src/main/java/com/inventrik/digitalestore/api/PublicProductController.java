@@ -2,6 +2,7 @@ package com.inventrik.digitalestore.api;
 
 import com.inventrik.digitalestore.dto.response.PagedResponse;
 import com.inventrik.digitalestore.dto.response.ProductResponse;
+import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.service.product.ProductService;
 import com.inventrik.digitalestore.service.tenant.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 
 @RestController
@@ -26,7 +30,7 @@ public class PublicProductController {
         try {
             var tenant = tenantService.getTenant(tenantId);
             return "A".equals(tenant.getStatus());
-        } catch (Exception e) {
+        } catch (ResourceNotFoundException e) {
             return false;
         }
     }
@@ -35,8 +39,8 @@ public class PublicProductController {
     @Operation(summary = "Get all products with pagination")
     public ResponseEntity<PagedResponse<ProductResponse>> getAllProducts(
             @PathVariable Integer tenantId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         if (!validateTenant(tenantId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
@@ -78,9 +82,9 @@ public class PublicProductController {
     @Operation(summary = "Search products by keyword")
     public ResponseEntity<PagedResponse<ProductResponse>> searchProducts(
             @PathVariable Integer tenantId,
-            @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam @Size(min = 1, max = 100) String keyword,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         if (!validateTenant(tenantId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }

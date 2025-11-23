@@ -10,12 +10,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -25,6 +28,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantId}/bundles")
 @RequiredArgsConstructor
+@Validated
 @Slf4j
 @Tag(name = "Bundle Management", description = "APIs for managing product bundles")
 public class BundleController {
@@ -110,7 +114,11 @@ public class BundleController {
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Valid @RequestBody BundleRequest bundleRequest,
             Authentication authentication) {
-        
+
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         String createdBy = authentication.getName();
         log.info("Creating bundle for tenant: {} by user: {}", tenantId, createdBy);
         BundleResponse bundle = bundleService.createBundle(tenantId, bundleRequest, createdBy);
@@ -133,7 +141,11 @@ public class BundleController {
             @Parameter(description = "Bundle ID") @PathVariable Long bundleId,
             @Valid @RequestBody BundleRequest bundleRequest,
             Authentication authentication) {
-        
+
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         String updatedBy = authentication.getName();
         log.info("Updating bundle {} for tenant: {} by user: {}", bundleId, tenantId, updatedBy);
         BundleResponse bundle = bundleService.updateBundle(tenantId, bundleId, bundleRequest, updatedBy);
@@ -153,7 +165,11 @@ public class BundleController {
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Parameter(description = "Bundle ID") @PathVariable Long bundleId,
             Authentication authentication) {
-        
+
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         String deletedBy = authentication.getName();
         log.info("Deleting bundle {} for tenant: {} by user: {}", bundleId, tenantId, deletedBy);
         bundleService.deleteBundle(tenantId, bundleId, deletedBy);
@@ -170,7 +186,7 @@ public class BundleController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<BundleResponse>> searchBundles(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
-            @Parameter(description = "Search term") @RequestParam String name,
+            @Parameter(description = "Search term") @RequestParam @Size(max = 100) String name,
             Authentication authentication) {
         
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
@@ -240,13 +256,17 @@ public class BundleController {
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Parameter(description = "Bundle ID") @PathVariable Long bundleId,
             @Parameter(description = "Product ID") @PathVariable Long productId,
-            @Parameter(description = "Quantity") @RequestParam(defaultValue = "1") Integer quantity,
-            Principal principal) {
-        
-        String username = principal != null ? principal.getName() : "system";
-        log.info("Adding product to bundle: bundleId={}, productId={}, quantity={}, tenantId={}, username={}", 
+            @Parameter(description = "Quantity") @RequestParam(defaultValue = "1") @Positive Integer quantity,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = authentication != null ? authentication.getName() : "system";
+        log.info("Adding product to bundle: bundleId={}, productId={}, quantity={}, tenantId={}, username={}",
                 bundleId, productId, quantity, tenantId, username);
-        
+
         BundleResponse bundle = bundleService.addProductToBundle(tenantId, bundleId, productId, quantity, username);
         return ResponseEntity.ok(bundle);
     }
@@ -264,12 +284,16 @@ public class BundleController {
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Parameter(description = "Bundle ID") @PathVariable Long bundleId,
             @Parameter(description = "Product ID") @PathVariable Long productId,
-            Principal principal) {
-        
-        String username = principal != null ? principal.getName() : "system";
-        log.info("Removing product from bundle: bundleId={}, productId={}, tenantId={}, username={}", 
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = authentication != null ? authentication.getName() : "system";
+        log.info("Removing product from bundle: bundleId={}, productId={}, tenantId={}, username={}",
                 bundleId, productId, tenantId, username);
-        
+
         BundleResponse bundle = bundleService.removeProductFromBundle(tenantId, bundleId, productId, username);
         return ResponseEntity.ok(bundle);
     }
@@ -287,13 +311,17 @@ public class BundleController {
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
             @Parameter(description = "Bundle ID") @PathVariable Long bundleId,
             @Parameter(description = "Product ID") @PathVariable Long productId,
-            @Parameter(description = "New quantity") @RequestParam Integer quantity,
-            Principal principal) {
-        
-        String username = principal != null ? principal.getName() : "system";
-        log.info("Updating product quantity in bundle: bundleId={}, productId={}, quantity={}, tenantId={}, username={}", 
+            @Parameter(description = "New quantity") @RequestParam @Positive Integer quantity,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = authentication != null ? authentication.getName() : "system";
+        log.info("Updating product quantity in bundle: bundleId={}, productId={}, quantity={}, tenantId={}, username={}",
                 bundleId, productId, quantity, tenantId, username);
-        
+
         BundleResponse bundle = bundleService.updateProductQuantityInBundle(tenantId, bundleId, productId, quantity, username);
         return ResponseEntity.ok(bundle);
     }

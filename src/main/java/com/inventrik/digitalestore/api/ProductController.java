@@ -18,11 +18,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Size;
 import java.util.List;
+import org.springframework.validation.annotation.Validated;
 
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantId}/products")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Product Management", description = "APIs for managing products")
 @SecurityRequirement(name = "oauth2")
 public class ProductController {
@@ -35,8 +40,8 @@ public class ProductController {
     @Operation(summary = "Get all products with pagination")
     public ResponseEntity<PagedResponse<ProductResponse>> getAllProducts(
             @PathVariable Integer tenantId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             Authentication authentication) {
         
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
@@ -73,13 +78,13 @@ public class ProductController {
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        String username = authentication.getName();
         ProductResponse createdProduct = productService.createProduct(tenantId, username, productRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
     }
-    
-    
+
+
     @PutMapping(path = "/{productId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update a product (JSON)")
@@ -92,13 +97,13 @@ public class ProductController {
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        String username = authentication.getName();
         ProductResponse updatedProduct = productService.updateProduct(tenantId, productId, username, updateRequest);
         return ResponseEntity.ok(updatedProduct);
     }
-    
-    
+
+
     @DeleteMapping("/{productId}")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete a product")
@@ -149,9 +154,9 @@ public class ProductController {
     @Operation(summary = "Search products by keyword")
     public ResponseEntity<PagedResponse<ProductResponse>> searchProducts(
             @PathVariable Integer tenantId,
-            @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam @Size(max = 100) String keyword,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             Authentication authentication) {
         
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {

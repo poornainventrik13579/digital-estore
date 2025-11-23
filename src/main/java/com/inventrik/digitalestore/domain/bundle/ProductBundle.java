@@ -3,6 +3,7 @@ package com.inventrik.digitalestore.domain.bundle;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
@@ -58,6 +59,7 @@ public class ProductBundle {
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "bundle", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<BundleItem> bundleItems = new ArrayList<>();
     

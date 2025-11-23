@@ -15,6 +15,7 @@ public interface StoreThemeService {
     StoreThemeResponse createTheme(String username, StoreThemeRequest themeRequest);
     StoreThemeResponse updateTheme(Integer tenantId, Integer themeId, String username, StoreThemeUpdateRequest updateRequest);
     void deleteTheme(Integer tenantId, Integer themeId);
-    List<StoreThemeResponse> getThemesByName(String themeName);
+    List<StoreThemeResponse> getThemesByName(Integer tenantId, String themeName);
+    List<StoreThemeResponse> getAllThemesByName(String themeName);
     boolean existsByTenantAndName(Integer tenantId, String themeName);
 }

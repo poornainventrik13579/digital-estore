@@ -3,6 +3,7 @@ package com.inventrik.digitalestore.service.order;
 import com.inventrik.digitalestore.domain.order.Order;
 import com.inventrik.digitalestore.domain.order.OrderItem;
 import com.inventrik.digitalestore.domain.order.OrderStatus;
+import com.inventrik.digitalestore.domain.product.Product;
 import com.inventrik.digitalestore.dto.request.OrderItemRequest;
 import com.inventrik.digitalestore.dto.request.OrderRequest;
 import com.inventrik.digitalestore.dto.request.OrderUpdateRequest;
@@ -19,6 +20,7 @@ import com.inventrik.digitalestore.repository.UserRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.discount.DiscountService;
 import com.inventrik.digitalestore.service.user.UserService;
+import com.inventrik.digitalestore.service.currency.CurrencyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,7 @@ public class OrderServiceImpl implements OrderService {
     private final DiscountService discountService;
     private final IdGeneratorService idGeneratorService;
     private final UserService userService;
+    private final CurrencyService currencyService;
     
     private OrderResponse mapToDTO(Order order) {
         List<OrderItemResponse> orderItemResponses = order.getOrderItems().stream()
@@ -83,7 +86,8 @@ public class OrderServiceImpl implements OrderService {
     
     @Override
     public List<OrderResponse> getAllOrders(Integer tenantId) {
-        return orderRepository.findByTenantId(tenantId).stream()
+        // Use optimized query with JOIN FETCH to avoid N+1 problem
+        return orderRepository.findByTenantIdWithItems(tenantId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -101,40 +105,75 @@ public class OrderServiceImpl implements OrderService {
         
         userRepository.findByTenantIdAndUserId(tenantId, orderRequest.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + orderRequest.getUserId()));
-        
-        BigDecimal finalAmount = orderRequest.getTotalAmount();
+
+        List<OrderItem> orderItems = new ArrayList<>();
+        Long tempOrderId = 0L;
+
+        for (OrderItemRequest itemRequest : orderRequest.getOrderItems()) {
+            Product product = productRepository.findByTenantIdAndProductId(tenantId, itemRequest.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
+
+            BigDecimal actualPrice = product.getDefaultPrice();
+            if (itemRequest.getPriceAtPurchase().compareTo(actualPrice) != 0) {
+                throw new BusinessException("Price mismatch for product " + product.getProductName() +
+                    ". Expected: " + actualPrice + ", Provided: " + itemRequest.getPriceAtPurchase());
+            }
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setTenantId(tenantId);
+            orderItem.setOrderId(tempOrderId);
+            orderItem.setProductId(itemRequest.getProductId());
+            orderItem.setPriceAtPurchase(actualPrice);
+            orderItem.setLicenseKey(itemRequest.getLicenseKey());
+            orderItem.setStatus("0");
+            orderItems.add(orderItem);
+        }
+
+        BigDecimal itemsTotal = orderItems.stream()
+                .map(OrderItem::getPriceAtPurchase)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (itemsTotal.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("Order items total must be greater than zero");
+        }
+
+        if (itemsTotal.compareTo(orderRequest.getTotalAmount()) != 0) {
+            throw new BusinessException("Order total mismatch. Expected: " + itemsTotal + ", Provided: " + orderRequest.getTotalAmount());
+        }
+
+        BigDecimal exchangeRate = currencyService.getExchangeRate("USD", orderRequest.getCurrency(), tenantId);
+
         BigDecimal discountAmount = BigDecimal.ZERO;
-        
+
         if (orderRequest.getDiscountCode() != null && !orderRequest.getDiscountCode().trim().isEmpty()) {
-            
-            DiscountValidationResponse validation = discountService.validateDiscountCode(tenantId, 
-                new ValidateDiscountRequest(orderRequest.getDiscountCode().trim(), orderRequest.getTotalAmount(), orderRequest.getUserId()));
-            
+
+            DiscountValidationResponse validation = discountService.validateDiscountCode(tenantId,
+                new ValidateDiscountRequest(orderRequest.getDiscountCode().trim(), itemsTotal, orderRequest.getUserId()));
+
             if (!validation.isValid()) {
                 throw new BusinessException("Invalid discount code: " + validation.getMessage());
             }
-            discountAmount = validation.getDiscountAmount();
-            finalAmount = validation.getFinalAmount();
         }
-        
+
         Long newOrderId = idGeneratorService.generateId(tenantId, "ORDER");
-        
+
         if (orderRequest.getDiscountCode() != null && !orderRequest.getDiscountCode().trim().isEmpty()) {
             try {
                 discountAmount = discountService.applyDiscountToOrder(
-                    tenantId, 
-                    orderRequest.getDiscountCode().trim(), 
-                    newOrderId, 
-                    orderRequest.getUserId(), 
-                    orderRequest.getTotalAmount(), 
+                    tenantId,
+                    orderRequest.getDiscountCode().trim(),
+                    newOrderId,
+                    orderRequest.getUserId(),
+                    itemsTotal,
                     username
                 );
-                finalAmount = orderRequest.getTotalAmount().subtract(discountAmount);
             } catch (Exception e) {
                 throw new BusinessException("Failed to apply discount code: " + e.getMessage());
             }
         }
-        
+
+        BigDecimal finalAmount = itemsTotal.subtract(discountAmount);
+
         Order order = new Order();
         order.setTenantId(tenantId);
         order.setOrderId(newOrderId);
@@ -142,57 +181,32 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderDate(LocalDateTime.now());
         order.setCurrencyCode(orderRequest.getCurrency());
         order.setOrderNumber("ORD-" + newOrderId);
-        order.setSubtotal(orderRequest.getTotalAmount());
+        order.setSubtotal(itemsTotal);
         order.setDiscountAmount(discountAmount);
         order.setTotalAmount(finalAmount);
-        order.setExchangeRate(orderRequest.getExchangeRate());
+        order.setExchangeRate(exchangeRate);
         order.setStatus(OrderStatus.PENDING.getDisplayName());
-        
+
         order.setCreatedBy(userService.getAuditCode(username));
         order.setUpdatedBy(userService.getAuditCode(username));
-        
+
         Order savedOrder = orderRepository.save(order);
-        
-        List<OrderItem> orderItems = new ArrayList<>();
-        for (OrderItemRequest itemRequest : orderRequest.getOrderItems()) {
-            
-            productRepository.findByTenantIdAndProductId(tenantId, itemRequest.getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
-            
-            OrderItem orderItem = new OrderItem();
-            orderItem.setTenantId(tenantId);
-            orderItem.setOrderId(newOrderId);
-            orderItem.setOrderItemId(idGeneratorService.generateId(tenantId, "ORDER_ITEM"));
-            orderItem.setProductId(itemRequest.getProductId());
-            orderItem.setPriceAtPurchase(itemRequest.getPriceAtPurchase());
-            orderItem.setLicenseKey(itemRequest.getLicenseKey());
-            orderItem.setStatus("0");
-            orderItem.setCreatedBy(userService.getAuditCode(username));
-            orderItem.setUpdatedBy(userService.getAuditCode(username));
-            orderItem.setCreated(LocalDateTime.now());
-            orderItem.setUpdated(LocalDateTime.now());
-            orderItems.add(orderItem);
-        }
-        
-        BigDecimal itemsTotal = orderItems.stream()
-                .map(OrderItem::getPriceAtPurchase)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        if (itemsTotal.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException("Order items total must be greater than zero");
-        }
-        
-        savedOrder.setSubtotal(itemsTotal);
-        
+
         for (OrderItem item : orderItems) {
+            item.setOrderId(newOrderId);
+            item.setOrderItemId(idGeneratorService.generateId(tenantId, "ORDER_ITEM"));
+            item.setCreatedBy(userService.getAuditCode(username));
+            item.setUpdatedBy(userService.getAuditCode(username));
+            item.setCreated(LocalDateTime.now());
+            item.setUpdated(LocalDateTime.now());
             savedOrder.getOrderItems().add(item);
             item.setOrder(savedOrder);
         }
-        
+
         savedOrder = orderRepository.save(savedOrder);
-        
+
         eventPublisher.publishEvent(new OrderStatusChangeEvent(savedOrder, null, savedOrder.getStatus()));
-        
+
         return mapToDTO(savedOrder);
     }
     
@@ -201,7 +215,11 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse updateOrder(Integer tenantId, Long orderId, String username, OrderUpdateRequest updateRequest) {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
-        
+
+        if (!order.getCreatedBy().equals(userService.getAuditCode(username))) {
+            throw new com.inventrik.digitalestore.exception.UnauthorizedException("You do not have permission to perform this action");
+        }
+
         String oldStatus = order.getStatus();
         
         if (updateRequest.getStatus() != null) {
@@ -227,24 +245,27 @@ public class OrderServiceImpl implements OrderService {
     
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public void deleteOrder(Integer tenantId, Long orderId) {
-        if (!orderRepository.findByTenantIdAndOrderId(tenantId, orderId).isPresent()) {
-            throw new ResourceNotFoundException("Order not found with id: " + orderId);
+    public void deleteOrder(Integer tenantId, Long orderId, String username) {
+        Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+
+        if (!order.getCreatedBy().equals(userService.getAuditCode(username))) {
+            throw new com.inventrik.digitalestore.exception.UnauthorizedException("You do not have permission to perform this action");
         }
-        
+
         orderRepository.deleteByTenantIdAndOrderId(tenantId, orderId);
     }
     
     @Override
     public List<OrderResponse> getOrdersByUser(Integer tenantId, Long userId) {
-        return orderRepository.findByTenantIdAndUserId(tenantId, userId).stream()
+        return orderRepository.findByTenantIdAndUserIdWithItems(tenantId, userId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
-    
+
     @Override
     public List<OrderResponse> getOrdersByStatus(Integer tenantId, String status) {
-        return orderRepository.findByTenantIdAndStatus(tenantId, status).stream()
+        return orderRepository.findByTenantIdAndStatusWithItems(tenantId, status).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -254,8 +275,13 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse completeOrder(Integer tenantId, Long orderId, String username) {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
-        
-        if (OrderStatus.CANCELLED.getDisplayName().equals(order.getStatus()) || 
+
+        if (!order.getCreatedBy().equals(userService.getAuditCode(username))) {
+            throw new com.inventrik.digitalestore.exception.UnauthorizedException(
+                "You do not have permission to complete this order");
+        }
+
+        if (OrderStatus.CANCELLED.getDisplayName().equals(order.getStatus()) ||
             OrderStatus.REFUNDED.getDisplayName().equals(order.getStatus())) {
             throw new BusinessException("Cannot complete order that is cancelled or refunded");
         }
@@ -278,8 +304,13 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse cancelOrder(Integer tenantId, Long orderId, String username) {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
-        
-        if (OrderStatus.COMPLETED.getDisplayName().equals(order.getStatus()) || 
+
+        if (!order.getCreatedBy().equals(userService.getAuditCode(username))) {
+            throw new com.inventrik.digitalestore.exception.UnauthorizedException(
+                "You do not have permission to cancel this order");
+        }
+
+        if (OrderStatus.COMPLETED.getDisplayName().equals(order.getStatus()) ||
             OrderStatus.REFUNDED.getDisplayName().equals(order.getStatus()) ||
             OrderStatus.PARTIALLY_REFUNDED.getDisplayName().equals(order.getStatus())) {
             throw new BusinessException("Cannot cancel order that is completed or refunded");
@@ -303,7 +334,11 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse refundOrder(Integer tenantId, Long orderId, String username) {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
-        
+
+        if (!order.getCreatedBy().equals(userService.getAuditCode(username))) {
+            throw new com.inventrik.digitalestore.exception.UnauthorizedException("You do not have permission to perform this action");
+        }
+
         if (!OrderStatus.COMPLETED.getDisplayName().equals(order.getStatus())) {
             throw new BusinessException("Only completed orders can be refunded");
         }
@@ -324,6 +359,21 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public boolean hasUserPurchasedProduct(Integer tenantId, Long userId, Long productId) {
-        return orderRepository.hasUserPurchasedProduct(tenantId, userId, productId);
+        // Check if user has purchased product in completed or processing orders
+        return orderRepository.hasUserPurchasedProduct(tenantId, userId, productId,
+                OrderStatus.COMPLETED.getDisplayName(), OrderStatus.PROCESSING.getDisplayName());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean doesUserOwnOrderItem(Integer tenantId, Long orderItemId, String username) {
+        Order order = orderRepository.findOrderByTenantIdAndOrderItemId(tenantId, orderItemId)
+                .orElse(null);
+
+        if (order == null) {
+            return false;
+        }
+
+        return userService.isCurrentUser(tenantId, order.getUserId(), username);
     }
 }

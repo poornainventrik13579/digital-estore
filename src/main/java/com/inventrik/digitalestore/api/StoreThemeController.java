@@ -3,6 +3,7 @@ package com.inventrik.digitalestore.api;
 import com.inventrik.digitalestore.dto.request.StoreThemeRequest;
 import com.inventrik.digitalestore.dto.request.StoreThemeUpdateRequest;
 import com.inventrik.digitalestore.dto.response.StoreThemeResponse;
+import com.inventrik.digitalestore.security.TenantAccessValidator;
 import com.inventrik.digitalestore.service.theme.StoreThemeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import java.util.List;
 
 @RestController
@@ -27,16 +29,23 @@ import java.util.List;
 public class StoreThemeController {
 
     private final StoreThemeService storeThemeService;
-    
+    private final TenantAccessValidator tenantAccessValidator;
+
     @GetMapping
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get all themes for a tenant")
     public ResponseEntity<List<StoreThemeResponse>> getThemesByTenant(
             @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId) {
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(storeThemeService.getThemesByTenant(tenantId));
     }
-    
+
     @GetMapping("/{themeId}")
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get a specific theme")
@@ -44,7 +53,13 @@ public class StoreThemeController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Theme ID", required = true)
-            @PathVariable Integer themeId) {
+            @PathVariable Integer themeId,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(storeThemeService.getTheme(tenantId, themeId));
     }
     
@@ -100,7 +115,17 @@ public class StoreThemeController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Status", required = true)
-            @PathVariable String status) {
+            @Pattern(
+                regexp = "^[AI]$",
+                message = "Status must be A (Active) or I (Inactive)"
+            )
+            @PathVariable String status,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         return ResponseEntity.ok(storeThemeService.getThemesByTenantAndStatus(tenantId, status));
     }
     

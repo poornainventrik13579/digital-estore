@@ -15,11 +15,11 @@ public interface DigitalDownloadRepository extends JpaRepository<DigitalDownload
     List<DigitalDownload> findByTenantIdAndOrderItemId(Integer tenantId, Long orderItemId);
     
     List<DigitalDownload> findByTenantId(Integer tenantId);
-    
-    List<DigitalDownload> findByIpAddress(String ipAddress);
-    
-    List<DigitalDownload> findByDownloadDateBetween(LocalDateTime startDate, LocalDateTime endDate);
-    
+
+    List<DigitalDownload> findByTenantIdAndIpAddress(Integer tenantId, String ipAddress);
+
+    List<DigitalDownload> findByTenantIdAndDownloadDateBetween(Integer tenantId, LocalDateTime startDate, LocalDateTime endDate);
+
     List<DigitalDownload> findByTenantIdAndStatus(Integer tenantId, String status);
     
     @Query("""

@@ -7,11 +7,15 @@ import com.inventrik.digitalestore.service.currency.CurrencyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -21,6 +25,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantId}/currencies")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Currency Management", description = "APIs for managing currencies and exchange rates")
 public class CurrencyController {
     
@@ -127,9 +132,9 @@ public class CurrencyController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Map<String, Object>> convertAmount(
             @PathVariable Integer tenantId,
-            @RequestParam BigDecimal amount,
-            @RequestParam String fromCurrency,
-            @RequestParam String toCurrency,
+            @RequestParam @Positive BigDecimal amount,
+            @RequestParam @Size(min = 3, max = 3) @Pattern(regexp = "^[A-Z]{3}$") String fromCurrency,
+            @RequestParam @Size(min = 3, max = 3) @Pattern(regexp = "^[A-Z]{3}$") String toCurrency,
             Authentication authentication) {
         
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
@@ -155,8 +160,8 @@ public class CurrencyController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Map<String, Object>> getExchangeRate(
             @PathVariable Integer tenantId,
-            @RequestParam String fromCurrency,
-            @RequestParam String toCurrency,
+            @RequestParam @Size(min = 3, max = 3) @Pattern(regexp = "^[A-Z]{3}$") String fromCurrency,
+            @RequestParam @Size(min = 3, max = 3) @Pattern(regexp = "^[A-Z]{3}$") String toCurrency,
             Authentication authentication) {
         
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
