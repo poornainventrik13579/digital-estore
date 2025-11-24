@@ -56,27 +56,27 @@ public class TenantController {
     public ResponseEntity<TenantResponse> getTenant(
             @PathVariable Integer tenantId,
             Authentication authentication) {
-        
+
         if (!verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         return ResponseEntity.ok(tenantService.getTenant(tenantId));
     }
-    
+
     @PostMapping("/tenants")
     @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
     @Operation(summary = "Create a new tenant")
     public ResponseEntity<TenantResponse> createTenantJson(
             @Valid @RequestBody TenantRequest tenantRequest,
             Authentication authentication) {
-        
+
         String username = (authentication != null) ? authentication.getName() : "admin";
         TenantResponse createdTenant = tenantService.createTenant(username, tenantRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTenant);
     }
-    
-    
+
+
     @PutMapping("/tenants/{tenantId}")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update tenant details")
@@ -84,85 +84,22 @@ public class TenantController {
             @PathVariable Integer tenantId,
             @Valid @RequestBody TenantUpdateRequest updateRequest,
             Authentication authentication) {
-        
+
         if (!verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         String username = (authentication != null) ? authentication.getName() : "tenant";
         TenantResponse updatedTenant = tenantService.updateTenant(tenantId, username, updateRequest);
         return ResponseEntity.ok(updatedTenant);
     }
-    
-    
+
+
     @DeleteMapping("/tenants/{tenantId}")
     @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
     @Operation(summary = "Delete a tenant")
     public ResponseEntity<Void> deleteTenant(@PathVariable Integer tenantId) {
         tenantService.deleteTenant(tenantId);
         return ResponseEntity.noContent().build();
-    }
-    
-    @GetMapping("/tenants/domain/{domainName}")
-    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
-    @Operation(summary = "Get tenant by domain name")
-    public ResponseEntity<TenantResponse> getTenantByDomain(@PathVariable String domainName) {
-        return ResponseEntity.ok(tenantService.getTenantByDomain(domainName));
-    }
-    
-    @GetMapping("/tenants/subdomain/{subdomain}")
-    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
-    @Operation(summary = "Get tenant by subdomain")
-    public ResponseEntity<TenantResponse> getTenantBySubdomain(@PathVariable String subdomain) {
-        return ResponseEntity.ok(tenantService.getTenantBySubdomain(subdomain));
-    }
-    
-    @GetMapping("/status/{status}")
-    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
-    @Operation(summary = "Get tenants by status")
-    public ResponseEntity<List<TenantResponse>> getTenantsByStatus(
-            @Parameter(description = "Status", required = true)
-            @Pattern(
-                regexp = "^[AI]$",
-                message = "Status must be A (Active) or I (Inactive)"
-            )
-            @PathVariable String status) {
-        return ResponseEntity.ok(tenantService.getTenantsByStatus(status));
-    }
-    
-    @GetMapping("/country/{countryRegion}")
-    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
-    @Operation(summary = "Get tenants by country/region")
-    public ResponseEntity<List<TenantResponse>> getTenantsByCountry(
-            @Parameter(description = "Country/Region", required = true)
-            @PathVariable String countryRegion) {
-        return ResponseEntity.ok(tenantService.getTenantsByCountry(countryRegion));
-    }
-    
-    @GetMapping("/check/email/{email}")
-    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
-    @Operation(summary = "Check if email exists")
-    public ResponseEntity<Boolean> checkEmailExists(
-            @Parameter(description = "Email address", required = true)
-            @PathVariable String email) {
-        return ResponseEntity.ok(tenantService.existsByEmail(email));
-    }
-    
-    @GetMapping("/check/domain/{domainName}")
-    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
-    @Operation(summary = "Check if domain exists")
-    public ResponseEntity<Boolean> checkDomainExists(
-            @Parameter(description = "Domain name", required = true)
-            @PathVariable String domainName) {
-        return ResponseEntity.ok(tenantService.existsByDomain(domainName));
-    }
-    
-    @GetMapping("/check/subdomain/{subdomain}")
-    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN')")
-    @Operation(summary = "Check if subdomain exists")
-    public ResponseEntity<Boolean> checkSubdomainExists(
-            @Parameter(description = "Subdomain", required = true)
-            @PathVariable String subdomain) {
-        return ResponseEntity.ok(tenantService.existsBySubdomain(subdomain));
     }
 }

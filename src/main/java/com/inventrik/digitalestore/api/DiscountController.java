@@ -135,31 +135,15 @@ public class DiscountController {
     public ResponseEntity<List<DiscountCodeResponse>> getAllDiscountCodes(
             @PathVariable Integer tenantId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         List<DiscountCodeResponse> response = discountService.getAllDiscountCodes(tenantId);
         return ResponseEntity.ok(response);
     }
-    
-    @GetMapping("/active")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get active discount codes", description = "Retrieve all currently active discount codes")
-    @ApiResponse(responseCode = "200", description = "List of active discount codes")
-    public ResponseEntity<List<DiscountCodeResponse>> getActiveDiscountCodes(
-            @PathVariable Integer tenantId,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        List<DiscountCodeResponse> response = discountService.getActiveDiscountCodes(tenantId);
-        return ResponseEntity.ok(response);
-    }
-    
+
     @DeleteMapping("/{discountId}")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete a discount code", description = "Soft delete a discount code")
@@ -200,7 +184,7 @@ public class DiscountController {
         return ResponseEntity.ok(response);
     }
     
-    @PostMapping("/{discountId}/usage")
+    @GetMapping("/{discountId}/usage")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get discount usage statistics", description = "Get usage count and total amount for a discount code")
     @ApiResponse(responseCode = "200", description = "Usage statistics")
@@ -208,36 +192,20 @@ public class DiscountController {
             @PathVariable Integer tenantId,
             @PathVariable Long discountId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         long usageCount = discountService.getDiscountUsageCount(tenantId, discountId);
         BigDecimal totalAmount = discountService.getTotalDiscountAmountUsed(tenantId, discountId);
-        
+
         Map<String, Object> stats = Map.of(
             "usageCount", usageCount,
             "totalDiscountAmount", totalAmount,
             "discountId", discountId
         );
-        
+
         return ResponseEntity.ok(stats);
-    }
-    
-    @PostMapping("/cleanup-expired")
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Cleanup expired discounts", description = "Deactivate all expired discount codes")
-    @ApiResponse(responseCode = "200", description = "Cleanup completed")
-    public ResponseEntity<Map<String, String>> cleanupExpiredDiscounts(
-            @PathVariable Integer tenantId,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        discountService.deactivateExpiredDiscounts(tenantId);
-        return ResponseEntity.ok(Map.of("message", "Expired discount codes have been deactivated"));
     }
 } 

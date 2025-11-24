@@ -27,14 +27,14 @@ public class TenantSignupRequest {
     @NotBlank(message = "Phone number is required")
     @Size(max = 20, message = "Phone number must be less than 20 characters")
     private String shopPhone;
-    
+
     @NotBlank(message = "Shop logo is required")
     @Size(max = 200, message = "Logo URL must be less than 200 characters")
     private String shopLogo;
-    
+
     @NotBlank(message = "Domain name is required")
     @Size(min = 4, max = 100, message = "Domain name must be between 4 and 100 characters")
-    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]\\.[a-zA-Z]{2,}$", 
+    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]\\.[a-zA-Z]{2,}$",
              message = "Domain name must be a valid format (e.g., mystore.example.com)")
     private String domainName;
     
@@ -57,7 +57,7 @@ public class TenantSignupRequest {
     
     @Size(max = 50, message = "Tax ID must be less than 50 characters")
     private String taxId;
-    
+
     @NotBlank(message = "Timezone is required")
     @Size(max = 50, message = "Timezone must be less than 50 characters")
     private String timezone;

@@ -6,57 +6,34 @@ Base URL: `http://localhost:8080`
 
 ## Authentication
 
-### 1. User Registration
+### 1. Customer Signup
 ```
-POST /api/v1/store-auth/tenants/{tenantId}/register
+POST /api/v1/tenants/{tenantId}/auth/signup
 ```
 ```json
 {
-  "email": "customer@email.com",
+  "email": "sarah.jones@email.com",
   "password": "Customer@123",
   "firstName": "Sarah",
-  "lastName": "Jones",
-  "phone": "+1-555-0201",
-  "company": "Tech Innovations Inc",
-  "address": {
-    "street": "123 Market Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "country": "United States",
-    "zipCode": "94105"
-  }
+  "lastName": "Jones"
 }
 ```
 
-### 2. User Login
+### 2. Customer Login
 ```
-POST /api/v1/store-auth/tenants/{tenantId}/login
+POST /api/v1/tenants/{tenantId}/auth/login
 ```
 ```json
 {
-  "email": "customer@email.com",
+  "email": "sarah.jones@email.com",
   "password": "Customer@123"
 }
 ```
 
-### 3. Get User Profile
+### 3. Get My Profile
 ```
-GET /api/v1/store-auth/tenants/{tenantId}/profile
+GET /api/v1/tenants/{tenantId}/auth/me
 Authorization: Bearer {token}
-```
-
-### 4. Update User Profile
-```
-PUT /api/v1/store-auth/tenants/{tenantId}/profile
-Authorization: Bearer {token}
-```
-```json
-{
-  "firstName": "Sarah",
-  "lastName": "Jones",
-  "phone": "+1-555-0201",
-  "company": "Tech Innovations Inc"
-}
 ```
 
 ---

@@ -142,7 +142,7 @@ public class TenantUserAuthServiceImpl implements TenantUserAuthService {
     
     private String generateJwtToken(User user, Tenant tenant) {
         Instant now = Instant.now();
-        
+
         JwtClaimsSet claims = JwtClaimsSet.builder()
             .issuer("http://localhost:8080")
             .issuedAt(now)
@@ -156,9 +156,9 @@ public class TenantUserAuthServiceImpl implements TenantUserAuthService {
             .claim("shop_name", tenant.getShopName())
             .claim("subdomain", tenant.getSubdomain())
             .claim("domain_name", tenant.getDomainName())
-            .claim("auth_type", "user") 
+            .claim("auth_type", "user")
             .build();
-        
+
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
 }

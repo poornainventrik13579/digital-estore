@@ -111,44 +111,15 @@ public class ProductController {
             @PathVariable Integer tenantId,
             @PathVariable Long productId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         productService.deleteProduct(tenantId, productId);
         return ResponseEntity.noContent().build();
     }
-    
-    @GetMapping("/category/{categoryId}")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get products by category")
-    public ResponseEntity<List<ProductResponse>> getProductsByCategory(
-            @PathVariable Integer tenantId,
-            @PathVariable Long categoryId,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        return ResponseEntity.ok(productService.getProductsByCategory(tenantId, categoryId));
-    }
-    
-    @GetMapping("/active")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get active products")
-    public ResponseEntity<List<ProductResponse>> getActiveProducts(
-            @PathVariable Integer tenantId,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        return ResponseEntity.ok(productService.getActiveProducts(tenantId));
-    }
-    
+
     @GetMapping("/search")
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Search products by keyword")

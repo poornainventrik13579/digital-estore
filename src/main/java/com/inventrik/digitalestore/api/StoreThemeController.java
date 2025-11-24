@@ -107,36 +107,4 @@ public class StoreThemeController {
         storeThemeService.deleteTheme(tenantId, themeId);
         return ResponseEntity.noContent().build();
     }
-    
-    @GetMapping("/status/{status}")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get themes by status for a tenant")
-    public ResponseEntity<List<StoreThemeResponse>> getThemesByStatus(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Status", required = true)
-            @Pattern(
-                regexp = "^[AI]$",
-                message = "Status must be A (Active) or I (Inactive)"
-            )
-            @PathVariable String status,
-            Authentication authentication) {
-
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        return ResponseEntity.ok(storeThemeService.getThemesByTenantAndStatus(tenantId, status));
-    }
-    
-    @GetMapping("/check/name/{themeName}")
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Check if theme name exists for tenant")
-    public ResponseEntity<Boolean> checkThemeNameExists(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Theme name", required = true)
-            @PathVariable String themeName) {
-        return ResponseEntity.ok(storeThemeService.existsByTenantAndName(tenantId, themeName));
-    }
 }

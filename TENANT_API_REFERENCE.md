@@ -8,26 +8,28 @@ Base URL: `http://localhost:8080`
 
 ### 1. Tenant Signup
 ```
-POST /api/v1/tenant-auth/signup
+POST /api/v1/tenants/auth/signup
 ```
 ```json
 {
-  "storeName": "TechHub Digital Store",
-  "subdomain": "techhub",
-  "email": "admin@techhub.com",
+  "shopName": "TechHub Digital Store",
+  "shopEmail": "admin@techhub.com",
   "password": "Admin@12345",
-  "firstName": "John",
-  "lastName": "Smith",
-  "phone": "+1-555-0100",
-  "businessType": "DIGITAL_GOODS",
-  "country": "United States",
-  "description": "Premium digital products marketplace"
+  "shopPhone": "+1-555-0100",
+  "shopLogo": "https://techhub.com/assets/logo.png",
+  "domainName": "techhub.example.com",
+  "subdomain": "techhub",
+  "countryRegion": "United States",
+  "baseCurrency": "USD",
+  "multiCurrency": false,
+  "taxId": "US-987654321",
+  "timezone": "America/New_York"
 }
 ```
 
 ### 2. Tenant Login
 ```
-POST /api/v1/tenant-auth/login
+POST /api/v1/tenants/auth/login
 ```
 ```json
 {
@@ -36,26 +38,25 @@ POST /api/v1/tenant-auth/login
 }
 ```
 
-### 3. Get Tenant Profile
+### 3. Get Current Tenant Profile
 ```
-GET /api/v1/tenant-auth/profile
+GET /api/v1/tenants/auth/me
 Authorization: Bearer {token}
 ```
 
-### 4. Update Tenant Profile
+### 4. Check Email Exists
 ```
-PUT /api/v1/tenant-auth/profile
-Authorization: Bearer {token}
+GET /api/v1/tenants/auth/check/email/{email}
 ```
-```json
-{
-  "storeName": "TechHub Digital Store",
-  "description": "Your one-stop shop for premium digital products",
-  "website": "https://techhub.com",
-  "timezone": "America/New_York",
-  "supportEmail": "support@techhub.com",
-  "supportPhone": "+1-555-0199"
-}
+
+### 5. Check Subdomain Exists
+```
+GET /api/v1/tenants/auth/check/subdomain/{subdomain}
+```
+
+### 6. Check Domain Exists
+```
+GET /api/v1/tenants/auth/check/domain/{domainName}
 ```
 
 ---

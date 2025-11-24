@@ -102,26 +102,12 @@ public class CategoryController {
             @PathVariable Integer tenantId,
             @PathVariable Long categoryId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         categoryService.deleteCategory(tenantId, categoryId);
         return ResponseEntity.noContent().build();
-    }
-    
-    @GetMapping("/active")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get active categories")
-    public ResponseEntity<List<CategoryResponse>> getActiveCategories(
-            @PathVariable Integer tenantId,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        return ResponseEntity.ok(categoryService.getActiveCategories(tenantId));
     }
 }

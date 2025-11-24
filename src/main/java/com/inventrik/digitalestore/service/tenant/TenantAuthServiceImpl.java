@@ -43,7 +43,7 @@ public class TenantAuthServiceImpl implements TenantAuthService {
         if (subdomainExists(signupRequest.getSubdomain())) {
             throw new BusinessException("A tenant with this subdomain already exists");
         }
-        
+
         if (domainExists(signupRequest.getDomainName())) {
             throw new BusinessException("A tenant with this domain name already exists");
         }
@@ -61,7 +61,7 @@ public class TenantAuthServiceImpl implements TenantAuthService {
         tenant.setMultiCurrency(signupRequest.getMultiCurrency());
         tenant.setTaxId(signupRequest.getTaxId());
         tenant.setTimezone(signupRequest.getTimezone());
-        tenant.setStatus("A"); 
+        tenant.setStatus("A");
         tenant.setCreatedBy("tenant-self");
         tenant.setUpdatedBy("tenant-self");
         
@@ -134,7 +134,7 @@ public class TenantAuthServiceImpl implements TenantAuthService {
     
     private String generateJwtToken(Tenant tenant) {
         Instant now = Instant.now();
-        
+
         JwtClaimsSet claims = JwtClaimsSet.builder()
             .issuer("http://localhost:8080")
             .issuedAt(now)
@@ -146,7 +146,7 @@ public class TenantAuthServiceImpl implements TenantAuthService {
             .claim("domain_name", tenant.getDomainName())
             .claim("user_type", "tenant")
             .build();
-        
+
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
 }

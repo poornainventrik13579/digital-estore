@@ -154,34 +154,17 @@ public class ReviewController {
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Parameter(description = "Product ID", required = true) @PathVariable Long productId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         log.info("Fetching rating statistics for product: {}", productId);
-        
+
         ProductRatingResponse rating = reviewService.getProductRating(tenantId, productId);
         return ResponseEntity.ok(rating);
     }
-    
-    @GetMapping("/verified")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get verified reviews", description = "Get all verified reviews")
-    public ResponseEntity<List<ReviewResponse>> getVerifiedReviews(
-            @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        log.info("Fetching verified reviews for tenant: {}", tenantId);
-        
-        List<ReviewResponse> reviews = reviewService.getVerifiedReviews(tenantId);
-        return ResponseEntity.ok(reviews);
-    }
-    
+
     @PutMapping("/{reviewId}/verify")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Verify review", description = "Mark a review as verified (admin only)")

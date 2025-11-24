@@ -25,10 +25,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/tenant-auth")
+@RequestMapping("/api/v1/tenants/auth")
 @RequiredArgsConstructor
 @Validated
-@Tag(name = "Tenant Authentication", description = "APIs for tenant registration and authentication")
+@Tag(name = "Tenant Authentication", description = "APIs for tenant (store owner) registration and authentication")
 @Slf4j
 public class TenantAuthController {
     
@@ -51,32 +51,17 @@ public class TenantAuthController {
     }
     
     @PostMapping("/login")
-    @Operation(summary = "Tenant login", 
+    @Operation(summary = "Tenant login",
                description = "Authenticate tenant and return JWT token")
     public ResponseEntity<TenantAuthResponse> login(
             @Valid @RequestBody TenantLoginRequest loginRequest) {
-        
+
         log.info("Tenant login request received for email: {}", loginRequest.getEmail());
-        
+
         TenantAuthResponse response = tenantAuthService.login(loginRequest);
-        
+
         log.info("Tenant login successful for tenant ID: {}", response.getTenantId());
-        
-        return ResponseEntity.ok(response);
-    }
-    
-    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    @Operation(summary = "Tenant login (Form)", 
-               description = "Authenticate tenant using form data and return JWT token")
-    public ResponseEntity<TenantAuthResponse> loginForm(
-            @Valid @ModelAttribute TenantLoginRequest loginRequest) {
-        
-        log.info("Tenant form login request received for email: {}", loginRequest.getEmail());
-        
-        TenantAuthResponse response = tenantAuthService.login(loginRequest);
-        
-        log.info("Tenant form login successful for tenant ID: {}", response.getTenantId());
-        
+
         return ResponseEntity.ok(response);
     }
     

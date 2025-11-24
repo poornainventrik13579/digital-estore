@@ -117,7 +117,7 @@ public class PageController {
             @Parameter(description = "Page ID", required = true)
             @PathVariable Long pageId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -125,45 +125,7 @@ public class PageController {
         pageService.deletePage(tenantId, pageId);
         return ResponseEntity.noContent().build();
     }
-    
-    @PostMapping("/{pageId}/publish")
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Publish a page")
-    public ResponseEntity<PageResponse> publishPage(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Page ID", required = true)
-            @PathVariable Long pageId,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
 
-        String username = (authentication != null) ? authentication.getName() : "system";
-        PageResponse publishedPage = pageService.publishPage(tenantId, pageId, username);
-        return ResponseEntity.ok(publishedPage);
-    }
-    
-    @PostMapping("/{pageId}/archive")
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Archive a page")
-    public ResponseEntity<PageResponse> archivePage(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Page ID", required = true)
-            @PathVariable Long pageId,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        String username = (authentication != null) ? authentication.getName() : "system";
-        PageResponse archivedPage = pageService.archivePage(tenantId, pageId, username);
-        return ResponseEntity.ok(archivedPage);
-    }
-    
     @GetMapping("/slug/{slug}")
     @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get page by slug")
@@ -173,136 +135,11 @@ public class PageController {
             @Parameter(description = "Page slug", required = true)
             @PathVariable String slug,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        
+
         return ResponseEntity.ok(pageService.getPageBySlug(tenantId, slug));
-    }
-    
-    @GetMapping("/status/{status}")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get pages by status")
-    public ResponseEntity<List<PageResponse>> getPagesByStatus(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Page status", required = true)
-            @PathVariable PageStatus status,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        return ResponseEntity.ok(pageService.getPagesByTenantAndStatus(tenantId, status));
-    }
-    
-    @GetMapping("/visibility/{visibility}")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get pages by visibility")
-    public ResponseEntity<List<PageResponse>> getPagesByVisibility(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Page visibility", required = true)
-            @PathVariable PageVisibility visibility,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        return ResponseEntity.ok(pageService.getPagesByTenantAndVisibility(tenantId, visibility));
-    }
-    
-    @GetMapping("/language/{language}")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get pages by language")
-    public ResponseEntity<List<PageResponse>> getPagesByLanguage(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Language code", required = true)
-            @PathVariable String language,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        return ResponseEntity.ok(pageService.getPagesByTenantAndLanguage(tenantId, language));
-    }
-    
-    @GetMapping("/default")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get default template pages")
-    public ResponseEntity<List<PageResponse>> getDefaultPages(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        return ResponseEntity.ok(pageService.getDefaultPages(tenantId));
-    }
-    
-    @GetMapping("/public")
-    @Operation(summary = "Get public published pages")
-    public ResponseEntity<List<PageResponse>> getPublicPages(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId) {
-        return ResponseEntity.ok(pageService.getPublicPages(tenantId));
-    }
-    
-    @GetMapping("/search")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Search pages by keyword")
-    public ResponseEntity<List<PageResponse>> searchPages(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Search keyword", required = true)
-            @RequestParam @Size(max = 100) String keyword,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        return ResponseEntity.ok(pageService.searchPages(tenantId, keyword));
-    }
-    
-    @GetMapping("/check/slug/{slug}")
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Check if slug exists for tenant")
-    public ResponseEntity<Boolean> checkSlugExists(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Page slug", required = true)
-            @PathVariable String slug,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        return ResponseEntity.ok(pageService.existsByTenantAndSlug(tenantId, slug));
-    }
-    
-    @GetMapping("/check/title/{title}")
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Check if title exists for tenant")
-    public ResponseEntity<Boolean> checkTitleExists(
-            @Parameter(description = "Tenant ID", required = true)
-            @PathVariable Integer tenantId,
-            @Parameter(description = "Page title", required = true)
-            @PathVariable String title,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        return ResponseEntity.ok(pageService.existsByTenantAndTitle(tenantId, title));
     }
 }

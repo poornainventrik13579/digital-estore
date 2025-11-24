@@ -23,38 +23,38 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/tenants/{tenantId}")
+@RequestMapping("/api/v1/tenants/{tenantId}/auth")
 @RequiredArgsConstructor
-@Tag(name = "Store User Authentication", description = "Shopify-style store user authentication APIs")
+@Tag(name = "User Authentication", description = "APIs for store customer authentication")
 @Slf4j
 public class TenantUserAuthController {
-    
+
     private final TenantUserAuthService tenantUserAuthService;
     private final TenantAccessValidator tenantAccessValidator;
-    
-    @PostMapping("/auth/users/signup")
-    @Operation(summary = "Register user to store")
+
+    @PostMapping("/signup")
+    @Operation(summary = "Register customer to store")
     public ResponseEntity<TenantUserAuthResponse> signup(
             @PathVariable Integer tenantId,
             @Valid @RequestBody TenantUserSignupRequest signupRequest) {
-        
+
         TenantUserAuthResponse response = tenantUserAuthService.signup(tenantId, signupRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
-    
-    @PostMapping("/auth/users/login")
-    @Operation(summary = "Login user to store")
+
+    @PostMapping("/login")
+    @Operation(summary = "Login customer to store")
     public ResponseEntity<TenantUserAuthResponse> login(
             @PathVariable Integer tenantId,
             @Valid @RequestBody TenantUserLoginRequest loginRequest) {
-        
+
         TenantUserAuthResponse response = tenantUserAuthService.login(tenantId, loginRequest);
         return ResponseEntity.ok(response);
     }
-    
-    @GetMapping("/auth/users/profile")
+
+    @GetMapping("/me")
     @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get user profile")
+    @Operation(summary = "Get current customer profile")
     public ResponseEntity<UserResponse> getCurrentUser(
             @PathVariable Integer tenantId,
             Authentication authentication) {

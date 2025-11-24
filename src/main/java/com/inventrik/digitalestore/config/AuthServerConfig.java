@@ -101,39 +101,38 @@ public class AuthServerConfig {
     @Order(3)
     public SecurityFilterChain tenantAuthSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher("/api/v1/tenant-auth/**")
+            .securityMatcher("/api/v1/tenants/auth/**")
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/api/v1/tenant-auth/signup", "/api/v1/tenant-auth/login", 
-                                "/api/v1/tenant-auth/check/**").permitAll()
+                .requestMatchers("/api/v1/tenants/auth/signup", "/api/v1/tenants/auth/login",
+                                "/api/v1/tenants/auth/check/**").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-            
+
         return http.build();
     }
 
     @Bean
     @Order(4)
-    public SecurityFilterChain userAuthSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain tenantUserAuthSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher("/api/v1/auth/**")
+            .securityMatcher("/api/v1/tenants/*/auth/**")
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/api/v1/auth/*/signup", "/api/v1/auth/*/login", 
-                                "/api/v1/auth/*/check/**", "/api/v1/auth/signup", "/api/v1/auth/login").permitAll()
+                .requestMatchers("/api/v1/tenants/*/auth/signup", "/api/v1/tenants/*/auth/login").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-            
+
         return http.build();
     }
 
@@ -141,7 +140,7 @@ public class AuthServerConfig {
     @Order(5)
     public SecurityFilterChain publicApiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher("/api/v1/public/**")
+            .securityMatcher("/api/v1/public/**", "/api/v1/webhooks/**", "/api/*/store/**", "/api/check/**")
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session
@@ -150,7 +149,7 @@ public class AuthServerConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .anyRequest().permitAll()
             );
-            
+
         return http.build();
     }
 

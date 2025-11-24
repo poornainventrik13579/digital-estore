@@ -134,14 +134,14 @@ public class TenantUserManagementController {
     
     @DeleteMapping("/{userId}")
     @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Delete user from tenant", 
+    @Operation(summary = "Delete user from tenant",
                description = "Delete user from tenant (Tenant Admin only, cannot delete self)")
     public ResponseEntity<Void> deleteUser(
             @PathVariable Integer tenantId,
             @Parameter(description = "User ID", required = true)
             @PathVariable Long userId,
             Authentication authentication) {
-        
+
         if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -153,54 +153,5 @@ public class TenantUserManagementController {
         userService.deleteUserFromTenant(tenantId, userId, username);
 
         return ResponseEntity.noContent().build();
-    }
-    
-    @GetMapping("/active")
-    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
-    @Operation(summary = "Get active users in tenant", 
-               description = "Get all active users in tenant (Admin only)")
-    public ResponseEntity<List<UserResponse>> getActiveTenantUsers(
-            @PathVariable Integer tenantId,
-            Authentication authentication) {
-        
-        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        log.info("Get active users request for tenant: {}", tenantId);
-        
-        List<UserResponse> users = userService.getActiveUsersByTenant(tenantId);
-        
-        return ResponseEntity.ok(users);
-    }
-
-    @GetMapping("/email/{email}")
-    @PreAuthorize("hasRole('ROLE_SYSTEM_ADMIN') or @userService.isUserWithEmail(#email, authentication.name)")
-    @Operation(summary = "Find user by email")
-    public ResponseEntity<UserResponse> findByEmail(
-            @PathVariable Integer tenantId,
-            @PathVariable String email,
-            Authentication authentication) {
-
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        return ResponseEntity.ok(userService.findByTenantIdAndEmail(tenantId, email));
-    }
-
-    @GetMapping("/me")
-    @Operation(summary = "Get current user details")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<UserResponse> getCurrentUser(
-            @PathVariable Integer tenantId,
-            Authentication authentication) {
-
-        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        String username = authentication.getName();
-        return ResponseEntity.ok(userService.findByTenantIdAndUsername(tenantId, username));
     }
 }
