@@ -1,6 +1,8 @@
 package com.inventrik.digitalestore.repository;
 
 import com.inventrik.digitalestore.domain.payment.Payment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,21 +12,24 @@ import java.util.Optional;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     
-    // Find payment by tenant and payment ID
     Optional<Payment> findByTenantIdAndPaymentId(Integer tenantId, Long paymentId);
-    
-    // Find payments by tenant and order ID
+
     List<Payment> findByTenantIdAndOrderId(Integer tenantId, Long orderId);
-    
-    // Find all payments for a tenant
+
     List<Payment> findByTenantId(Integer tenantId);
-    
-    // Find payments by tenant and status
+    Page<Payment> findByTenantId(Integer tenantId, Pageable pageable);
+
     List<Payment> findByTenantIdAndStatus(Integer tenantId, String status);
-    
-    // Find payment by transaction ID
+    Page<Payment> findByTenantIdAndStatus(Integer tenantId, String status, Pageable pageable);
+
+    Optional<Payment> findByTenantIdAndTransactionId(Integer tenantId, String transactionId);
+
+    /**
+     * WARNING: Internal use only for Stripe webhooks.
+     * Never expose this method through public API endpoints.
+     * Webhooks are already authenticated via Stripe signature verification.
+     */
     Optional<Payment> findByTransactionId(String transactionId);
-    
-    // Delete payment by tenant and payment ID
+
     void deleteByTenantIdAndPaymentId(Integer tenantId, Long paymentId);
 }

@@ -3,6 +3,7 @@ package com.inventrik.digitalestore.api;
 import com.inventrik.digitalestore.dto.request.DigitalProductDetailsRequest;
 import com.inventrik.digitalestore.dto.response.DigitalProductDetailsResponse;
 import com.inventrik.digitalestore.dto.response.DownloadHistoryResponse;
+import com.inventrik.digitalestore.security.TenantAccessValidator;
 import com.inventrik.digitalestore.service.download.DownloadService;
 import com.inventrik.digitalestore.util.HttpUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,8 +28,10 @@ import java.util.List;
 @SecurityRequirement(name = "oauth2")
 @Slf4j
 public class DownloadController {
-    
+
     private final DownloadService downloadService;
+    private final TenantAccessValidator tenantAccessValidator;
+    private final com.inventrik.digitalestore.service.order.OrderService orderService;
     
     @PostMapping("/tenants/{tenantId}/order-items/{orderItemId}/record-download")
     @PreAuthorize("hasRole('ROLE_USER')")
@@ -38,12 +41,20 @@ public class DownloadController {
             @PathVariable Long orderItemId,
             HttpServletRequest request,
             Authentication authentication) {
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = authentication.getName();
+
+        if (!orderService.doesUserOwnOrderItem(tenantId, orderItemId, username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         String ipAddress = HttpUtils.getClientIpAddress(request);
-        
         downloadService.recordDownload(tenantId, orderItemId, ipAddress, username);
-        
+
         return ResponseEntity.ok().build();
     }
     
@@ -52,39 +63,57 @@ public class DownloadController {
     @Operation(summary = "Get download history for order item")
     public ResponseEntity<List<DownloadHistoryResponse>> getDownloadHistory(
             @PathVariable Integer tenantId,
-            @PathVariable Long orderItemId) {
-        
+            @PathVariable Long orderItemId,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = authentication.getName();
+        if (!orderService.doesUserOwnOrderItem(tenantId, orderItemId, username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         List<DownloadHistoryResponse> history = downloadService.getDownloadHistory(tenantId, orderItemId);
         return ResponseEntity.ok(history);
     }
     
     @GetMapping("/tenants/{tenantId}/users/{userId}/download-history")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get download history for user")
     public ResponseEntity<List<DownloadHistoryResponse>> getUserDownloadHistory(
             @PathVariable Integer tenantId,
-            @PathVariable Long userId) {
+            @PathVariable Long userId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         List<DownloadHistoryResponse> history = downloadService.getUserDownloadHistory(tenantId, userId);
         return ResponseEntity.ok(history);
     }
     
-    // Digital Product Details Management
     @PostMapping("/tenants/{tenantId}/digital-product-details")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Create digital product details")
     public ResponseEntity<DigitalProductDetailsResponse> createDigitalProductDetails(
             @PathVariable Integer tenantId,
             @Valid @RequestBody DigitalProductDetailsRequest request,
             Authentication authentication) {
         
-        String username = (authentication != null) ? authentication.getName() : "system";
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = authentication.getName();
         DigitalProductDetailsResponse response = downloadService.createDigitalProductDetails(tenantId, username, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
     
     @PutMapping("/tenants/{tenantId}/digital-product-details/{productId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Update digital product details")
     public ResponseEntity<DigitalProductDetailsResponse> updateDigitalProductDetails(
             @PathVariable Integer tenantId,
@@ -92,7 +121,11 @@ public class DownloadController {
             @Valid @RequestBody DigitalProductDetailsRequest request,
             Authentication authentication) {
         
-        String username = (authentication != null) ? authentication.getName() : "system";
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = authentication.getName();
         DigitalProductDetailsResponse response = downloadService.updateDigitalProductDetails(tenantId, productId, username, request);
         return ResponseEntity.ok(response);
     }
@@ -102,32 +135,46 @@ public class DownloadController {
     @Operation(summary = "Get digital product details")
     public ResponseEntity<DigitalProductDetailsResponse> getDigitalProductDetails(
             @PathVariable Integer tenantId,
-            @PathVariable Long productId) {
+            @PathVariable Long productId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         DigitalProductDetailsResponse response = downloadService.getDigitalProductDetails(tenantId, productId);
         return ResponseEntity.ok(response);
     }
     
     @GetMapping("/tenants/{tenantId}/digital-product-details")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get all digital product details")
     public ResponseEntity<List<DigitalProductDetailsResponse>> getAllDigitalProductDetails(
-            @PathVariable Integer tenantId) {
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         List<DigitalProductDetailsResponse> response = downloadService.getAllDigitalProductDetails(tenantId);
         return ResponseEntity.ok(response);
     }
     
     @DeleteMapping("/tenants/{tenantId}/digital-product-details/{productId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Delete digital product details")
     public ResponseEntity<Void> deleteDigitalProductDetails(
             @PathVariable Integer tenantId,
-            @PathVariable Long productId) {
+            @PathVariable Long productId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         downloadService.deleteDigitalProductDetails(tenantId, productId);
         return ResponseEntity.noContent().build();
     }
     
-
 }

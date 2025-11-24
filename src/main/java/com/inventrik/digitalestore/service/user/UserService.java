@@ -1,46 +1,56 @@
 package com.inventrik.digitalestore.service.user;
 
-import com.inventrik.digitalestore.dto.request.UserRequest;
-import com.inventrik.digitalestore.dto.request.UserUpdateRequest;
+import com.inventrik.digitalestore.domain.user.User;
+import com.inventrik.digitalestore.dto.request.TenantUserSignupRequest;
+import com.inventrik.digitalestore.dto.request.TenantUserUpdateRequest;
 import com.inventrik.digitalestore.dto.response.UserResponse;
 
 import java.util.List;
 
 public interface UserService {
     
-    // Get all users for a tenant
+    List<UserResponse> getUsersByTenant(Integer tenantId);
+    
+    UserResponse getUserByTenantAndUserId(Integer tenantId, Long userId);
+    
+    UserResponse createUserForTenant(Integer tenantId, TenantUserSignupRequest userRequest, String createdBy);
+    
+    UserResponse updateUserInTenant(Integer tenantId, Long userId, TenantUserUpdateRequest updateRequest, String updatedBy);
+
+    void deleteUserFromTenant(Integer tenantId, Long userId, String username);
+
+    List<UserResponse> getActiveUsersByTenant(Integer tenantId);
+    
+    List<UserResponse> getTenantAdmins(Integer tenantId);
+    
     List<UserResponse> getAllUsers(Integer tenantId);
-    
-    // Get a single user by ID
+
     UserResponse getUser(Integer tenantId, Long userId);
+
+    UserResponse createUser(Integer tenantId, String createdBy, TenantUserSignupRequest userRequest);
     
-    // Create a new user
-    UserResponse createUser(Integer tenantId, String createdBy, UserRequest userRequest);
-    
-    // Update an existing user
-    UserResponse updateUser(Integer tenantId, Long userId, String updatedBy, UserUpdateRequest updateRequest);
-    
-    // Delete a user
-    void deleteUser(Integer tenantId, Long userId);
-    
-    // Get active users
+    UserResponse updateUser(Integer tenantId, Long userId, String updatedBy, TenantUserUpdateRequest updateRequest);
+
+    void deleteUser(Integer tenantId, Long userId, String username);
+
     List<UserResponse> getActiveUsers(Integer tenantId);
     
-    // Find user by username
     UserResponse findByUsername(String username);
-    
-    // Find user by email
+
+    UserResponse findByTenantIdAndUsername(Integer tenantId, String username);
+
+    UserResponse findByTenantIdAndEmail(Integer tenantId, String email);
+
+    UserResponse mapToUserResponse(User user);
+
     UserResponse findByEmail(String email);
     boolean isCurrentUser(Integer tenantId, Long userId, String username);
     boolean isUserWithEmail(String email, String username);
     
-    // Forgot password functionality
     void sendPasswordResetEmail(String email);
     
-    // Get audit code for username
     String getAuditCode(String username);
     
-    // Safely truncate username for audit fields
     String truncateUsernameForAudit(String username);
 
 }

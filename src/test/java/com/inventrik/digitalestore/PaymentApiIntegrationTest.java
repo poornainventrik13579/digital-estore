@@ -14,9 +14,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Full API integration test: creates order, processes payment, confirms payment
- */
 public class PaymentApiIntegrationTest {
     
     private static final String API_BASE_URL = "http://localhost:8080/api/v1";
@@ -32,28 +29,22 @@ public class PaymentApiIntegrationTest {
         try {
             Stripe.apiKey = STRIPE_API_KEY;
             
-            // Step 1: Authenticate
             String authHeader = getBasicAuthHeader(USERNAME, PASSWORD);
             
-            // Step 2: Create an order
             Long orderId = createOrder(authHeader);
             System.out.println("Created order with ID: " + orderId);
             
-            // Step 3: Create a test payment method with Stripe
             PaymentMethod paymentMethod = createTestPaymentMethod();
             System.out.println("Created payment method with ID: " + paymentMethod.getId());
             
-            // Step 4: Create a payment through our API
             Map<String, Object> paymentResponse = createPayment(authHeader, orderId, paymentMethod.getId());
             Long paymentId = ((Number) paymentResponse.get("paymentId")).longValue();
             String clientSecret = (String) paymentResponse.get("clientSecret");
             System.out.println("Created payment with ID: " + paymentId);
             System.out.println("Client secret: " + clientSecret);
             
-            // Step 5: Confirm payment with Stripe (simulating frontend)
             confirmPaymentWithStripe(clientSecret);
             
-            // Step 6: Confirm payment in our system
             Map<String, Object> confirmedPayment = confirmPayment(authHeader, paymentId, 
                     (String) paymentResponse.get("transactionId"));
             System.out.println("Payment confirmed. Status: " + confirmedPayment.get("status"));
@@ -71,14 +62,13 @@ public class PaymentApiIntegrationTest {
     }
     
     private static Long createOrder(String authHeader) throws Exception {
-        // Create order request
+        
         Map<String, Object> orderRequest = new HashMap<>();
         orderRequest.put("userId", 1L);
         orderRequest.put("currency", "USD");
         orderRequest.put("totalAmount", 49.99);
         orderRequest.put("exchangeRate", 1.0);
         
-        // Add order item
         Map<String, Object> orderItem = new HashMap<>();
         orderItem.put("productId", 1L);
         orderItem.put("priceAtPurchase", 49.99);
@@ -86,10 +76,8 @@ public class PaymentApiIntegrationTest {
         
         orderRequest.put("orderItems", new Object[]{orderItem});
         
-        // Convert to JSON
         String requestBody = objectMapper.writeValueAsString(orderRequest);
         
-        // Create request
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_BASE_URL + "/tenants/" + TENANT_ID + "/orders"))
                 .header("Content-Type", "application/json")
@@ -97,10 +85,8 @@ public class PaymentApiIntegrationTest {
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
         
-        // Send request
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         
-        // Check response
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
             Map<String, Object> responseMap = objectMapper.readValue(response.body(), Map.class);
             return ((Number) responseMap.get("orderId")).longValue();
@@ -114,7 +100,7 @@ public class PaymentApiIntegrationTest {
         PaymentMethodCreateParams params = PaymentMethodCreateParams.builder()
                 .setType(PaymentMethodCreateParams.Type.CARD)
                 .setCard(PaymentMethodCreateParams.CardDetails.builder()
-                        .setNumber("4242424242424242") // Test card number
+                        .setNumber("4242424242424242") 
                         .setExpMonth(12L)
                         .setExpYear(2030L)
                         .setCvc("123")
@@ -126,7 +112,7 @@ public class PaymentApiIntegrationTest {
     
     private static Map<String, Object> createPayment(String authHeader, Long orderId, String paymentMethodId) 
             throws Exception {
-        // Create payment request
+        
         Map<String, Object> paymentRequest = new HashMap<>();
         paymentRequest.put("orderId", orderId);
         paymentRequest.put("currency", "USD");
@@ -134,10 +120,8 @@ public class PaymentApiIntegrationTest {
         paymentRequest.put("paymentMethod", "Credit Card");
         paymentRequest.put("paymentToken", paymentMethodId);
         
-        // Convert to JSON
         String requestBody = objectMapper.writeValueAsString(paymentRequest);
         
-        // Create request
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_BASE_URL + "/tenants/" + TENANT_ID + "/payments"))
                 .header("Content-Type", "application/json")
@@ -145,10 +129,8 @@ public class PaymentApiIntegrationTest {
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
         
-        // Send request
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         
-        // Check response
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
             return objectMapper.readValue(response.body(), Map.class);
         } else {
@@ -158,21 +140,21 @@ public class PaymentApiIntegrationTest {
     }
     
     private static void confirmPaymentWithStripe(String clientSecret) throws StripeException {
-        // In a real app, this would be done by Stripe.js on the frontend
+        
         String paymentIntentId = clientSecret.split("_secret_")[0];
         
         com.stripe.model.PaymentIntent intent = 
                 com.stripe.model.PaymentIntent.retrieve(paymentIntentId);
         
         Map<String, Object> params = new HashMap<>();
-        params.put("payment_method", "pm_card_visa"); // Test payment method
+        params.put("payment_method", "pm_card_visa"); 
         
         intent.confirm(params);
     }
     
     private static Map<String, Object> confirmPayment(String authHeader, Long paymentId, String transactionId) 
             throws Exception {
-        // Create request
+        
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_BASE_URL + "/tenants/" + TENANT_ID + "/payments/" + 
                         paymentId + "/confirm?transactionId=" + transactionId))
@@ -180,10 +162,8 @@ public class PaymentApiIntegrationTest {
                 .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
         
-        // Send request
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         
-        // Check response
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
             return objectMapper.readValue(response.body(), Map.class);
         } else {

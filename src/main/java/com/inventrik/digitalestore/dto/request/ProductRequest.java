@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
@@ -26,6 +28,7 @@ public class ProductRequest {
     
     @NotBlank(message = "Currency code is required")
     @Size(min = 3, max = 3, message = "Currency code must be exactly 3 characters")
+    @Pattern(regexp = "^[A-Z]{3}$", message = "Currency code must be 3 uppercase letters (ISO 4217 format)")
     private String defaultCurrency;
     
     @Size(max = 256, message = "Image1 URL must be less than 256 characters")
@@ -50,6 +53,8 @@ public class ProductRequest {
     private String thumbnail;
     
     private String metadata;
-    
+
+    @NotNull(message = "Category ID is required")
+    @Positive(message = "Category ID must be positive")
     private Long categoryId;
 }

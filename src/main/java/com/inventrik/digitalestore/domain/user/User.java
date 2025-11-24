@@ -25,7 +25,7 @@ public class User {
     @Column(name = "user_id")
     private Long userId;
     
-    @Column(name = "username", nullable = false, unique = true, length = 50)
+    @Column(name = "username", nullable = false, length = 50)
     private String username;
     
     @Column(name = "first_name", length = 50)
@@ -37,10 +37,10 @@ public class User {
     @Column(name = "image", length = 256)
     private String image;
     
-    @Column(name = "phone", unique = true, length = 100)
+    @Column(name = "phone", length = 100)
     private String phone;
     
-    @Column(name = "email", unique = true, length = 100)
+    @Column(name = "email", length = 100)
     private String email;
     
     @Column(name = "user_type", nullable = false)
@@ -72,7 +72,7 @@ public class User {
     @Column(name = "tax_id", length = 50)
     private String taxId;
     
-    @Column(name = "otp", unique = true, length = 8)
+    @Column(name = "otp", length = 8)
     private String otp;
     
     @Column(name = "password_hash", nullable = false, length = 255)
@@ -102,6 +102,31 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updated = LocalDateTime.now();
+    }
+    
+    public boolean belongsToTenant(Integer tenantId) {
+        return this.tenantId != null && this.tenantId.equals(tenantId);
+    }
+    
+    public boolean isTenantAdmin() {
+        return UserRole.TENANT_ADMIN.equals(this.userRole);
+    }
+    
+    public boolean isSystemAdmin() {
+        return UserRole.SYSTEM_ADMIN.equals(this.userRole);
+    }
+    
+    public boolean hasAdminPrivileges() {
+        return isSystemAdmin() || isTenantAdmin();
+    }
+    
+    public String getFullName() {
+        if (firstName == null && lastName == null) {
+            return username;
+        }
+        return String.format("%s %s", 
+            firstName != null ? firstName : "", 
+            lastName != null ? lastName : "").trim();
     }
     
     public static class UserPK implements Serializable {

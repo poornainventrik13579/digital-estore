@@ -7,9 +7,6 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-/**
- * Entity for storing payment audit events.
- */
 @Entity
 @Table(name = "payment_audit_log")
 @Data
@@ -20,7 +17,10 @@ public class PaymentAudit {
     @Id
     @Column(name = "audit_id")
     private String auditId;
-    
+
+    @Column(name = "tenant_id", nullable = false)
+    private Integer tenantId;
+
     @Column(name = "payment_id")
     private Long paymentId;
     

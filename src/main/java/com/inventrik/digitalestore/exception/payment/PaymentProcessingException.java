@@ -1,13 +1,9 @@
 package com.inventrik.digitalestore.exception.payment;
 
-/**
- * Exception thrown when a payment cannot be processed due to an error
- * with the payment processor or other system issues.
- */
 public class PaymentProcessingException extends PaymentException {
     
     public PaymentProcessingException(String message) {
-        super(message, true); // Most processing exceptions are retryable
+        super(message, true); 
     }
     
     public PaymentProcessingException(String message, Throwable cause) {

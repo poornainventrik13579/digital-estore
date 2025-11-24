@@ -1,0 +1,2417 @@
+{
+    "info": {
+        "name": "Digital E-Store API Collection",
+        "description": "Complete API collection for Digital E-Store application with simplified JWT authentication. Updated with enhanced product fields including multiple images, banners, thumbnails, and metadata. Includes examples for software licenses, e-books, music tracks, and stock photos.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": "2.1.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8080",
+            "type": "string"
+        },
+        {
+            "key": "tenant_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "client_id",
+            "value": "web-client",
+            "type": "string"
+        },
+        {
+            "key": "client_secret",
+            "value": "web-secret",
+            "type": "string"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "username",
+            "value": "johndoe",
+            "type": "string"
+        },
+        {
+            "key": "user_email",
+            "value": "john.doe@example.com",
+            "type": "string"
+        },
+        {
+            "key": "user_password",
+            "value": "password123",
+            "type": "string"
+        },
+        {
+            "key": "review_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "product_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "category_id",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "subdomain",
+            "value": "teststore",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "01. Authentication",
+            "item": [
+                {
+                    "name": "Complete Authentication Flow",
+                    "item": [
+                        {
+                            "name": "Step 1: Create Test User",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "if (pm.response.code === 200) {",
+                                            "    console.log('✅ Test user created successfully');",
+                                            "} else if (pm.response.code === 400 && pm.response.text().includes('already exists')) {",
+                                            "    console.log('✅ Test user already exists - ready to use');",
+                                            "} else {",
+                                            "    console.log('❌ User creation failed:', pm.response.text());",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "tenantId",
+                                            "value": "{{tenant_id}}"
+                                        },
+                                        {
+                                            "key": "username",
+                                            "value": "{{username}}"
+                                        },
+                                        {
+                                            "key": "email",
+                                            "value": "{{user_email}}"
+                                        },
+                                        {
+                                            "key": "password",
+                                            "value": "{{user_password}}"
+                                        },
+                                        {
+                                            "key": "firstName",
+                                            "value": "John"
+                                        },
+                                        {
+                                            "key": "lastName",
+                                            "value": "Doe"
+                                        },
+                                        {
+                                            "key": "phone",
+                                            "value": "1234567890"
+                                        }
+                                    ]
+                                },
+                                "url": "{{base_url}}/api/v1/auth/signup"
+                            }
+                        },
+                        {
+                            "name": "Step 2: Get User Token",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "if (pm.response.code === 200) {",
+                                            "    const response = pm.response.json();",
+                                            "    pm.collectionVariables.set('access_token', response.access_token);",
+                                            "    console.log('✅ User token obtained successfully');",
+                                            "    console.log('Username:', response.username);",
+                                            "    console.log('Token will be used for authenticated requests');",
+                                            "} else {",
+                                            "    console.log('❌ Token request failed:', pm.response.text());",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/x-www-form-urlencoded"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "urlencoded",
+                                    "urlencoded": [
+                                        {
+                                            "key": "username",
+                                            "value": "{{username}}"
+                                        },
+                                        {
+                                            "key": "password",
+                                            "value": "{{user_password}}"
+                                        }
+                                    ]
+                                },
+                                "url": "{{base_url}}/api/v1/auth/login"
+                            }
+                        },
+                        {
+                            "name": "Step 3: Test Review Creation",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "if (pm.response.code === 201) {",
+                                            "    const response = pm.response.json();",
+                                            "    console.log('✅ Review created successfully!');",
+                                            "    console.log('Review ID:', response.reviewId);",
+                                            "    console.log('Username in review:', response.username);",
+                                            "    pm.collectionVariables.set('review_id', response.reviewId);",
+                                            "} else {",
+                                            "    console.log('❌ Review creation failed:', pm.response.text());",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{access_token}}"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "X-Tenant-ID",
+                                        "value": "{{tenant_id}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"productId\": 1,\n    \"rating\": 5,\n    \"comment\": \"Test review created by user {{username}} - authentication working correctly!\"\n}"
+                                },
+                                "url": "{{base_url}}/api/v1/reviews"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Tenant Authentication",
+                    "item": [
+                        {
+                            "name": "Tenant Signup",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "if (pm.response.code === 201) {",
+                                            "    const response = pm.response.json();",
+                                            "    pm.collectionVariables.set('access_token', response.token);",
+                                            "    pm.collectionVariables.set('tenant_id', response.tenantId);",
+                                            "    console.log('Tenant signup successful');",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"shopName\": \"Test Store\",\n  \"shopEmail\": \"admin@teststore.com\",\n  \"domainName\": \"teststore\",\n  \"storePassword\": \"securePassword123\",\n  \"phoneNumber\": \"+1234567890\",\n  \"address\": \"123 Test Street\",\n  \"city\": \"Test City\",\n  \"state\": \"Test State\",\n  \"country\": \"Test Country\",\n  \"postalCode\": \"12345\"\n}"
+                                },
+                                "url": "{{base_url}}/api/v1/tenant-auth/signup"
+                            }
+                        },
+                        {
+                            "name": "Tenant Login",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "if (pm.response.code === 200) {",
+                                            "    const response = pm.response.json();",
+                                            "    pm.collectionVariables.set('access_token', response.token);",
+                                            "    pm.collectionVariables.set('tenant_id', response.tenantId);",
+                                            "    console.log('Tenant login successful');",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"admin@teststore.com\",\n  \"storePassword\": \"securePassword123\"\n}"
+                                },
+                                "url": "{{base_url}}/api/v1/tenant-auth/login"
+                            }
+                        },
+                        {
+                            "name": "Get Current Tenant Profile",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{access_token}}"
+                                    }
+                                ],
+                                "url": "{{base_url}}/api/v1/tenant-auth/me"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Store User Authentication (Shopify Style)",
+                    "item": [
+                        {
+                            "name": "User Signup to Store",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "if (pm.response.code === 201) {",
+                                            "    const response = pm.response.json();",
+                                            "    pm.collectionVariables.set('access_token', response.token);",
+                                            "    console.log('User signup successful');",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"user@teststore.com\",\n  \"password\": \"userPassword123\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"phone\": \"+1234567890\",\n  \"userType\": \"CUSTOMER\"\n}"
+                                },
+                                "url": "{{base_url}}/api/{{subdomain}}/auth/users/signup"
+                            }
+                        },
+                        {
+                            "name": "User Login to Store",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "if (pm.response.code === 200) {",
+                                            "    const response = pm.response.json();",
+                                            "    pm.collectionVariables.set('access_token', response.token);",
+                                            "    console.log('User login successful');",
+                                            "}"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"user@teststore.com\",\n  \"password\": \"userPassword123\"\n}"
+                                },
+                                "url": "{{base_url}}/api/{{subdomain}}/auth/users/login"
+                            }
+                        },
+                        {
+                            "name": "Get User Profile",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{access_token}}"
+                                    }
+                                ],
+                                "url": "{{base_url}}/api/auth/users/profile"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get User Token (Custom Login)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    pm.collectionVariables.set('access_token', response.access_token);",
+                                    "    console.log('User token saved:', response.access_token);",
+                                    "    console.log('Authenticated as:', response.username);",
+                                    "} else {",
+                                    "    console.log('Token request failed:', pm.response.text());",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/x-www-form-urlencoded"
+                            }
+                        ],
+                        "body": {
+                            "mode": "urlencoded",
+                            "urlencoded": [
+                                {
+                                    "key": "username",
+                                    "value": "{{username}}"
+                                },
+                                {
+                                    "key": "password",
+                                    "value": "{{user_password}}"
+                                }
+                            ]
+                        },
+                        "url": "{{base_url}}/api/v1/auth/login"
+                    }
+                },
+                {
+                    "name": "Create Test User",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    console.log('Test user created successfully');",
+                                    "} else if (pm.response.code === 400 && pm.response.text().includes('already exists')) {",
+                                    "    console.log('Test user already exists - ready to use');",
+                                    "} else {",
+                                    "    console.log('User creation failed:', pm.response.text());",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/x-www-form-urlencoded"
+                            }
+                        ],
+                        "body": {
+                            "mode": "urlencoded",
+                            "urlencoded": [
+                                {
+                                    "key": "tenantId",
+                                    "value": "{{tenant_id}}"
+                                },
+                                {
+                                    "key": "username",
+                                    "value": "{{username}}"
+                                },
+                                {
+                                    "key": "user_email",
+                                    "value": "{{user_email}}@example.com"
+                                },
+                                {
+                                    "key": "password",
+                                    "value": "{{user_password}}"
+                                },
+                                {
+                                    "key": "firstName",
+                                    "value": "Test"
+                                },
+                                {
+                                    "key": "lastName",
+                                    "value": "User"
+                                },
+                                {
+                                    "key": "phone",
+                                    "value": "1234567890"
+                                }
+                            ]
+                        },
+                        "url": "{{base_url}}/api/v1/auth/signup"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "02. Categories",
+            "item": [
+                {
+                    "name": "Get All Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories"
+                    }
+                },
+                {
+                    "name": "Get Category by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/1"
+                    }
+                },
+                {
+                    "name": "Create Category (JSON)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Software Licenses\",\n    \"description\": \"Digital software licenses and tools\",\n    \"isActive\": true\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories"
+                    }
+                },
+                {
+                    "name": "Create Category (Form)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/x-www-form-urlencoded"
+                            }
+                        ],
+                        "body": {
+                            "mode": "urlencoded",
+                            "urlencoded": [
+                                {
+                                    "key": "name",
+                                    "value": "E-books"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "Digital books and publications"
+                                },
+                                {
+                                    "key": "isActive",
+                                    "value": "true"
+                                }
+                            ]
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories"
+                    }
+                },
+                {
+                    "name": "Update Category (JSON)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Updated Software Licenses\",\n    \"description\": \"Updated description for digital software licenses\",\n    \"isActive\": true\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/1"
+                    }
+                },
+                {
+                    "name": "Update Category (Form)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/x-www-form-urlencoded"
+                            }
+                        ],
+                        "body": {
+                            "mode": "urlencoded",
+                            "urlencoded": [
+                                {
+                                    "key": "name",
+                                    "value": "Updated E-books"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "Updated digital books and publications"
+                                },
+                                {
+                                    "key": "isActive",
+                                    "value": "true"
+                                }
+                            ]
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/1"
+                    }
+                },
+                {
+                    "name": "Delete Category",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/1"
+                    }
+                },
+                {
+                    "name": "Get Active Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/active"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "03. Products",
+            "item": [
+                {
+                    "name": "Get All Products",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products?page=0&size=20",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "tenants", "{{tenant_id}}", "products"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Product by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/1"
+                    }
+                },
+                {
+                    "name": "Create Product (JSON)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Adobe Photoshop License\",\n    \"description\": \"Professional photo editing software license\",\n    \"price\": 299.99,\n    \"categoryId\": 1,\n    \"isActive\": true,\n    \"stockQuantity\": 100,\n    \"sku\": \"PS-2024-001\"\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products"
+                    }
+                },
+                {
+                    "name": "Create Product (Form)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/x-www-form-urlencoded"
+                            }
+                        ],
+                        "body": {
+                            "mode": "urlencoded",
+                            "urlencoded": [
+                                {
+                                    "key": "name",
+                                    "value": "Illustrator License"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "Vector graphics software license"
+                                },
+                                {
+                                    "key": "price",
+                                    "value": "249.99"
+                                },
+                                {
+                                    "key": "categoryId",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "isActive",
+                                    "value": "true"
+                                },
+                                {
+                                    "key": "stockQuantity",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "sku",
+                                    "value": "AI-2024-001"
+                                }
+                            ]
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products"
+                    }
+                },
+                {
+                    "name": "Update Product (JSON)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Adobe Photoshop License - Updated\",\n    \"description\": \"Updated professional photo editing software license\",\n    \"price\": 349.99,\n    \"isActive\": true,\n    \"stockQuantity\": 150\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/1"
+                    }
+                },
+                {
+                    "name": "Update Product (Form)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/x-www-form-urlencoded"
+                            }
+                        ],
+                        "body": {
+                            "mode": "urlencoded",
+                            "urlencoded": [
+                                {
+                                    "key": "name",
+                                    "value": "Illustrator License - Updated"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "Updated vector graphics software license"
+                                },
+                                {
+                                    "key": "price",
+                                    "value": "299.99"
+                                },
+                                {
+                                    "key": "isActive",
+                                    "value": "true"
+                                },
+                                {
+                                    "key": "stockQuantity",
+                                    "value": "75"
+                                }
+                            ]
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/1"
+                    }
+                },
+                {
+                    "name": "Delete Product",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/1"
+                    }
+                },
+                {
+                    "name": "Get Active Products",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/active"
+                    }
+                },
+                {
+                    "name": "Get Products by Category",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/category/1"
+                    }
+                },
+                {
+                    "name": "Search Products",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/search?keyword=photoshop&page=0&size=20",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "tenants", "{{tenant_id}}", "products", "search"],
+                            "query": [
+                                {
+                                    "key": "keyword",
+                                    "value": "photoshop"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "size",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "04. User Management",
+            "item": [
+                {
+                    "name": "Get All Users in Tenant",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users"
+                    }
+                },
+                {
+                    "name": "Get User by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/1"
+                    }
+                },
+                {
+                    "name": "Create User in Tenant",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"newuser\",\n    \"email\": \"newuser@teststore.com\",\n    \"password\": \"password123\",\n    \"firstName\": \"New\",\n    \"lastName\": \"User\",\n    \"phone\": \"+1234567890\",\n    \"userType\": \"CUSTOMER\"\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users"
+                    }
+                },
+                {
+                    "name": "Update User",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"firstName\": \"Updated\",\n    \"lastName\": \"User\",\n    \"phone\": \"+1234567891\",\n    \"isActive\": true\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/1"
+                    }
+                },
+                {
+                    "name": "Delete User from Tenant",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/1"
+                    }
+                },
+                {
+                    "name": "Get Active Users",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/active"
+                    }
+                },
+                {
+                    "name": "Get Tenant Admins",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/admins"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "05. Orders",
+            "item": [
+                {
+                    "name": "Get All Orders",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders"
+                    }
+                },
+                {
+                    "name": "Get Order by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1"
+                    }
+                },
+                {
+                    "name": "Create Order (JSON)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"customerEmail\": \"customer@example.com\",\n    \"items\": [\n        {\n            \"productId\": 1,\n            \"quantity\": 2\n        }\n    ],\n    \"shippingAddress\": {\n        \"street\": \"123 Customer St\",\n        \"city\": \"Customer City\",\n        \"state\": \"Customer State\",\n        \"country\": \"Customer Country\",\n        \"postalCode\": \"12345\"\n    }\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders"
+                    }
+                },
+                {
+                    "name": "Create Order (Form)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/x-www-form-urlencoded"
+                            }
+                        ],
+                        "body": {
+                            "mode": "urlencoded",
+                            "urlencoded": [
+                                {
+                                    "key": "productId",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "quantity",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "customerEmail",
+                                    "value": "customer@example.com"
+                                }
+                            ]
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders"
+                    }
+                },
+                {
+                    "name": "Update Order",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"Processing\",\n    \"shippingAddress\": {\n        \"street\": \"456 Updated St\",\n        \"city\": \"Updated City\",\n        \"state\": \"Updated State\",\n        \"country\": \"Updated Country\",\n        \"postalCode\": \"54321\"\n    }\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1"
+                    }
+                },
+                {
+                    "name": "Delete Order",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1"
+                    }
+                },
+                {
+                    "name": "Get Orders by User",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/user/1"
+                    }
+                },
+                {
+                    "name": "Get Orders by Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/status/Pending"
+                    }
+                },
+                {
+                    "name": "Complete Order",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1/complete"
+                    }
+                },
+                {
+                    "name": "Cancel Order",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1/cancel"
+                    }
+                },
+                {
+                    "name": "Refund Order",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/1/refund"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "06. Payments",
+            "item": [
+                {
+                    "name": "Get All Payments",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments"
+                    }
+                },
+                {
+                    "name": "Get Payment by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1"
+                    }
+                },
+                {
+                    "name": "Create Payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"orderId\": 1,\n    \"amount\": 299.99,\n    \"currency\": \"USD\",\n    \"paymentMethodId\": \"pm_test_card\",\n    \"customerEmail\": \"customer@example.com\"\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments"
+                    }
+                },
+                {
+                    "name": "Confirm Payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1/confirm?transactionId=txn_123456",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "1", "confirm"],
+                            "query": [
+                                {
+                                    "key": "transactionId",
+                                    "value": "txn_123456"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Cancel Payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1/cancel"
+                    }
+                },
+                {
+                    "name": "Refund Payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1/refund"
+                    }
+                },
+                {
+                    "name": "Partial Refund Payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"amount\": 50.00,\n    \"reason\": \"Customer requested partial refund\"\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/1/partial-refund"
+                    }
+                },
+                {
+                    "name": "Get Payments by Order",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/order/1"
+                    }
+                },
+                {
+                    "name": "Get Payments by Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/status/completed"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "07. Product Bundles",
+            "item": [
+                {
+                    "name": "Get All Bundles",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles"
+                    }
+                },
+                {
+                    "name": "Get Active Bundles",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/active"
+                    }
+                },
+                {
+                    "name": "Get Bundle by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1"
+                    }
+                },
+                {
+                    "name": "Create Bundle",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Adobe Creative Suite\",\n    \"description\": \"Complete creative suite bundle\",\n    \"discountPercentage\": 15.0,\n    \"isActive\": true,\n    \"bundleItems\": [\n        {\n            \"productId\": 1,\n            \"quantity\": 1\n        },\n        {\n            \"productId\": 2,\n            \"quantity\": 1\n        }\n    ]\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles"
+                    }
+                },
+                {
+                    "name": "Update Bundle",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Adobe Creative Suite - Updated\",\n    \"description\": \"Updated complete creative suite bundle\",\n    \"discountPercentage\": 20.0,\n    \"isActive\": true\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1"
+                    }
+                },
+                {
+                    "name": "Delete Bundle",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1"
+                    }
+                },
+                {
+                    "name": "Search Bundles",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/search?name=Adobe",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "search"],
+                            "query": [
+                                {
+                                    "key": "name",
+                                    "value": "Adobe"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Calculate Bundle Price",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "[\n    {\n        \"productId\": 1,\n        \"quantity\": 1\n    },\n    {\n        \"productId\": 2,\n        \"quantity\": 1\n    }\n]"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/calculate-price"
+                    }
+                },
+                {
+                    "name": "Get Bundles Containing Product",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/product/1"
+                    }
+                },
+                {
+                    "name": "Add Product to Bundle",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1/products/1?quantity=2",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "1", "products", "1"],
+                            "query": [
+                                {
+                                    "key": "quantity",
+                                    "value": "2"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Remove Product from Bundle",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1/products/1"
+                    }
+                },
+                {
+                    "name": "Update Product Quantity in Bundle",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/1/products/1/quantity?quantity=3",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "1", "products", "1", "quantity"],
+                            "query": [
+                                {
+                                    "key": "quantity",
+                                    "value": "3"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Bundle Count",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/count"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "08. Discount Codes",
+            "item": [
+                {
+                    "name": "Get All Discount Codes",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts"
+                    }
+                },
+                {
+                    "name": "Get Discount Code by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1"
+                    }
+                },
+                {
+                    "name": "Get Discount Code by Code",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/code/SAVE20"
+                    }
+                },
+                {
+                    "name": "Create Discount Code",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"SAVE20\",\n    \"discountType\": \"PERCENTAGE\",\n    \"discountValue\": 20.0,\n    \"isActive\": true,\n    \"usageLimit\": 100,\n    \"validFrom\": \"2024-01-01T00:00:00\",\n    \"validUntil\": \"2024-12-31T23:59:59\"\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts"
+                    }
+                },
+                {
+                    "name": "Update Discount Code",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"SAVE25\",\n    \"discountType\": \"PERCENTAGE\",\n    \"discountValue\": 25.0,\n    \"isActive\": true,\n    \"usageLimit\": 50\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1"
+                    }
+                },
+                {
+                    "name": "Delete Discount Code",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1"
+                    }
+                },
+                {
+                    "name": "Get Active Discount Codes",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/active"
+                    }
+                },
+                {
+                    "name": "Validate Discount Code",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"SAVE20\",\n    \"orderAmount\": 100.0\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/validate"
+                    }
+                },
+                {
+                    "name": "Get Discount Usage Statistics",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/1/usage"
+                    }
+                },
+                {
+                    "name": "Cleanup Expired Discounts",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/cleanup-expired"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "09. Reviews",
+            "item": [
+                {
+                    "name": "Create Review",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    console.log('Review created successfully:', response);",
+                                    "    pm.collectionVariables.set('review_id', response.reviewId);",
+                                    "} else {",
+                                    "    console.log('Review creation failed:', pm.response.text());",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Tenant-ID",
+                                "value": "{{tenant_id}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"productId\": 1,\n    \"rating\": 5,\n    \"comment\": \"Excellent product! Highly recommended by {{username}}!\"\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews"
+                    }
+                },
+                {
+                    "name": "Get Product Reviews",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/product/1"
+                    }
+                },
+                {
+                    "name": "Get User Reviews",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/user/1"
+                    }
+                },
+                {
+                    "name": "Get Review by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1"
+                    }
+                },
+                {
+                    "name": "Update Review",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"rating\": 4,\n    \"comment\": \"Updated review - Good product with minor issues\"\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1"
+                    }
+                },
+                {
+                    "name": "Delete Review",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1"
+                    }
+                },
+                {
+                    "name": "Get Product Rating Statistics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/product/1/rating"
+                    }
+                },
+                {
+                    "name": "Get Verified Reviews",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/verified"
+                    }
+                },
+                {
+                    "name": "Verify Review",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/1/verify"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "10. Tenant Management",
+            "item": [
+                {
+                    "name": "Get All Tenants (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/admin/tenants"
+                    }
+                },
+                {
+                    "name": "Get Tenant by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/admin/tenants/{{tenant_id}}"
+                    }
+                },
+                {
+                    "name": "Create Tenant (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"shopName\": \"New Store\",\n    \"shopEmail\": \"admin@newstore.com\",\n    \"domainName\": \"newstore\",\n    \"storePassword\": \"password123\",\n    \"phoneNumber\": \"+1234567890\",\n    \"address\": \"123 Main St\",\n    \"city\": \"City\",\n    \"state\": \"State\",\n    \"country\": \"Country\",\n    \"postalCode\": \"12345\"\n}"
+                        },
+                        "url": "{{base_url}}/api/admin/tenants"
+                    }
+                },
+                {
+                    "name": "Update Tenant",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"shopName\": \"Updated Store Name\",\n    \"phoneNumber\": \"+1234567891\",\n    \"address\": \"456 Updated St\",\n    \"city\": \"Updated City\",\n    \"state\": \"Updated State\",\n    \"country\": \"Updated Country\",\n    \"postalCode\": \"54321\"\n}"
+                        },
+                        "url": "{{base_url}}/api/admin/tenants/{{tenant_id}}"
+                    }
+                },
+                {
+                    "name": "Delete Tenant (Admin)",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/admin/tenants/{{tenant_id}}"
+                    }
+                },
+                {
+                    "name": "Get Tenant by Domain",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/admin/tenants/domain/teststore.com"
+                    }
+                },
+                {
+                    "name": "Get Tenant by Subdomain",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/admin/tenants/subdomain/{{subdomain}}"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "11. Global Admin APIs",
+            "item": [
+                {
+                    "name": "Get All Pages (Global)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/pages"
+                    }
+                },
+                {
+                    "name": "Get All Themes (Global)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/themes"
+                    }
+                },
+                {
+                    "name": "Get Themes by Name (Global)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/themes/name/default-theme"
+                    }
+                },
+                {
+                    "name": "Get All Taxes (Global)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/taxes"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "12. Public Shopping APIs",
+            "item": [
+                {
+                    "name": "Browse Public Products",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/public/{{subdomain}}/products"
+                    }
+                },
+                {
+                    "name": "Get Public Product Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/public/{{subdomain}}/products/1"
+                    }
+                },
+                {
+                    "name": "Browse Public Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/public/{{subdomain}}/categories"
+                    }
+                },
+                {
+                    "name": "Get Public Category Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/public/{{subdomain}}/categories/1"
+                    }
+                },
+                {
+                    "name": "Get Public Reviews",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/public/{{subdomain}}/reviews/product/1"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "13. Digital Downloads",
+            "item": [
+                {
+                    "name": "Record Download",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/order-items/1/record-download"
+                    }
+                },
+                {
+                    "name": "Get Download History for Order Item",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/order-items/1/download-history"
+                    }
+                },
+                {
+                    "name": "Get User Download History",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/1/download-history"
+                    }
+                },
+                {
+                    "name": "Create Digital Product Details",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"productId\": 1,\n    \"fileUrl\": \"https://example.com/downloads/product1.zip\",\n    \"fileSize\": 2048,\n    \"fileFormat\": \"ZIP\",\n    \"licenseInfo\": \"Single user license\",\n    \"version\": \"1.0\"\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/digital-product-details"
+                    }
+                },
+                {
+                    "name": "Update Digital Product Details",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"fileUrl\": \"https://example.com/downloads/product1-updated.zip\",\n    \"fileSize\": 3072,\n    \"fileFormat\": \"ZIP\",\n    \"licenseInfo\": \"Single user license - updated\",\n    \"version\": \"1.1\"\n}"
+                        },
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/digital-product-details/1"
+                    }
+                },
+                {
+                    "name": "Get Digital Product Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/digital-product-details/1"
+                    }
+                },
+                {
+                    "name": "Get All Digital Product Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/digital-product-details"
+                    }
+                },
+                {
+                    "name": "Delete Digital Product Details",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/v1/tenants/{{tenant_id}}/digital-product-details/1"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "14. Currencies",
+            "item": [
+                {
+                    "name": "Get All Currencies",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Tenant-ID",
+                                "value": "{{tenant_id}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/currencies"
+                    }
+                },
+                {
+                    "name": "Get Currency by Code",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Tenant-ID",
+                                "value": "{{tenant_id}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/currencies/USD"
+                    }
+                },
+                {
+                    "name": "Create Currency",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Tenant-ID",
+                                "value": "{{tenant_id}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"currencyCode\": \"GBP\",\n    \"currencyName\": \"British Pound\",\n    \"isDefault\": \"0\",\n    \"exchangeRate\": 0.8200,\n    \"symbol\": \"£\"\n}"
+                        },
+                        "url": "{{base_url}}/api/currencies"
+                    }
+                },
+                {
+                    "name": "Update Currency",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "X-Tenant-ID",
+                                "value": "{{tenant_id}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"currencyName\": \"British Pound Sterling\",\n    \"exchangeRate\": 0.8150,\n    \"symbol\": \"£\"\n}"
+                        },
+                        "url": "{{base_url}}/api/currencies/GBP"
+                    }
+                },
+                {
+                    "name": "Delete Currency",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "X-Tenant-ID",
+                                "value": "{{tenant_id}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/currencies/GBP"
+                    }
+                },
+                {
+                    "name": "Get Default Currency",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Tenant-ID",
+                                "value": "{{tenant_id}}"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/currencies/default"
+                    }
+                },
+                {
+                    "name": "Convert Amount",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Tenant-ID",
+                                "value": "{{tenant_id}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/currencies/convert?amount=100&fromCurrency=USD&toCurrency=EUR",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "currencies", "convert"],
+                            "query": [
+                                {
+                                    "key": "amount",
+                                    "value": "100"
+                                },
+                                {
+                                    "key": "fromCurrency",
+                                    "value": "USD"
+                                },
+                                {
+                                    "key": "toCurrency",
+                                    "value": "EUR"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Exchange Rate",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Tenant-ID",
+                                "value": "{{tenant_id}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/currencies/exchange-rate?fromCurrency=USD&toCurrency=EUR",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "currencies", "exchange-rate"],
+                            "query": [
+                                {
+                                    "key": "fromCurrency",
+                                    "value": "USD"
+                                },
+                                {
+                                    "key": "toCurrency",
+                                    "value": "EUR"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "15. Webhooks",
+            "item": [
+                {
+                    "name": "Stripe Payment Webhook",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Stripe-Signature",
+                                "value": "t=1234567890,v1=test_signature"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id\": \"evt_test_webhook\",\n    \"object\": \"event\",\n    \"type\": \"payment_intent.succeeded\",\n    \"data\": {\n        \"object\": {\n            \"id\": \"pi_test_payment\",\n            \"amount\": 29999,\n            \"currency\": \"usd\",\n            \"status\": \"succeeded\",\n            \"metadata\": {\n                \"tenant_id\": \"1\",\n                \"order_id\": \"1\"\n            }\n        }\n    }\n}"
+                        },
+                        "url": "{{base_url}}/api/webhooks/stripe"
+                    }
+                }
+            ]
+        }
+    ]
+}

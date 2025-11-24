@@ -55,8 +55,8 @@ public class CurrencyServiceImpl implements CurrencyService {
         currency.setExchangeRate(request.getExchangeRate());
         currency.setIsDefault(request.getIsDefault());
         currency.setStatus("0");
-        currency.setCreatedBy("1");
-        currency.setUpdatedBy("1");
+        currency.setCreatedBy("system");
+        currency.setUpdatedBy("system");
         
         Currency saved = currencyRepository.save(currency);
         return convertToResponse(saved);
@@ -79,7 +79,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         currency.setSymbol(request.getSymbol());
         currency.setExchangeRate(request.getExchangeRate());
         currency.setIsDefault(request.getIsDefault());
-        currency.setUpdatedBy("1");
+        currency.setUpdatedBy("system");
         
         Currency updated = currencyRepository.save(currency);
         return convertToResponse(updated);
@@ -95,7 +95,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         }
         
         currency.setStatus("-1");
-        currency.setUpdatedBy("1");
+        currency.setUpdatedBy("system");
         currencyRepository.save(currency);
     }
     
@@ -110,7 +110,15 @@ public class CurrencyServiceImpl implements CurrencyService {
                 .orElseThrow(() -> new RuntimeException("From currency not found"));
         Currency toCur = currencyRepository.findByTenantIdAndCurrencyCodeAndStatus(tenantId, toCurrency, "0")
                 .orElseThrow(() -> new RuntimeException("To currency not found"));
-        
+
+        // Validate exchange rates are not null or zero
+        if (fromCur.getExchangeRate() == null || fromCur.getExchangeRate().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid exchange rate for currency: " + fromCurrency);
+        }
+        if (toCur.getExchangeRate() == null || toCur.getExchangeRate().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid exchange rate for currency: " + toCurrency);
+        }
+
         BigDecimal usdAmount = amount.divide(fromCur.getExchangeRate(), 4, RoundingMode.HALF_UP);
         return usdAmount.multiply(toCur.getExchangeRate()).setScale(2, RoundingMode.HALF_UP);
     }

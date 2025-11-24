@@ -28,4 +28,7 @@ public interface ProductBundleRepository extends JpaRepository<ProductBundle, Pr
     
     @Query("SELECT COUNT(pb) FROM ProductBundle pb WHERE pb.tenantId = :tenantId AND pb.status = '0'")
     Long countActiveBundles(@Param("tenantId") Integer tenantId);
+    
+    @Query("SELECT DISTINCT pb FROM ProductBundle pb JOIN pb.bundleItems bi WHERE pb.tenantId = :tenantId AND bi.productId = :productId AND pb.status = '0'")
+    List<ProductBundle> findBundlesContainingProduct(@Param("tenantId") Integer tenantId, @Param("productId") Long productId);
 } 

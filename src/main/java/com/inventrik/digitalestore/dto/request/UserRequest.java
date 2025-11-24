@@ -22,11 +22,13 @@ public class UserRequest {
     private String username;
     
     @Schema(description = "First name", example = "John", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-    @Size(max = 50, message = "First name must be less than 50 characters")
+    @NotBlank(message = "First name is required")
+    @Size(min = 1, max = 50, message = "First name must be between 1 and 50 characters")
     private String firstName;
-    
+
     @Schema(description = "Last name", example = "Doe", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-    @Size(max = 50, message = "Last name must be less than 50 characters")
+    @NotBlank(message = "Last name is required")
+    @Size(min = 1, max = 50, message = "Last name must be between 1 and 50 characters")
     private String lastName;
     
     @Schema(description = "Profile image URL", example = "https://example.com/profile.jpg", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
@@ -55,7 +57,6 @@ public class UserRequest {
     @Schema(description = "User role (USER, ADMIN, MANAGER)", example = "USER", defaultValue = "USER")
     private UserRole userRole = UserRole.USER;
     
-    // Company specific fields (only required when userType is COMPANY)
     @Schema(description = "Company name (required for COMPANY users)", example = "Acme Corporation")
     private String companyName;
     

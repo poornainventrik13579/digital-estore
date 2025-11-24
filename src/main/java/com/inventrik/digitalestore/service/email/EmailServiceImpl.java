@@ -44,7 +44,7 @@ public class EmailServiceImpl implements EmailService {
     @Async("taskExecutor")
     public void sendOrderConfirmationWithInvoice(Order order, User user, byte[] invoicePdf) {
         try {
-            // Prepare email context
+            
             Map<String, Object> templateModel = new HashMap<>();
             templateModel.put("order", order);
             templateModel.put("user", user);
@@ -52,7 +52,6 @@ public class EmailServiceImpl implements EmailService {
             templateModel.put("totalAmount", order.getTotalAmount());
             templateModel.put("currency", order.getCurrency());
             
-            // Send email with attachment
             sendEmailWithAttachment(
                 user.getEmail(),
                 "Order Confirmation #" + order.getOrderId(),
@@ -73,12 +72,11 @@ public class EmailServiceImpl implements EmailService {
     @Async("taskExecutor")
     public void sendCancellationNotification(Order order, User user) {
         try {
-            // Prepare email context
+            
             Map<String, Object> templateModel = new HashMap<>();
             templateModel.put("order", order);
             templateModel.put("user", user);
             
-            // Send email
             sendEmail(
                 user.getEmail(),
                 "Order Cancellation #" + order.getOrderId(),
@@ -97,13 +95,12 @@ public class EmailServiceImpl implements EmailService {
     @Async("taskExecutor")
     public void sendRefundNotification(Order order, Payment payment, User user) {
         try {
-            // Prepare email context
+            
             Map<String, Object> templateModel = new HashMap<>();
             templateModel.put("order", order);
             templateModel.put("payment", payment);
             templateModel.put("user", user);
             
-            // Send email
             sendEmail(
                 user.getEmail(),
                 "Refund Confirmation #" + order.getOrderId(),
@@ -122,11 +119,10 @@ public class EmailServiceImpl implements EmailService {
     @Async("taskExecutor")
     public void sendAccountCreationConfirmation(User user) {
         try {
-            // Prepare email context
+            
             Map<String, Object> templateModel = new HashMap<>();
             templateModel.put("user", user);
             
-            // Send email
             sendEmail(
                 user.getEmail(),
                 "Welcome to Digital E-Store!",
@@ -145,12 +141,11 @@ public class EmailServiceImpl implements EmailService {
     @Async("taskExecutor")
     public void sendPasswordResetLink(User user, String resetToken) {
         try {
-            // Prepare email context
+            
             Map<String, Object> templateModel = new HashMap<>();
             templateModel.put("user", user);
             templateModel.put("resetToken", resetToken);
             
-            // Send email
             sendEmail(
                 user.getEmail(),
                 "Password Reset Request",
@@ -169,13 +164,12 @@ public class EmailServiceImpl implements EmailService {
     @Async("taskExecutor")
     public void sendDigitalProductAccessEmail(Order order, User user) {
         try {
-            // Prepare email context
+            
             Map<String, Object> templateModel = new HashMap<>();
             templateModel.put("order", order);
             templateModel.put("user", user);
             templateModel.put("orderItems", order.getOrderItems());
             
-            // Send email
             sendEmail(
                 user.getEmail(),
                 "Your Digital Purchase is Ready - Order #" + order.getOrderId(),
@@ -190,13 +184,9 @@ public class EmailServiceImpl implements EmailService {
         }
     }
     
-    /**
-     * Helper method to send a simple email
-     */
     private void sendEmail(String to, String subject, String templateName, Map<String, Object> templateModel) 
             throws MessagingException, UnsupportedEncodingException {
         
-        // Add baseUrl to template model
         templateModel.put("baseUrl", baseUrl);
         
         MimeMessage message = emailSender.createMimeMessage();
@@ -215,9 +205,6 @@ public class EmailServiceImpl implements EmailService {
         emailSender.send(message);
     }
     
-    /**
-     * Helper method to send an email with attachment
-     */
     private void sendEmailWithAttachment(
             String to, 
             String subject, 
@@ -226,7 +213,6 @@ public class EmailServiceImpl implements EmailService {
             String attachmentFilename,
             byte[] attachmentData) throws MessagingException, UnsupportedEncodingException {
         
-        // Add baseUrl to template model
         templateModel.put("baseUrl", baseUrl);
         
         MimeMessage message = emailSender.createMimeMessage();
@@ -242,7 +228,6 @@ public class EmailServiceImpl implements EmailService {
         String htmlContent = templateEngine.process(templateName, context);
         helper.setText(htmlContent, true);
         
-        // Add attachment
         helper.addAttachment(attachmentFilename, new ByteArrayResource(attachmentData));
         
         emailSender.send(message);
@@ -252,14 +237,13 @@ public class EmailServiceImpl implements EmailService {
     @Async("taskExecutor")
     public void sendPaymentFailureNotification(Order order, Payment payment, User user, String failureReason) {
         try {
-            // Prepare email context
+            
             Map<String, Object> templateModel = new HashMap<>();
             templateModel.put("order", order);
             templateModel.put("payment", payment);
             templateModel.put("user", user);
             templateModel.put("failureReason", failureReason);
             
-            // Send email
             sendEmail(
                 user.getEmail(),
                 "Payment Failed - Order #" + order.getOrderId(),

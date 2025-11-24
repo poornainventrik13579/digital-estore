@@ -1,10 +1,10 @@
-// src/main/java/com/inventrik/digitalestore/exception/payment/PaymentNotFoundException.java
+
 package com.inventrik.digitalestore.exception.payment;
 
 public class PaymentNotFoundException extends PaymentException {
     
     public PaymentNotFoundException(String message) {
-        super(message, false); // Payment not found errors are not retryable
+        super(message, false); 
     }
     
     public PaymentNotFoundException(String message, Throwable cause) {

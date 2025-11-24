@@ -61,8 +61,18 @@ public class BundleServiceImpl implements BundleService {
     
     @Override
     public BundleResponse createBundle(Integer tenantId, BundleRequest bundleRequest, String username) {
+        if (bundleRequest.getDiscountPercent() == null) {
+            bundleRequest.setDiscountPercent(BigDecimal.ZERO);
+        }
+        
         if (!validateBundleComposition(tenantId, bundleRequest.getBundleItems())) {
             throw new IllegalArgumentException("Invalid bundle composition");
+        }
+        
+        BigDecimal calculatedPrice = calculateBundlePrice(tenantId, bundleRequest.getBundleItems());
+        if (bundleRequest.getBundlePrice().compareTo(calculatedPrice) > 0) {
+            log.warn("Bundle price {} is higher than calculated price {} for bundle: {}", 
+                bundleRequest.getBundlePrice(), calculatedPrice, bundleRequest.getBundleName());
         }
         
         Long newBundleId = idGeneratorService.generateId(tenantId, "BUNDLE");
@@ -144,9 +154,17 @@ public class BundleServiceImpl implements BundleService {
     @Override
     @Transactional(readOnly = true)
     public BigDecimal calculateBundlePrice(Integer tenantId, List<BundleRequest.BundleItemRequest> bundleItems) {
+        if (bundleItems == null || bundleItems.isEmpty()) {
+            throw new IllegalArgumentException("Bundle items cannot be null or empty");
+        }
+        
         BigDecimal totalPrice = BigDecimal.ZERO;
         
         for (BundleRequest.BundleItemRequest item : bundleItems) {
+            if (item.getProductId() == null || item.getQuantity() == null) {
+                throw new IllegalArgumentException("Product ID and quantity are required for all bundle items");
+            }
+            
             Product product = productRepository.findByTenantIdAndProductIdAndStatus(tenantId, item.getProductId(), "0")
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + item.getProductId()));
             
@@ -164,8 +182,13 @@ public class BundleServiceImpl implements BundleService {
             return false;
         }
         
-        // Check if all products exist and are active
         for (BundleRequest.BundleItemRequest item : bundleItems) {
+            if (item.getProductId() == null || item.getQuantity() == null || item.getQuantity() < 1) {
+                log.warn("Invalid bundle item: productId={}, quantity={}, tenantId={}", 
+                    item.getProductId(), item.getQuantity(), tenantId);
+                return false;
+            }
+            
             boolean productExists = productRepository.findByTenantIdAndProductIdAndStatus(tenantId, item.getProductId(), "0")
                     .isPresent();
             if (!productExists) {
@@ -180,12 +203,10 @@ public class BundleServiceImpl implements BundleService {
     @Override
     @Transactional(readOnly = true)
     public List<BundleResponse> getBundlesContainingProduct(Integer tenantId, Long productId) {
-        List<BundleItem> bundleItems = bundleItemRepository.findBundlesContainingProduct(tenantId, productId);
+        List<ProductBundle> bundles = bundleRepository.findBundlesContainingProduct(tenantId, productId);
         
-        return bundleItems.stream()
-                .map(item -> item.getBundleId())
-                .distinct()
-                .map(bundleId -> getBundle(tenantId, bundleId))
+        return bundles.stream()
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
     
@@ -194,20 +215,18 @@ public class BundleServiceImpl implements BundleService {
         ProductBundle bundle = bundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bundle not found with id: " + bundleId));
         
-        // Check if product exists
         productRepository.findByTenantIdAndProductIdAndStatus(tenantId, productId, "0")
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
         
-        // Create new bundle item
         BundleItem bundleItem = new BundleItem();
         bundleItem.setTenantId(tenantId);
         bundleItem.setBundleId(bundleId);
         bundleItem.setProductId(productId);
         bundleItem.setQuantity(quantity);
         bundleItem.setStatus("0");
-        bundleItem.setCreatedBy("1");
-        bundleItem.setUpdatedBy("1");
-        
+        bundleItem.setCreatedBy(username);
+        bundleItem.setUpdatedBy(username);
+
         bundleItemRepository.save(bundleItem);
         
         log.info("Product added to bundle: bundleId={}, productId={}, quantity={}, tenantId={}, username={}", 
@@ -224,7 +243,7 @@ public class BundleServiceImpl implements BundleService {
                 .filter(item -> item.getProductId().equals(productId))
                 .forEach(item -> {
                     item.setStatus("-1");
-                    item.setUpdatedBy("1");
+                    item.setUpdatedBy(username);
                     bundleItemRepository.save(item);
                 });
         
@@ -244,7 +263,7 @@ public class BundleServiceImpl implements BundleService {
                 .ifPresentOrElse(
                         item -> {
                             item.setQuantity(quantity);
-                            item.setUpdatedBy("1");
+                            item.setUpdatedBy(username);
                             bundleItemRepository.save(item);
                         },
                         () -> {

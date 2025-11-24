@@ -25,9 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * Test for Stripe webhook handling
- */
 public class WebhookHandlerTest {
     private static final String DEFAULT_API_KEY = "sk_test_your_test_key";
     private static final String DEFAULT_WEBHOOK_SECRET = "whsec_your_webhook_secret";
@@ -37,25 +34,21 @@ public class WebhookHandlerTest {
     
     public static void main(String[] args) {
         try {
-            // Load API key and webhook secret
+            
             String apiKey = TestUtils.loadStripeApiKey();
             String webhookSecret = loadWebhookSecret();
             
             Stripe.apiKey = apiKey;
             
-            // Step 1: Create a test payment intent
             PaymentIntent intent = createTestPaymentIntent();
             System.out.println("Created payment intent: " + intent.getId());
             
-            // Step 2: Create a simulated webhook event
             String payload = createWebhookPayload(intent.getId());
             System.out.println("Created webhook payload");
             
-            // Step 3: Calculate webhook signature
             String signature = calculateSignature(payload, webhookSecret);
             System.out.println("Calculated signature: " + signature);
             
-            // Step 4: Send webhook request to application
             HttpResponse<String> response = sendWebhookRequest(payload, signature);
             System.out.println("Webhook response status: " + response.statusCode());
             System.out.println("Webhook response body: " + response.body());
@@ -66,11 +59,10 @@ public class WebhookHandlerTest {
         }
     }
 
-    
     private static String loadWebhookSecret() {
         Properties props = new Properties();
         try {
-            // Try loading from application.properties
+            
             InputStream input = new FileInputStream("src/main/resources/application.properties");
             props.load(input);
             String secret = props.getProperty("stripe.webhook.secret");
@@ -80,7 +72,6 @@ public class WebhookHandlerTest {
                 return secret;
             }
             
-            // Try environment variable
             secret = System.getenv("STRIPE_WEBHOOK_SECRET");
             if (secret != null && !secret.isEmpty()) {
                 System.out.println("Successfully loaded webhook secret from environment");
@@ -99,8 +90,8 @@ public class WebhookHandlerTest {
     private static PaymentIntent createTestPaymentIntent() throws StripeException {
         PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                 .setCurrency("usd")
-                .setAmount(1000L) // $10.00
-                .setPaymentMethod("pm_card_visa") // Test payment method
+                .setAmount(1000L) 
+                .setPaymentMethod("pm_card_visa") 
                 .setConfirmationMethod(PaymentIntentCreateParams.ConfirmationMethod.MANUAL)
                 .build();
         
@@ -108,10 +99,9 @@ public class WebhookHandlerTest {
     }
     
     private static String createWebhookPayload(String paymentIntentId) throws StripeException {
-        // Retrieve the payment intent to ensure we have the latest data
+        
         PaymentIntent intent = PaymentIntent.retrieve(paymentIntentId);
         
-        // Create a mock event payload
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("id", "evt_" + System.currentTimeMillis());
         eventData.put("object", "event");

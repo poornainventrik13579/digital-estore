@@ -6,10 +6,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/**
- * Generic paginated response wrapper for API endpoints.
- * Provides pagination metadata along with the actual data.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

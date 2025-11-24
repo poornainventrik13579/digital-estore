@@ -33,7 +33,6 @@ public class ProductServiceImpl implements ProductService {
     private final IdGeneratorService idGeneratorService;
     private final UserService userService;
     
-    // Utility method to convert Entity to DTO
     private ProductResponse mapToDTO(Product product) {
         return new ProductResponse(
             product.getProductId(),
@@ -58,7 +57,7 @@ public class ProductServiceImpl implements ProductService {
     }
     
     @Override
-    @Cacheable(value = "products", key = "#tenantId + ':all'")
+    @Cacheable(value = "products", key = "#tenantId + ':' + 'all'")
     public List<ProductResponse> getAllProducts(Integer tenantId) {
         return productRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDTO)
@@ -89,7 +88,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductResponse createProduct(Integer tenantId, String username, ProductRequest productRequest) {
-        // Generate a new product ID
+        
         Long newProductId = idGeneratorService.generateId(tenantId, "PRODUCT");
         
         Product product = new Product();
@@ -108,17 +107,15 @@ public class ProductServiceImpl implements ProductService {
         product.setThumbnail(productRequest.getThumbnail());
         product.setMetadata(productRequest.getMetadata());
         
-        // Set category if provided
         if (productRequest.getCategoryId() != null) {
-            // First verify the category exists
+            
             categoryRepository.findByTenantIdAndCategoryId(tenantId, productRequest.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + productRequest.getCategoryId()));
             
-            // Set the category ID directly
             product.setCategoryId(productRequest.getCategoryId());
         }
         
-        product.setStatus("0"); // Active status
+        product.setStatus("0"); 
         product.setCreatedBy(userService.getAuditCode(username));
         product.setUpdatedBy(userService.getAuditCode(username));
         product.setCreated(LocalDateTime.now());
@@ -173,18 +170,17 @@ public class ProductServiceImpl implements ProductService {
             product.setMetadata(updateRequest.getMetadata());
         }
         if (updateRequest.getCategoryId() != null) {
-            // First verify the category exists
+            
             categoryRepository.findByTenantIdAndCategoryId(tenantId, updateRequest.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + updateRequest.getCategoryId()));
             
-            // Set the category ID directly
             product.setCategoryId(updateRequest.getCategoryId());
         }
         if (updateRequest.getStatus() != null) {
             product.setStatus(updateRequest.getStatus());
         }
         
-        product.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        product.setUpdatedBy(userService.getAuditCode(username));
         product.setUpdated(LocalDateTime.now());
         
         Product updatedProduct = productRepository.save(product);
@@ -216,5 +212,21 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findByTenantIdAndStatus(tenantId, "0").stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+    
+    @Override
+    @Cacheable(value = "products", key = "#tenantId + ':search:' + #keyword + ':' + #page + ':' + #size")
+    public PagedResponse<ProductResponse> searchProducts(Integer tenantId, String keyword, int page, int size) {
+        // Escape LIKE wildcards to prevent SQL injection
+        String escapedKeyword = keyword.replace("%", "\\%").replace("_", "\\_");
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("created").descending());
+        Page<Product> productPage = productRepository.searchByKeyword(tenantId, escapedKeyword, pageable);
+
+        List<ProductResponse> products = productPage.getContent().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+
+        return PagedResponse.of(products, page, size, productPage.getTotalElements());
     }
 }

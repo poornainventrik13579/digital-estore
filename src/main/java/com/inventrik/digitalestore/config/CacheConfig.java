@@ -19,10 +19,6 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import java.time.Duration;
 import java.util.TimeZone;
 
-/**
- * Redis Cache Configuration for multi-tenant e-commerce platform.
- * Provides tenant-aware caching for improved performance.
- */
 @Configuration
 @EnableCaching
 public class CacheConfig {
@@ -37,19 +33,14 @@ public class CacheConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         
-        // Use String serializer for keys
         template.setKeySerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
         
-        // Configure ObjectMapper with JSR310 module for LocalDateTime support
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         objectMapper.setTimeZone(TimeZone.getTimeZone("UTC"));
-        // Enable type information for proper deserialization
-        objectMapper.activateDefaultTyping(objectMapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL);
         
-        // Use JSON serializer for values with configured ObjectMapper
         GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
         template.setValueSerializer(jsonSerializer);
         template.setHashValueSerializer(jsonSerializer);
@@ -60,16 +51,13 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        // Configure ObjectMapper with JSR310 module for LocalDateTime support
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         objectMapper.setTimeZone(TimeZone.getTimeZone("UTC"));
-        // Enable type information for proper deserialization
-        objectMapper.activateDefaultTyping(objectMapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL);
         
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-            .entryTtl(Duration.ofHours(1)) // Cache for 1 hour
+            .entryTtl(Duration.ofHours(1)) 
             .computePrefixWith(cacheName -> "estore:" + cacheName + ":")
             .serializeKeysWith(RedisSerializationContext.SerializationPair
                 .fromSerializer(new StringRedisSerializer()))

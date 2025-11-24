@@ -7,15 +7,12 @@ import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A simplified DTO for form submissions with a single product item.
- * Multiple product orders would require multiple form submissions.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,7 +23,9 @@ public class OrderFormRequest {
     private Long userId;
     
     @Schema(description = "Currency code", example = "USD", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "Currency is required")
     @Size(min = 3, max = 3, message = "Currency code must be exactly 3 characters")
+    @Pattern(regexp = "^[A-Z]{3}$", message = "Currency code must be 3 uppercase letters (ISO 4217 format)")
     private String currency;
     
     @Schema(description = "Total amount", example = "99.99", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -39,7 +38,6 @@ public class OrderFormRequest {
     @DecimalMin(value = "0.01", inclusive = true, message = "Exchange rate must be greater than zero")
     private BigDecimal exchangeRate;
     
-    // Single product order
     @Schema(description = "Product ID", example = "123", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Product ID is required")
     private Long productId;
@@ -52,16 +50,12 @@ public class OrderFormRequest {
     @Schema(description = "License key (optional)", example = "XXXX-YYYY-ZZZZ")
     private String licenseKey;
     
-    /**
-     * Converts this simplified form to the regular OrderRequest
-     */
     public OrderRequest toOrderRequest() {
-        // Create the order items list with a single item
+        
         List<OrderItemRequest> items = new ArrayList<>();
         OrderItemRequest item = new OrderItemRequest(productId, price, licenseKey);
         items.add(item);
         
-        // Create and return the full order request
         return new OrderRequest(userId, currency, totalAmount, exchangeRate, items, null);
     }
 }

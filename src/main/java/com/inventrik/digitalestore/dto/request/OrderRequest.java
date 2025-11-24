@@ -24,6 +24,7 @@ public class OrderRequest {
     private Long userId;
     
     @Schema(description = "Currency code", example = "USD", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "Currency is required")
     @Size(min = 3, max = 3, message = "Currency code must be exactly 3 characters")
     @Pattern(regexp = "^[A-Z]{3}$", message = "Currency code must be 3 uppercase letters (ISO 4217 format)")
     private String currency;
@@ -44,5 +45,6 @@ public class OrderRequest {
     private List<OrderItemRequest> orderItems;
     
     @Schema(description = "Discount code to apply", example = "SAVE20")
+    @Size(max = 50, message = "Discount code must be less than 50 characters")
     private String discountCode;
 }

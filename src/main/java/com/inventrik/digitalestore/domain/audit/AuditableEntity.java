@@ -28,10 +28,10 @@ public abstract class AuditableEntity {
         created = LocalDateTime.now();
         updated = LocalDateTime.now();
         if (createdBy == null) {
-            createdBy = "system"; // Default value
+            createdBy = "system"; 
         }
         if (updatedBy == null) {
-            updatedBy = "system"; // Default value
+            updatedBy = "system"; 
         }
     }
     
@@ -39,7 +39,7 @@ public abstract class AuditableEntity {
     protected void onUpdate() {
         updated = LocalDateTime.now();
         if (updatedBy == null) {
-            updatedBy = "system"; // Default value
+            updatedBy = "system"; 
         }
     }
 } 

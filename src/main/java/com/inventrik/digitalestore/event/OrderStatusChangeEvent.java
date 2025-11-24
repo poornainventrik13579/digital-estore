@@ -1,4 +1,4 @@
-// src/main/java/com/inventrik/digitalestore/event/OrderStatusChangeEvent.java
+
 package com.inventrik.digitalestore.event;
 
 import com.inventrik.digitalestore.domain.order.Order;

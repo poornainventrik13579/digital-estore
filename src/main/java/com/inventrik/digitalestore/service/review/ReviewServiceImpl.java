@@ -9,6 +9,7 @@ import com.inventrik.digitalestore.exception.ValidationException;
 import com.inventrik.digitalestore.repository.ReviewRepository;
 import com.inventrik.digitalestore.service.order.OrderService;
 import com.inventrik.digitalestore.service.user.UserService;
+import com.inventrik.digitalestore.service.IdGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,14 +30,14 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserService userService;
     private final OrderService orderService;
+    private final IdGeneratorService idGeneratorService;
     
     @Override
     public ReviewResponse createReview(Integer tenantId, String username, ReviewRequest reviewRequest) {
         log.info("Creating review for product {} by user {}", reviewRequest.getProductId(), username);
+
+        var user = userService.findByTenantIdAndUsername(tenantId, username);
         
-        var user = userService.findByUsername(username);
-        
-        // Check if user already reviewed this product
         Optional<Review> existingReview = reviewRepository.findByTenantIdAndUserIdAndProductIdAndStatus(
             tenantId, user.getUserId(), reviewRequest.getProductId(), "0");
         
@@ -44,10 +45,9 @@ public class ReviewServiceImpl implements ReviewService {
             throw new ValidationException("User has already reviewed this product");
         }
         
-        // Verify user purchased this product
         boolean hasPurchased = orderService.hasUserPurchasedProduct(tenantId, user.getUserId(), reviewRequest.getProductId());
         
-        Long reviewId = generateReviewId(tenantId);
+        Long reviewId = idGeneratorService.generateId(tenantId, "ORDER");
         
         Review review = new Review();
         review.setTenantId(tenantId);
@@ -58,8 +58,8 @@ public class ReviewServiceImpl implements ReviewService {
         review.setComment(reviewRequest.getComment());
         review.setVerified(hasPurchased);
         review.setStatus("0");
-        review.setCreatedBy(username.length() > 2 ? username.substring(0, 2) : username);
-        review.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        review.setCreatedBy(userService.getAuditCode(username));
+        review.setUpdatedBy(userService.getAuditCode(username));
         
         Review savedReview = reviewRepository.save(review);
         
@@ -71,13 +71,13 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     public List<ReviewResponse> getProductReviews(Integer tenantId, Long productId) {
         log.info("Fetching reviews for product: {}", productId);
-        
+
         List<Review> reviews = reviewRepository.findByTenantIdAndProductIdAndStatusOrderByReviewDateDesc(
             tenantId, productId, "0");
-        
+
         return reviews.stream()
             .map(review -> {
-                var user = userService.getUser(tenantId, review.getUserId());
+                var user = userService.getUserByTenantAndUserId(tenantId, review.getUserId());
                 return mapToResponse(review, user.getUsername());
             })
             .collect(Collectors.toList());
@@ -90,9 +90,9 @@ public class ReviewServiceImpl implements ReviewService {
         
         List<Review> reviews = reviewRepository.findByTenantIdAndUserIdAndStatusOrderByReviewDateDesc(
             tenantId, userId, "0");
-        
-        var user = userService.getUser(tenantId, userId);
-        
+
+        var user = userService.getUserByTenantAndUserId(tenantId, userId);
+
         return reviews.stream()
             .map(review -> mapToResponse(review, user.getUsername()))
             .collect(Collectors.toList());
@@ -105,21 +105,20 @@ public class ReviewServiceImpl implements ReviewService {
         
         Review review = reviewRepository.findById(new Review.ReviewPK(tenantId, reviewId))
             .orElseThrow(() -> new ResourceNotFoundException("Review not found with ID: " + reviewId));
-        
-        var user = userService.getUser(tenantId, review.getUserId());
+
+        var user = userService.getUserByTenantAndUserId(tenantId, review.getUserId());
         return mapToResponse(review, user.getUsername());
     }
     
     @Override
     public ReviewResponse updateReview(Integer tenantId, Long reviewId, ReviewRequest reviewRequest, String username) {
         log.info("Updating review: {} by user: {}", reviewId, username);
-        
+
         Review review = reviewRepository.findById(new Review.ReviewPK(tenantId, reviewId))
             .orElseThrow(() -> new ResourceNotFoundException("Review not found with ID: " + reviewId));
+
+        var user = userService.findByTenantIdAndUsername(tenantId, username);
         
-        var user = userService.findByUsername(username);
-        
-        // Only allow user to update their own review
         if (!review.getUserId().equals(user.getUserId())) {
             throw new ValidationException("User can only update their own reviews");
         }
@@ -137,13 +136,12 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public void deleteReview(Integer tenantId, Long reviewId, String username) {
         log.info("Deleting review: {} by user: {}", reviewId, username);
-        
+
         Review review = reviewRepository.findById(new Review.ReviewPK(tenantId, reviewId))
             .orElseThrow(() -> new ResourceNotFoundException("Review not found with ID: " + reviewId));
+
+        var user = userService.findByTenantIdAndUsername(tenantId, username);
         
-        var user = userService.findByUsername(username);
-        
-        // Only allow user to delete their own review
         if (!review.getUserId().equals(user.getUserId())) {
             throw new ValidationException("User can only delete their own reviews");
         }
@@ -182,10 +180,10 @@ public class ReviewServiceImpl implements ReviewService {
         log.info("Fetching verified reviews for tenant: {}", tenantId);
         
         List<Review> reviews = reviewRepository.findVerifiedReviews(tenantId);
-        
+
         return reviews.stream()
             .map(review -> {
-                var user = userService.getUser(tenantId, review.getUserId());
+                var user = userService.getUserByTenantAndUserId(tenantId, review.getUserId());
                 return mapToResponse(review, user.getUsername());
             })
             .collect(Collectors.toList());
@@ -200,21 +198,14 @@ public class ReviewServiceImpl implements ReviewService {
         
         review.setVerified(true);
         review.setUpdatedBy(username);
-        
+
         Review verifiedReview = reviewRepository.save(review);
-        
-        var user = userService.getUser(tenantId, review.getUserId());
-        
+
+        var user = userService.getUserByTenantAndUserId(tenantId, review.getUserId());
+
         log.info("Review verified successfully: {}", reviewId);
         return mapToResponse(verifiedReview, user.getUsername());
     }
-    
-    private Long generateReviewId(Integer tenantId) {
-        Long maxId = reviewRepository.findMaxReviewId(tenantId);
-        return maxId != null ? maxId + 1 : 1000000001L;
-    }
-    
-
     
     private ReviewResponse mapToResponse(Review review, String username) {
         return new ReviewResponse(

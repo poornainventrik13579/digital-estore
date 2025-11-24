@@ -32,10 +32,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPasswordHash(),
-                user.getStatus().equals("0"), // enabled
-                true, // account not expired
-                true, // credentials not expired
-                true, // account not locked
+                user.getStatus().equals("0"), 
+                true, 
+                true, 
+                true, 
                 getAuthorities(user)
         );
     }
@@ -43,14 +43,13 @@ public class CustomUserDetailsService implements UserDetailsService {
     private Collection<? extends GrantedAuthority> getAuthorities(User user) {
         List<GrantedAuthority> authorities = new ArrayList<>();
         
-        // Add role based on user's role field (only give specific role, not all roles)
-        if ("0".equals(user.getStatus())) {
+        if ("A".equals(user.getStatus())) {
             switch (user.getUserRole()) {
-                case ADMIN:
+                case SYSTEM_ADMIN:
                     authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
                     break;
-                case MANAGER:
-                    authorities.add(new SimpleGrantedAuthority("ROLE_MANAGER"));
+                case TENANT_ADMIN:
+                    authorities.add(new SimpleGrantedAuthority("ROLE_TENANT_ADMIN"));
                     break;
                 case USER:
                 default:

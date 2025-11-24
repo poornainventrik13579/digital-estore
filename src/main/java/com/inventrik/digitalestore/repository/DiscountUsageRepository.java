@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -34,5 +35,5 @@ public interface DiscountUsageRepository extends JpaRepository<DiscountUsage, Di
                                              @Param("status") String status);
     
     @Query("SELECT SUM(u.discountAmount) FROM DiscountUsage u WHERE u.tenantId = :tenantId AND u.discountId = :discountId AND u.status = :status")
-    Double getTotalDiscountAmountUsed(@Param("tenantId") Integer tenantId, @Param("discountId") Long discountId, @Param("status") String status);
+    BigDecimal getTotalDiscountAmountUsed(@Param("tenantId") Integer tenantId, @Param("discountId") Long discountId, @Param("status") String status);
 } 

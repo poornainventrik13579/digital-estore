@@ -93,13 +93,68 @@ public class AuthServerConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .anyRequest().permitAll()
             );
-            // No JWT resource server configuration for auth endpoints
             
         return http.build();
     }
 
     @Bean
     @Order(3)
+    public SecurityFilterChain tenantAuthSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/v1/tenants/auth/**")
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/api/v1/tenants/auth/signup", "/api/v1/tenants/auth/login",
+                                "/api/v1/tenants/auth/check/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(4)
+    public SecurityFilterChain tenantUserAuthSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/v1/tenants/*/auth/**")
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/api/v1/tenants/*/auth/signup", "/api/v1/tenants/*/auth/login").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(5)
+    public SecurityFilterChain publicApiSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/v1/public/**", "/api/v1/webhooks/**", "/api/*/store/**", "/api/check/**")
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authorizeHttpRequests(authorize -> authorize
+                .anyRequest().permitAll()
+            );
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(6)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher("/api/v1/**")
@@ -128,7 +183,7 @@ public class AuthServerConfig {
     }
 
     @Bean
-    @Order(4)
+    @Order(7)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authorize -> authorize
@@ -155,9 +210,10 @@ public class AuthServerConfig {
 
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
+        String clientSecret = System.getenv().getOrDefault("OAUTH_CLIENT_SECRET", "web-secret");
         RegisteredClient webClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("web-client")
-                .clientSecret(passwordEncoder().encode("web-secret"))
+                .clientSecret(passwordEncoder().encode(clientSecret))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -167,8 +223,8 @@ public class AuthServerConfig {
                 .scope("read")
                 .scope("write")
                 .tokenSettings(TokenSettings.builder()
-                        .accessTokenTimeToLive(Duration.ofHours(1))
-                        .refreshTokenTimeToLive(Duration.ofDays(7))
+                        .accessTokenTimeToLive(Duration.ofMinutes(30))
+                        .refreshTokenTimeToLive(Duration.ofHours(24))
                         .build())
                 .clientSettings(ClientSettings.builder()
                         .requireAuthorizationConsent(false)
@@ -219,13 +275,13 @@ public class AuthServerConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(Arrays.asList("http://localhost:*", "https://localhost:*"));
+        config.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://localhost:3000"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
         config.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/api/**", config);
         return source;
     }
 }

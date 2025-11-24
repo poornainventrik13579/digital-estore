@@ -12,6 +12,7 @@ import com.inventrik.digitalestore.exception.payment.InsufficientRefundAmountExc
 import com.inventrik.digitalestore.exception.payment.PaymentNotFoundException;
 import com.inventrik.digitalestore.exception.payment.PaymentProcessingException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
+import com.inventrik.digitalestore.exception.UnauthorizedException;
 import com.inventrik.digitalestore.repository.OrderRepository;
 import com.inventrik.digitalestore.repository.PaymentRepository;
 import com.inventrik.digitalestore.repository.UserRepository;
@@ -36,6 +37,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -77,7 +79,7 @@ public class StripePaymentService implements PaymentService {
         response.setRefundReason(payment.getRefundReason());
         response.setCreated(payment.getCreated());
         response.setUpdated(payment.getUpdated());
-        response.setClientSecret(null); // Set only when creating
+        response.setClientSecret(null); 
         return response;
     }
     
@@ -94,7 +96,23 @@ public class StripePaymentService implements PaymentService {
                 .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
         return mapToDTO(payment);
     }
-    
+
+    @Override
+    public PaymentResponse getPayment(Integer tenantId, Long paymentId, String username, boolean isAdmin) {
+        Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
+
+        if (!isAdmin) {
+            Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+            if (!order.getCreatedBy().equals(username)) {
+                throw new UnauthorizedException("You do not have permission to view this payment");
+            }
+        }
+
+        return mapToDTO(payment);
+    }
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -103,34 +121,39 @@ public class StripePaymentService implements PaymentService {
         
         return transactionCoordinator.executeInStrictTransaction(() -> {
             try {
-                // Check for existing payments with idempotency
-                if (idempotencyKeyService.isKeyRegistered(idempotencyKey)) {
-                    // Find existing payment for this order
+                // Atomically register idempotency key - prevents race conditions
+                if (!idempotencyKeyService.registerKey(idempotencyKey)) {
+                    // Key already exists, return existing payment
                     List<Payment> existingPayments = paymentRepository.findByTenantIdAndOrderId(tenantId, paymentRequest.getOrderId());
                     if (!existingPayments.isEmpty()) {
                         Payment existingPayment = existingPayments.get(0);
-                        log.warn("Duplicate payment attempt detected for order {}, returning existing payment {}", 
+                        log.warn("Duplicate payment attempt detected for order {}, returning existing payment {}",
                                 paymentRequest.getOrderId(), existingPayment.getPaymentId());
                         return mapToDTO(existingPayment);
                     }
-                }
-                
-                // Register idempotency key
-                if (!idempotencyKeyService.registerKey(idempotencyKey)) {
-                    throw new PaymentProcessingException("Duplicate payment request detected", false);
+                    throw new PaymentProcessingException("Duplicate payment request detected but payment not found", false);
                 }
                 
                 Order order = orderRepository.findByTenantIdAndOrderId(tenantId, paymentRequest.getOrderId())
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + paymentRequest.getOrderId()));
-                
+
+                // CRITICAL: Validate payment amount matches order total
+                if (paymentRequest.getAmount().compareTo(order.getTotalAmount()) != 0) {
+                    throw new PaymentProcessingException(
+                        "Payment amount mismatch. Order total: " + order.getTotalAmount() +
+                        ", Payment amount: " + paymentRequest.getAmount(), false);
+                }
+
                 Long newPaymentId = idGeneratorService.generateId(tenantId, "PAYMENT");
                 
                 PaymentIntent paymentIntent = retryService.executeWithRetry(() -> {
                     try {
                         Map<String, Object> params = new HashMap<>();
                         params.put("currency", paymentRequest.getCurrency().toLowerCase());
-                        // Use amount as-is (assuming it's already in the correct format for Stripe)
-                        long amountLong = paymentRequest.getAmount().setScale(0, BigDecimal.ROUND_HALF_UP).longValue();
+                        
+                        long amountLong = paymentRequest.getAmount()
+                            .multiply(new BigDecimal("100"))
+                            .setScale(0, RoundingMode.HALF_UP).longValue();
                         params.put("amount", amountLong);
                         params.put("description", "Payment for order #" + paymentRequest.getOrderId());
                         params.put("capture_method", "automatic");
@@ -200,20 +223,12 @@ public class StripePaymentService implements PaymentService {
             
             String oldStatus = payment.getStatus();
             
-            // Create a test payment method and confirm the PaymentIntent
             retryService.executeWithRetry(() -> {
                 try {
                     PaymentIntent paymentIntent = PaymentIntent.retrieve(payment.getTransactionId());
                     
-                    if ("requires_confirmation".equals(paymentIntent.getStatus()) || 
-                        "requires_payment_method".equals(paymentIntent.getStatus())) {
-                        
-                        // Use Stripe test payment method token
-                        Map<String, Object> confirmParams = new HashMap<>();
-                        confirmParams.put("payment_method", "pm_card_visa"); // Stripe test token
-                        confirmParams.put("return_url", "http://localhost:8080/payment/success");
-                        
-                        paymentIntent.confirm(confirmParams);
+                    if ("requires_confirmation".equals(paymentIntent.getStatus())) {
+                        paymentIntent.confirm();
                     }
                     
                     return paymentIntent;
@@ -222,7 +237,6 @@ public class StripePaymentService implements PaymentService {
                 }
             });
             
-            // Re-fetch the payment intent to get the latest status
             PaymentIntent paymentIntent = retryService.executeWithRetry(() -> {
                 try {
                     return PaymentIntent.retrieve(payment.getTransactionId());
@@ -234,28 +248,23 @@ public class StripePaymentService implements PaymentService {
             if ("succeeded".equals(paymentIntent.getStatus())) {
                 payment.setStatus(PaymentStatus.SUCCESSFUL.getDisplayName());
                 
-                // Update the order status if necessary
                 Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + payment.getOrderId()));
                 
                 order.setStatus("Processing");
-                order.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+                order.setUpdatedBy(userService.getAuditCode(username));
                 order.setUpdated(LocalDateTime.now());
                 Order savedOrder = orderRepository.save(order);
                 
-                // Log successful payment confirmation
                 paymentEventLogger.logPaymentConfirmation(payment, transactionId, username);
                 
-                // Send confirmation email with invoice
                 userRepository.findByTenantIdAndUserId(tenantId, savedOrder.getUserId()).ifPresent(user -> {
                     try {
-                        // Generate invoice PDF
+                        
                         byte[] invoicePdf = invoiceService.generateInvoice(savedOrder, user);
                         
-                        // Store invoice for future reference
                         invoiceService.storeInvoice(savedOrder, invoicePdf);
                         
-                        // Send confirmation email with invoice attachment
                         emailService.sendOrderConfirmationWithInvoice(savedOrder, user, invoicePdf);
                         
                         log.info("Order confirmation email sent for order {}", savedOrder.getOrderId());
@@ -265,15 +274,13 @@ public class StripePaymentService implements PaymentService {
                     }
                 });
             } else {
-                // Handle other statuses
+                
                 payment.setStatus(PaymentStatus.PROCESSING.getDisplayName());
                 
-                // Log payment status change
                 paymentEventLogger.logPaymentStatusChange(payment, oldStatus, payment.getStatus(), username);
             }
             
-            // Ensure username is truncated to 2 characters as per DB schema
-            String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+            String truncatedUsername = userService.getAuditCode(username);
             payment.setUpdatedBy(truncatedUsername);
             payment.setUpdated(LocalDateTime.now());
             
@@ -302,8 +309,6 @@ public class StripePaymentService implements PaymentService {
                     throw new PaymentProcessingException("Cannot cancel payment that is already completed or refunded", false);
                 }
                 
-                // String oldStatus = payment.getStatus();
-                
                 try {
                     retryService.executeWithRetry(() -> {
                         try {
@@ -321,29 +326,25 @@ public class StripePaymentService implements PaymentService {
                     });
                 } catch (PaymentProcessingException e) {
                     log.error("Error canceling payment with Stripe: {}", e.getMessage(), e);
-                    // Continue with local cancelation even if Stripe call fails
+                    
                 }
                 
                 payment.setStatus(PaymentStatus.FAILED.getDisplayName());
                 
-                // Ensure username is truncated to 2 characters as per DB schema
                 String truncatedUsername = userService.truncateUsernameForAudit(username);
                 payment.setUpdatedBy(truncatedUsername);
                 payment.setUpdated(LocalDateTime.now());
                 
                 Payment updatedPayment = paymentRepository.save(payment);
                 
-                // Log payment cancellation
                 paymentEventLogger.logPaymentCancellation(updatedPayment, username);
                 
-                // Update order status and send cancellation email
                 orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId()).ifPresent(order -> {
                     order.setStatus(OrderStatus.CANCELLED.getDisplayName());
                     order.setUpdatedBy(truncatedUsername);
                     order.setUpdated(LocalDateTime.now());
                     Order savedOrder = orderRepository.save(order);
                     
-                    // Send cancellation notification
                     userRepository.findByTenantIdAndUserId(tenantId, order.getUserId()).ifPresent(user -> {
                         try {
                             emailService.sendCancellationNotification(savedOrder, user);
@@ -362,6 +363,23 @@ public class StripePaymentService implements PaymentService {
                 throw new PaymentProcessingException("Failed to cancel payment: " + e.getMessage(), e, false);
             }
         });
+    }
+
+    @Override
+    public PaymentResponse cancelPayment(Integer tenantId, Long paymentId, String username, boolean isAdmin) {
+        Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
+
+        if (!isAdmin) {
+            Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+            if (!order.getCreatedBy().equals(username)) {
+                throw new UnauthorizedException("You do not have permission to cancel this payment");
+            }
+        }
+
+        return cancelPayment(tenantId, paymentId, username);
     }
     
     @Override
@@ -418,7 +436,7 @@ public class StripePaymentService implements PaymentService {
                     payment.setStatus(PaymentStatus.PARTIALLY_REFUNDED.getDisplayName());
                 }
                 
-                String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+                String truncatedUsername = userService.getAuditCode(username);
                 payment.setUpdatedBy(truncatedUsername);
                 payment.setUpdated(LocalDateTime.now());
                 
@@ -497,11 +515,11 @@ public class StripePaymentService implements PaymentService {
                 Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + payment.getOrderId()));
                 order.setStatus("Refunded");
-                order.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+                order.setUpdatedBy(userService.getAuditCode(username));
                 order.setUpdated(LocalDateTime.now());
                 orderRepository.save(order);
                 
-                String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+                String truncatedUsername = userService.getAuditCode(username);
                 payment.setUpdatedBy(truncatedUsername);
                 payment.setUpdated(LocalDateTime.now());
                 
@@ -545,10 +563,9 @@ public class StripePaymentService implements PaymentService {
     @Override
     public void handlePaymentWebhook(String payload, String signature) {
         try {
-            // Verify the webhook signature
+            
             Event event = Webhook.constructEvent(payload, signature, stripeConfig.getWebhookSecret());
             
-            // Process the event in a new transaction
             transactionCoordinator.executeInNewTransaction(() -> {
                 try {
                     processStripeEvent(event);
@@ -567,13 +584,8 @@ public class StripePaymentService implements PaymentService {
         }
     }
     
-    /**
-     * Process a Stripe event from a webhook.
-     *
-     * @param event The Stripe event
-     */
     private void processStripeEvent(Event event) {
-        // Extract the Stripe object from the event
+        
         EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
         StripeObject stripeObject = null;
         
@@ -584,10 +596,8 @@ public class StripePaymentService implements PaymentService {
             return;
         }
         
-        // Extract payment intent ID
         String paymentIntentId = null;
         
-        // Handle different event types
         switch (event.getType()) {
             case "payment_intent.succeeded":
                 PaymentIntent paymentIntent = (PaymentIntent) stripeObject;
@@ -612,7 +622,6 @@ public class StripePaymentService implements PaymentService {
                 break;
         }
         
-        // Log the webhook event
         if (paymentIntentId != null) {
             paymentRepository.findByTransactionId(paymentIntentId).ifPresent(payment -> {
                 paymentEventLogger.logWebhookEvent(
@@ -625,7 +634,7 @@ public class StripePaymentService implements PaymentService {
     }
     
     private void handleSuccessfulPayment(PaymentIntent paymentIntent) {
-        // Find the payment by transaction ID
+        
         paymentRepository.findByTransactionId(paymentIntent.getId()).ifPresent(payment -> {
             String oldStatus = payment.getStatus();
             payment.setStatus(PaymentStatus.SUCCESSFUL.getDisplayName());
@@ -633,7 +642,6 @@ public class StripePaymentService implements PaymentService {
             
             Payment updatedPayment = paymentRepository.save(payment);
             
-            // Log the status change
             paymentEventLogger.logPaymentStatusChange(
                 updatedPayment, 
                 oldStatus,
@@ -641,26 +649,22 @@ public class StripePaymentService implements PaymentService {
                 "webhook"
             );
             
-            // Update the order status
             orderRepository.findByTenantIdAndOrderId(payment.getTenantId(), payment.getOrderId()).ifPresent(order -> {
                 if (!"Completed".equals(order.getStatus()) && 
                     !"Cancelled".equals(order.getStatus()) && 
                     !"Refunded".equals(order.getStatus())) {
                     order.setStatus("Processing");
                     order.setUpdated(LocalDateTime.now());
-                    order.setUpdatedBy("wh"); // webhook
+                    order.setUpdatedBy("wh"); 
                     Order savedOrder = orderRepository.save(order);
                     
-                    // Send confirmation email with invoice
                     userRepository.findByTenantIdAndUserId(payment.getTenantId(), order.getUserId()).ifPresent(user -> {
                         try {
-                            // Generate invoice PDF
+                            
                             byte[] invoicePdf = invoiceService.generateInvoice(savedOrder, user);
                             
-                            // Store invoice for future reference
                             invoiceService.storeInvoice(savedOrder, invoicePdf);
                             
-                            // Send confirmation email with invoice attachment
                             emailService.sendOrderConfirmationWithInvoice(savedOrder, user, invoicePdf);
                             
                             log.info("Order confirmation email sent via webhook for order {}", savedOrder.getOrderId());
@@ -675,36 +679,31 @@ public class StripePaymentService implements PaymentService {
     }
     
     private void handleFailedPayment(PaymentIntent paymentIntent) {
-        // Find the payment by transaction ID
+        
         paymentRepository.findByTransactionId(paymentIntent.getId()).ifPresent(payment -> {
-            // String oldStatus = payment.getStatus();
+            
             payment.setStatus(PaymentStatus.FAILED.getDisplayName());
             payment.setUpdated(LocalDateTime.now());
             
             Payment updatedPayment = paymentRepository.save(payment);
             
-            // Get failure message
             String failureMessage = "Unknown error";
             if (paymentIntent.getLastPaymentError() != null) {
                 failureMessage = paymentIntent.getLastPaymentError().getMessage();
             }
             
-            // Create a final copy for use in lambda
             final String finalFailureMessage = failureMessage;
             
-            // Log the payment failure
             paymentEventLogger.logPaymentFailure(updatedPayment, finalFailureMessage, "webhook");
             
-            // Update the order status if necessary
             orderRepository.findByTenantIdAndOrderId(payment.getTenantId(), payment.getOrderId()).ifPresent(order -> {
-                // Only update if the order is in a pending state
+                
                 if ("Pending".equals(order.getStatus())) {
                     order.setStatus("Payment Failed");
                     order.setUpdated(LocalDateTime.now());
-                    order.setUpdatedBy("wh"); // webhook
+                    order.setUpdatedBy("wh"); 
                     Order savedOrder = orderRepository.save(order);
                     
-                    // Send payment failure notification
                     userRepository.findByTenantIdAndUserId(payment.getTenantId(), order.getUserId()).ifPresent(user -> {
                         try {
                             emailService.sendPaymentFailureNotification(savedOrder, updatedPayment, user, finalFailureMessage);
@@ -720,13 +719,12 @@ public class StripePaymentService implements PaymentService {
     
     private void handleRefundedCharge(com.stripe.model.Charge charge) {
         try {
-            // We need to get the PaymentIntent to find our payment
+            
             PaymentIntent paymentIntent = PaymentIntent.retrieve(charge.getPaymentIntent());
             
             paymentRepository.findByTransactionId(paymentIntent.getId()).ifPresent(payment -> {
                 String oldStatus = payment.getStatus();
                 
-                // Check if it's a full or partial refund
                 if (charge.getAmountRefunded().equals(charge.getAmount())) {
                     payment.setStatus(PaymentStatus.REFUNDED.getDisplayName());
                 } else {
@@ -737,7 +735,6 @@ public class StripePaymentService implements PaymentService {
                 
                 Payment updatedPayment = paymentRepository.save(payment);
                 
-                // Log the refund
                 paymentEventLogger.logPaymentStatusChange(
                     updatedPayment,
                     oldStatus,
@@ -745,7 +742,6 @@ public class StripePaymentService implements PaymentService {
                     "webhook"
                 );
                 
-                // Update the order status and send email notification
                 orderRepository.findByTenantIdAndOrderId(payment.getTenantId(), payment.getOrderId()).ifPresent(order -> {
                     if (PaymentStatus.REFUNDED.getDisplayName().equals(payment.getStatus())) {
                         order.setStatus("Refunded");
@@ -753,10 +749,9 @@ public class StripePaymentService implements PaymentService {
                         order.setStatus("Partially Refunded");
                     }
                     order.setUpdated(LocalDateTime.now());
-                    order.setUpdatedBy("wh"); // webhook
+                    order.setUpdatedBy("wh"); 
                     Order savedOrder = orderRepository.save(order);
                     
-                    // Send refund notification email
                     userRepository.findByTenantIdAndUserId(payment.getTenantId(), order.getUserId()).ifPresent(user -> {
                         try {
                             emailService.sendRefundNotification(savedOrder, updatedPayment, user);
@@ -771,6 +766,5 @@ public class StripePaymentService implements PaymentService {
             log.error("Error retrieving payment intent for refunded charge: {}", e.getMessage(), e);
         }
     }
-
 
 }

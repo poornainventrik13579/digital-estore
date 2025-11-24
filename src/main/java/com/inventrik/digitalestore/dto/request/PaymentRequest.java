@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -21,6 +22,7 @@ public class PaymentRequest {
     private Long orderId;
     
     @Schema(description = "Currency code", example = "USD", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "Currency is required")
     @Size(min = 3, max = 3, message = "Currency code must be exactly 3 characters")
     @Pattern(regexp = "^[A-Z]{3}$", message = "Currency code must be 3 uppercase letters (ISO 4217 format)")
     private String currency;
@@ -31,10 +33,11 @@ public class PaymentRequest {
     private BigDecimal amount;
     
     @Schema(description = "Payment method", example = "Credit Card", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull(message = "Payment method is required")
+    @NotBlank(message = "Payment method is required")
+    @Size(max = 50, message = "Payment method must be less than 50 characters")
     private String paymentMethod;
     
-    // For Stripe integration
     @Schema(description = "Stripe token or payment method ID", example = "pm_card_visa")
+    @NotNull(message = "Payment token is required")
     private String paymentToken;
 }

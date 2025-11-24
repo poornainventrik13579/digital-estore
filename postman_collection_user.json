@@ -1,0 +1,487 @@
+{
+  "info": {
+    "name": "Digital Estore - Customer API",
+    "description": "API collection for store customers to browse products, place orders, and manage their accounts",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{customer_access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "customer_access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tenant_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Customer Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sarah.jones@email.com\",\n  \"password\": \"Customer@123\",\n  \"firstName\": \"Sarah\",\n  \"lastName\": \"Jones\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/auth/signup",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "Customer Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sarah.jones@email.com\",\n  \"password\": \"Customer@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Browse All Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "products"]
+            }
+          }
+        },
+        {
+          "name": "Get Product Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/products/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "products", "1"]
+            }
+          }
+        },
+        {
+          "name": "Filter by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/products?categoryId=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "products"],
+              "query": [
+                {
+                  "key": "categoryId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter Active Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/products?isActive=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "products"],
+              "query": [
+                {
+                  "key": "isActive",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Category Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "categories", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bundles",
+      "item": [
+        {
+          "name": "Get All Bundles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/bundles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "bundles"]
+            }
+          }
+        },
+        {
+          "name": "Get Bundle Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/bundles/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "bundles", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart & Checkout",
+      "item": [
+        {
+          "name": "Validate Discount Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME25\",\n  \"orderAmount\": 99.99\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/discounts/validate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "discounts", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Calculate Tax",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/taxes/calculate?baseAmount=99.99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "taxes", "calculate"],
+              "query": [
+                {
+                  "key": "baseAmount",
+                  "value": "99.99"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Shipping Rates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/shipping",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "shipping"]
+            }
+          }
+        },
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 1,\n      \"price\": 79.99\n    }\n  ],\n  \"discountCode\": \"WELCOME25\",\n  \"shippingAddress\": {\n    \"line1\": \"123 Main Street\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"postalCode\": \"10001\",\n    \"country\": \"United States\"\n  },\n  \"billingAddress\": {\n    \"line1\": \"123 Main Street\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"postalCode\": \"10001\",\n    \"country\": \"United States\"\n  },\n  \"paymentMethod\": \"STRIPE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "orders"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Get My Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/{{user_id}}/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "{{user_id}}", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Get Order Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/{{user_id}}/orders/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "{{user_id}}", "orders", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Downloads",
+      "item": [
+        {
+          "name": "Get My Downloads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/{{user_id}}/downloads",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "{{user_id}}", "downloads"]
+            }
+          }
+        },
+        {
+          "name": "Download Product File",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/{{user_id}}/downloads/1/file",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "{{user_id}}", "downloads", "1", "file"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Get Product Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/products/1/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "products", "1", "reviews"]
+            }
+          }
+        },
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Excellent product! Easy to use and great quality.\",\n  \"productId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/{{user_id}}/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "{{user_id}}", "reviews"]
+            }
+          }
+        },
+        {
+          "name": "Update My Review",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Updated review - still great but found minor issue\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/{{user_id}}/reviews/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "{{user_id}}", "reviews", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete My Review",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/{{user_id}}/reviews/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "{{user_id}}", "reviews", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Store Pages",
+      "item": [
+        {
+          "name": "Get All Pages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/pages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "pages"]
+            }
+          }
+        },
+        {
+          "name": "Get Page by Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/pages/about-us",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "pages", "about-us"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Store Info",
+      "item": [
+        {
+          "name": "Get Store Theme",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/theme",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "theme"]
+            }
+          }
+        },
+        {
+          "name": "Get Store Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/store/{{tenant_id}}/info",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "store", "{{tenant_id}}", "info"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

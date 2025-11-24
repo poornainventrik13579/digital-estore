@@ -8,45 +8,31 @@ import java.util.List;
 
 public interface BundleService {
     
-    // Get all bundles for a tenant
     List<BundleResponse> getAllBundles(Integer tenantId);
     
-    // Get active bundles only
     List<BundleResponse> getActiveBundles(Integer tenantId);
     
-    // Get a single bundle by ID
     BundleResponse getBundle(Integer tenantId, Long bundleId);
     
-    // Create a new bundle
     BundleResponse createBundle(Integer tenantId, BundleRequest bundleRequest, String username);
     
-    // Update an existing bundle
     BundleResponse updateBundle(Integer tenantId, Long bundleId, BundleRequest bundleRequest, String username);
     
-    // Delete/deactivate a bundle
     void deleteBundle(Integer tenantId, Long bundleId, String username);
     
-    // Search bundles by name
     List<BundleResponse> searchBundles(Integer tenantId, String name);
     
-    // Calculate bundle pricing
     BigDecimal calculateBundlePrice(Integer tenantId, List<BundleRequest.BundleItemRequest> bundleItems);
     
-    // Validate bundle composition
     boolean validateBundleComposition(Integer tenantId, List<BundleRequest.BundleItemRequest> bundleItems);
     
-    // Get bundles containing a specific product
     List<BundleResponse> getBundlesContainingProduct(Integer tenantId, Long productId);
     
-    // Add product to existing bundle
     BundleResponse addProductToBundle(Integer tenantId, Long bundleId, Long productId, Integer quantity, String username);
     
-    // Remove product from bundle
     BundleResponse removeProductFromBundle(Integer tenantId, Long bundleId, Long productId, String username);
     
-    // Update product quantity in bundle
     BundleResponse updateProductQuantityInBundle(Integer tenantId, Long bundleId, Long productId, Integer quantity, String username);
     
-    // Get bundle statistics
     Long getBundleCount(Integer tenantId);
 } 

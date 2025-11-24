@@ -1,8 +1,8 @@
 package com.inventrik.digitalestore.service.user;
 
 import com.inventrik.digitalestore.domain.user.User;
-import com.inventrik.digitalestore.dto.request.UserRequest;
-import com.inventrik.digitalestore.dto.request.UserUpdateRequest;
+import com.inventrik.digitalestore.dto.request.TenantUserSignupRequest;
+import com.inventrik.digitalestore.dto.request.TenantUserUpdateRequest;
 import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.exception.BusinessException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
@@ -11,17 +11,18 @@ import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.notification.EmailNotificationService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
     
     private final UserRepository userRepository;
@@ -29,7 +30,6 @@ public class UserServiceImpl implements UserService {
     private final EmailNotificationService emailNotificationService;
     private final IdGeneratorService idGeneratorService;
 
-    // Utility method to convert Entity to DTO
     private UserResponse mapToDTO(User user) {
         return new UserResponse(
             user.getUserId(),
@@ -93,8 +93,8 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional
-    public UserResponse createUser(Integer tenantId, String createdBy, UserRequest userRequest) {
-        // Check for duplicate username, email, phone
+    public UserResponse createUser(Integer tenantId, String createdBy, TenantUserSignupRequest userRequest) {
+        
         if (userRepository.existsByUsername(userRequest.getUsername())) {
             throw new BusinessException("Username already exists");
         }
@@ -105,10 +105,8 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("Phone number already exists");
         }
         
-        // Generate a new user ID
         Long newUserId = idGeneratorService.generateId(tenantId, "USER");
         
-        // Generate OTP
         String otp = generateOTP();
         
         User user = new User();
@@ -121,9 +119,8 @@ public class UserServiceImpl implements UserService {
         user.setPhone(userRequest.getPhone());
         user.setEmail(userRequest.getEmail());
         user.setUserType(userRequest.getUserType());
-        user.setUserRole(userRequest.getUserRole());
+        user.setUserRole(com.inventrik.digitalestore.domain.user.UserRole.USER); 
         
-        // Set company details if user type is COMPANY
         if (userRequest.getUserType() != null && userRequest.getUserType() == com.inventrik.digitalestore.domain.user.UserType.COMPANY) {
             user.setCompanyName(userRequest.getCompanyName());
             user.setCompanyRegistrationNumber(userRequest.getCompanyRegistrationNumber());
@@ -135,10 +132,10 @@ public class UserServiceImpl implements UserService {
         }
         
         user.setOtp(otp);
-        // Encode password
+        
         user.setPasswordHash(passwordEncoder.encode(userRequest.getPassword()));
-        user.setStatus("0"); // Active status
-        // Ensure createdBy doesn't exceed 2 characters
+        user.setStatus("0"); 
+        
         user.setCreatedBy(String.format("%02d", newUserId % 98 + 1));
         user.setUpdatedBy(String.format("%02d", newUserId % 98 + 1));
         user.setCreated(LocalDateTime.now());
@@ -152,11 +149,14 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional
-    public UserResponse updateUser(Integer tenantId, Long userId, String updatedBy, UserUpdateRequest updateRequest) {
+    public UserResponse updateUser(Integer tenantId, Long userId, String updatedBy, TenantUserUpdateRequest updateRequest) {
         User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-        
-        // Update user properties if provided
+
+        if (!user.getUsername().equals(updatedBy)) {
+            throw new com.inventrik.digitalestore.exception.UnauthorizedException("You do not have permission to perform this action");
+        }
+
         if (updateRequest.getFirstName() != null) {
             user.setFirstName(updateRequest.getFirstName());
         }
@@ -175,11 +175,7 @@ public class UserServiceImpl implements UserService {
         if (updateRequest.getUserType() != null) {
             user.setUserType(updateRequest.getUserType());
         }
-        if (updateRequest.getUserRole() != null) {
-            user.setUserRole(updateRequest.getUserRole());
-        }
         
-        // Update company details
         if (updateRequest.getCompanyName() != null) {
             user.setCompanyName(updateRequest.getCompanyName());
         }
@@ -201,11 +197,7 @@ public class UserServiceImpl implements UserService {
         if (updateRequest.getTaxId() != null) {
             user.setTaxId(updateRequest.getTaxId());
         }
-        if (updateRequest.getStatus() != null) {
-            user.setStatus(updateRequest.getStatus());
-        }
         
-        // Ensure updatedBy doesn't exceed 2 characters
         user.setUpdatedBy(getAuditCode(updatedBy));
         user.setUpdated(LocalDateTime.now());
         
@@ -216,11 +208,14 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional
-    public void deleteUser(Integer tenantId, Long userId) {
-        if (!userRepository.findByTenantIdAndUserId(tenantId, userId).isPresent()) {
-            throw new ResourceNotFoundException("User not found with id: " + userId);
+    public void deleteUser(Integer tenantId, Long userId, String username) {
+        User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        if (!user.getUsername().equals(username)) {
+            throw new com.inventrik.digitalestore.exception.UnauthorizedException("You do not have permission to perform this action");
         }
-        
+
         userRepository.deleteByTenantIdAndUserId(tenantId, userId);
     }
     
@@ -237,7 +232,21 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
         return mapToDTO(user);
     }
-    
+
+    @Override
+    public UserResponse findByTenantIdAndUsername(Integer tenantId, String username) {
+        User user = userRepository.findByTenantIdAndUsername(tenantId, username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username + " in tenant: " + tenantId));
+        return mapToDTO(user);
+    }
+
+    @Override
+    public UserResponse findByTenantIdAndEmail(Integer tenantId, String email) {
+        User user = userRepository.findByTenantIdAndEmail(tenantId, email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email + " in tenant: " + tenantId));
+        return mapToDTO(user);
+    }
+
     @Override
     public UserResponse findByEmail(String email) {
         User user = userRepository.findByEmail(email)
@@ -245,10 +254,9 @@ public class UserServiceImpl implements UserService {
         return mapToDTO(user);
     }
     
-    // Helper method to generate OTP
     private String generateOTP() {
-        Random random = new Random();
-        int otp = 100000 + random.nextInt(900000); // 6-digit OTP
+        java.security.SecureRandom random = new java.security.SecureRandom();
+        int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp);
     }
     
@@ -258,16 +266,13 @@ public class UserServiceImpl implements UserService {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
             
-            // Generate reset token (using OTP for simplicity)
             String resetToken = generateOTP();
             
-            // Send password reset email
             emailNotificationService.sendPasswordResetEmail(user, resetToken);
             
         } catch (ResourceNotFoundException e) {
-            // For security reasons, don't reveal if email exists or not
-            // Just log the error and return success to user
-            System.out.println("Password reset attempted for non-existent email: " + email);
+            
+            log.info("Password reset attempted for non-existent email: {}", email);
         }
     }
     
@@ -288,13 +293,119 @@ public class UserServiceImpl implements UserService {
         }
     }
     
-    /**
-     * Safely truncates username to 2 characters for database audit fields
-     */
     public String truncateUsernameForAudit(String username) {
         if (username == null || username.isEmpty()) {
             return "00";
         }
-        return username.length() > 2 ? username.substring(0, 2) : username;
+        return getAuditCode(username);
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponse> getUsersByTenant(Integer tenantId) {
+        return userRepository.findByTenantId(tenantId)
+            .stream()
+            .map(this::mapToDTO)
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getUserByTenantAndUserId(Integer tenantId, Long userId) {
+        User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return mapToDTO(user);
+    }
+    
+    @Override
+    @Transactional
+    public UserResponse createUserForTenant(Integer tenantId, TenantUserSignupRequest userRequest, String createdBy) {
+        
+        if (userRepository.existsByTenantIdAndUsername(tenantId, userRequest.getUsername())) {
+            throw new BusinessException("Username already exists in this store");
+        }
+        
+        if (userRepository.existsByTenantIdAndEmail(tenantId, userRequest.getEmail())) {
+            throw new BusinessException("Email already exists in this store");
+        }
+        
+        if (userRequest.getPhone() != null && 
+            userRepository.existsByTenantIdAndPhone(tenantId, userRequest.getPhone())) {
+            throw new BusinessException("Phone number already exists in this store");
+        }
+        
+        User user = new User();
+        user.setTenantId(tenantId);
+        user.setUserId(idGeneratorService.generateUserId());
+        user.setUsername(userRequest.getUsername());
+        user.setFirstName(userRequest.getFirstName());
+        user.setLastName(userRequest.getLastName());
+        user.setEmail(userRequest.getEmail());
+        user.setPhone(userRequest.getPhone());
+        user.setImage(userRequest.getImage());
+        user.setUserType(userRequest.getUserType());
+        
+        long userCount = userRepository.countByTenantId(tenantId);
+        user.setUserRole(userCount == 0 ? com.inventrik.digitalestore.domain.user.UserRole.TENANT_ADMIN : com.inventrik.digitalestore.domain.user.UserRole.USER);
+        
+        if (userRequest.getUserType() != null && "BUSINESS".equals(userRequest.getUserType().name())) {
+            user.setCompanyName(userRequest.getCompanyName());
+            user.setCompanyRegistrationNumber(userRequest.getCompanyRegistrationNumber());
+            user.setCompanyAddress1(userRequest.getCompanyAddress1());
+            user.setCompanyAddress2(userRequest.getCompanyAddress2());
+            user.setCompanyCountry(userRequest.getCompanyCountry());
+            user.setCompanyPincode(userRequest.getCompanyPincode());
+            user.setTaxId(userRequest.getTaxId());
+        }
+        
+        user.setPasswordHash(passwordEncoder.encode(userRequest.getPassword()));
+        user.setStatus("A"); 
+        user.setCreatedBy(getAuditCode(createdBy));
+        user.setUpdatedBy(getAuditCode(createdBy));
+        user.setCreated(LocalDateTime.now());
+        user.setUpdated(LocalDateTime.now());
+        
+        User savedUser = userRepository.save(user);
+        
+        log.info("User created successfully with ID: {} for tenant: {}", savedUser.getUserId(), tenantId);
+        
+        return mapToDTO(savedUser);
+    }
+    
+    @Override
+    public UserResponse updateUserInTenant(Integer tenantId, Long userId, TenantUserUpdateRequest updateRequest, String updatedBy) {
+        
+        return updateUser(tenantId, userId, updatedBy, updateRequest);
+    }
+    
+    @Override
+    public void deleteUserFromTenant(Integer tenantId, Long userId, String username) {
+
+        deleteUser(tenantId, userId, username);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponse> getActiveUsersByTenant(Integer tenantId) {
+        return userRepository.findByTenantIdAndStatus(tenantId, "A")
+            .stream()
+            .map(this::mapToDTO)
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponse> getTenantAdmins(Integer tenantId) {
+        return userRepository.findByTenantIdAndUserRole(tenantId, com.inventrik.digitalestore.domain.user.UserRole.TENANT_ADMIN)
+            .stream()
+            .map(this::mapToDTO)
+            .collect(Collectors.toList());
+    }
+    
+    
+    @Override
+    public UserResponse mapToUserResponse(User user) {
+        return mapToDTO(user);
+    }
+    
 }

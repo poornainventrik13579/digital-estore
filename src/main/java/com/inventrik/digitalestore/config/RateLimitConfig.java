@@ -71,7 +71,6 @@ public class RateLimitConfig implements WebMvcConfigurer {
         private final int paymentLimit;
         private final int adminLimit;
         
-        // Store request counts per IP and endpoint type with thread-safe operations
         private final ConcurrentHashMap<String, AtomicInteger> requestCounts = new ConcurrentHashMap<>();
         private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         
@@ -82,7 +81,6 @@ public class RateLimitConfig implements WebMvcConfigurer {
             this.paymentLimit = paymentLimit;
             this.adminLimit = adminLimit;
             
-            // Reset counters every minute
             scheduler.scheduleAtFixedRate(requestCounts::clear, 1, 1, TimeUnit.MINUTES);
         }
         
@@ -113,13 +111,12 @@ public class RateLimitConfig implements WebMvcConfigurer {
             String requestUri = request.getRequestURI();
             String key = clientIp + ":" + getEndpointType(requestUri);
             
-            // Thread-safe increment and get operation
             AtomicInteger count = requestCounts.computeIfAbsent(key, k -> new AtomicInteger(0));
             int currentCount = count.incrementAndGet();
             int limit = getLimit(requestUri);
             
             if (currentCount > limit) {
-                response.setStatus(429); // Too Many Requests
+                response.setStatus(429); 
                 response.setHeader("X-RateLimit-Limit", String.valueOf(limit));
                 response.setHeader("X-RateLimit-Remaining", "0");
                 response.setHeader("X-RateLimit-Reset", String.valueOf(System.currentTimeMillis() + 60000));
@@ -128,15 +125,12 @@ public class RateLimitConfig implements WebMvcConfigurer {
                 return false;
             }
             
-            // Add rate limit headers
             response.setHeader("X-RateLimit-Limit", String.valueOf(limit));
             response.setHeader("X-RateLimit-Remaining", String.valueOf(Math.max(0, limit - currentCount)));
             response.setHeader("X-RateLimit-Reset", String.valueOf(System.currentTimeMillis() + 60000));
             
             return true;
         }
-        
-
         
         private String getEndpointType(String requestUri) {
             if (requestUri.contains("/auth/")) {

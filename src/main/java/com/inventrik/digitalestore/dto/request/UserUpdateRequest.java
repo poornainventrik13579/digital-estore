@@ -42,7 +42,6 @@ public class UserUpdateRequest {
     @Schema(description = "User role (USER, ADMIN, MANAGER)", example = "USER")
     private UserRole userRole;
     
-    // Company specific fields
     @Schema(description = "Company name", example = "Acme Corporation")
     private String companyName;
     

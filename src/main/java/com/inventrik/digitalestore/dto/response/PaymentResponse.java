@@ -25,7 +25,8 @@ public class PaymentResponse {
     private String refundReason;
     private LocalDateTime created;
     private LocalDateTime updated;
-    
-    // For Stripe client-side integration
+
+    // Stripe client secret - ONLY populated during payment creation for frontend use
+    // Always null when querying existing payments (for security)
     private String clientSecret;
 }

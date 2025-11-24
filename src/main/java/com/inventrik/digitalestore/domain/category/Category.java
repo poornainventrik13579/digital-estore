@@ -4,6 +4,7 @@ import com.inventrik.digitalestore.domain.product.Product;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
@@ -37,18 +38,19 @@ public class Category {
     @Column(name = "status", nullable = false, length = 2)
     private String status;
     
-    @Column(name = "created_by", nullable = false, length = 2)
+    @Column(name = "created_by", nullable = false, length = 50)
     private String createdBy;
     
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
     
-    @Column(name = "updated_by", nullable = false, length = 2)
+    @Column(name = "updated_by", nullable = false, length = 50)
     private String updatedBy;
     
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Product> products = new ArrayList<>();
     

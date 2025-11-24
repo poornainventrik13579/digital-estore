@@ -6,6 +6,7 @@ import com.inventrik.digitalestore.dto.response.PaymentResponse;
 import com.inventrik.digitalestore.exception.payment.InsufficientRefundAmountException;
 import com.inventrik.digitalestore.exception.payment.PaymentNotFoundException;
 import com.inventrik.digitalestore.exception.payment.PaymentProcessingException;
+import com.inventrik.digitalestore.security.TenantAccessValidator;
 import com.inventrik.digitalestore.service.payment.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -22,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import java.util.List;
 
 @RestController
@@ -32,21 +34,38 @@ import java.util.List;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final TenantAccessValidator tenantAccessValidator;
     
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get all payments")
-    public ResponseEntity<List<PaymentResponse>> getAllPayments(@PathVariable Integer tenantId) {
+    public ResponseEntity<List<PaymentResponse>> getAllPayments(
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(paymentService.getAllPayments(tenantId));
     }
     
     @GetMapping("/{paymentId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN') or hasRole('ROLE_USER')")
     @Operation(summary = "Get a payment by ID")
     public ResponseEntity<PaymentResponse> getPayment(
             @PathVariable Integer tenantId,
-            @PathVariable Long paymentId) {
-        return ResponseEntity.ok(paymentService.getPayment(tenantId, paymentId));
+            @PathVariable Long paymentId,
+            Authentication authentication) {
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = authentication.getName();
+        boolean isAdmin = tenantAccessValidator.isTenantAdmin(authentication, tenantId);
+
+        return ResponseEntity.ok(paymentService.getPayment(tenantId, paymentId, username, isAdmin));
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
@@ -57,7 +76,11 @@ public class PaymentController {
             @Valid @RequestBody PaymentRequest paymentRequest,
             Authentication authentication) {
         
-        String username = (authentication != null) ? authentication.getName() : "system";
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = authentication.getName();
         PaymentResponse createdPayment = paymentService.createPayment(tenantId, username, paymentRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPayment);
     }
@@ -71,39 +94,53 @@ public class PaymentController {
             @RequestParam String transactionId,
             Authentication authentication) {
         
-        String username = (authentication != null) ? authentication.getName() : "system";
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = authentication.getName();
         PaymentResponse confirmedPayment = paymentService.confirmPayment(tenantId, paymentId, transactionId, username);
         return ResponseEntity.ok(confirmedPayment);
     }
     
     @PostMapping("/{paymentId}/cancel")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN') or hasRole('ROLE_USER')")
     @Operation(summary = "Cancel a payment")
     public ResponseEntity<PaymentResponse> cancelPayment(
             @PathVariable Integer tenantId,
             @PathVariable Long paymentId,
             Authentication authentication) {
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
-        PaymentResponse cancelledPayment = paymentService.cancelPayment(tenantId, paymentId, username);
+
+        if (!tenantAccessValidator.verifyTenantAccess(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = authentication.getName();
+        boolean isAdmin = tenantAccessValidator.isTenantAdmin(authentication, tenantId);
+
+        PaymentResponse cancelledPayment = paymentService.cancelPayment(tenantId, paymentId, username, isAdmin);
         return ResponseEntity.ok(cancelledPayment);
     }
     
     @PostMapping("/{paymentId}/refund")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Refund a payment")
     public ResponseEntity<PaymentResponse> refundPayment(
             @PathVariable Integer tenantId,
             @PathVariable Long paymentId,
             Authentication authentication) {
         
-        String username = (authentication != null) ? authentication.getName() : "system";
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String username = authentication.getName();
         PaymentResponse refundedPayment = paymentService.refundPayment(tenantId, paymentId, username);
         return ResponseEntity.ok(refundedPayment);
     }
     
     @PostMapping("/{paymentId}/partial-refund")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Process partial refund", description = "Process a partial refund for a payment")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Partial refund processed successfully"),
@@ -116,6 +153,10 @@ public class PaymentController {
             @Valid @RequestBody PartialRefundRequest refundRequest,
             Authentication authentication) {
         
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         try {
             PaymentResponse response = paymentService.partialRefundPayment(tenantId, paymentId, refundRequest, authentication.getName());
             return ResponseEntity.ok(response);
@@ -127,20 +168,36 @@ public class PaymentController {
     }
     
     @GetMapping("/order/{orderId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get payments by order")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByOrder(
             @PathVariable Integer tenantId,
-            @PathVariable Long orderId) {
+            @PathVariable Long orderId,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(paymentService.getPaymentsByOrder(tenantId, orderId));
     }
     
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_TENANT_ADMIN')")
     @Operation(summary = "Get payments by status")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByStatus(
             @PathVariable Integer tenantId,
-            @PathVariable String status) {
+            @Pattern(
+                regexp = "^(Pending|Processing|Successful|Failed|Refunded|Partially Refunded)$",
+                message = "Status must be one of: Pending, Processing, Successful, Failed, Refunded, Partially Refunded"
+            )
+            @PathVariable String status,
+            Authentication authentication) {
+        
+        if (!tenantAccessValidator.isTenantAdmin(authentication, tenantId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
         return ResponseEntity.ok(paymentService.getPaymentsByStatus(tenantId, status));
     }
 }
