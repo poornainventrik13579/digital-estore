@@ -35,6 +35,6 @@ public class GlobalStoreThemeController {
     public ResponseEntity<List<StoreThemeResponse>> getThemesByName(
             @Parameter(description = "Theme name", required = true)
             @PathVariable String themeName) {
-        return ResponseEntity.ok(storeThemeService.getThemesByName(themeName));
+        return ResponseEntity.ok(storeThemeService.getAllThemesByName(themeName));
     }
 }

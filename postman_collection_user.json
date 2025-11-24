@@ -1,0 +1,1612 @@
+{
+  "info": {
+    "name": "Digital E-Store - User APIs",
+    "description": "User authentication, management, and public access APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tenantId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Download Management",
+      "item": [
+        {
+          "name": "Get download history for user",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/users/{userId}/download-history",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "users",
+                "{userId}",
+                "download-history"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                },
+                {
+                  "key": "userId",
+                  "value": "{userId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Order Management",
+      "item": [
+        {
+          "name": "Get orders by user",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/orders/user/{userId}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "orders",
+                "user",
+                "{userId}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": "Tenant ID"
+                },
+                {
+                  "key": "userId",
+                  "value": "{userId}",
+                  "description": "User ID"
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Public Category Access",
+      "item": [
+        {
+          "name": "Get all categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/public/tenants/{tenantId}/categories",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tenants",
+                "{tenantId}",
+                "categories"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Get a category by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/public/tenants/{tenantId}/categories/{categoryId}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tenants",
+                "{tenantId}",
+                "categories",
+                "{categoryId}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{categoryId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Public Product Access",
+      "item": [
+        {
+          "name": "Get all products with pagination",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/public/tenants/{tenantId}/products",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tenants",
+                "{tenantId}",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "description": ""
+                }
+              ],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Get a product by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/public/tenants/{tenantId}/products/{productId}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tenants",
+                "{tenantId}",
+                "products",
+                "{productId}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                },
+                {
+                  "key": "productId",
+                  "value": "{productId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Search products by keyword",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/public/tenants/{tenantId}/products/search",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tenants",
+                "{tenantId}",
+                "products",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "page",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "size",
+                  "value": "",
+                  "description": ""
+                }
+              ],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Get products by category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/public/tenants/{tenantId}/products/category/{categoryId}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tenants",
+                "{tenantId}",
+                "products",
+                "category",
+                "{categoryId}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{categoryId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Get active products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/public/tenants/{tenantId}/products/active",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tenants",
+                "{tenantId}",
+                "products",
+                "active"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Public Reviews",
+      "item": [
+        {
+          "name": "Get review by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/public/tenants/{tenantId}/reviews/{reviewId}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tenants",
+                "{tenantId}",
+                "reviews",
+                "{reviewId}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": "Tenant ID"
+                },
+                {
+                  "key": "reviewId",
+                  "value": "{reviewId}",
+                  "description": "Review ID"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Get verified reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/public/tenants/{tenantId}/reviews/verified",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tenants",
+                "{tenantId}",
+                "reviews",
+                "verified"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": "Tenant ID"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Get product reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/public/tenants/{tenantId}/reviews/product/{productId}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tenants",
+                "{tenantId}",
+                "reviews",
+                "product",
+                "{productId}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": "Tenant ID"
+                },
+                {
+                  "key": "productId",
+                  "value": "{productId}",
+                  "description": "Product ID"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Get product rating statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/public/tenants/{tenantId}/reviews/product/{productId}/rating",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tenants",
+                "{tenantId}",
+                "reviews",
+                "product",
+                "{productId}",
+                "rating"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": "Tenant ID"
+                },
+                {
+                  "key": "productId",
+                  "value": "{productId}",
+                  "description": "Product ID"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Get user reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/reviews/user/{userId}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "reviews",
+                "user",
+                "{userId}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": "Tenant ID"
+                },
+                {
+                  "key": "userId",
+                  "value": "{userId}",
+                  "description": "User ID"
+                }
+              ]
+            },
+            "description": "Get all reviews by a specific user"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Store Information",
+      "item": [
+        {
+          "name": "Get store status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/{subdomain}/store/status",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "{subdomain}",
+                "store",
+                "status"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "subdomain",
+                  "value": "{subdomain}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Get public store information",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/{subdomain}/store/info",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "{subdomain}",
+                "store",
+                "info"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "subdomain",
+                  "value": "{subdomain}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Check subdomain availability",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/check/subdomain/{subdomain}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "check",
+                "subdomain",
+                "{subdomain}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "subdomain",
+                  "value": "{subdomain}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Store User Authentication",
+      "item": [
+        {
+          "name": "Register user to store",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/auth/users/signup",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "auth",
+                "users",
+                "signup"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login user to store",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/auth/users/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "auth",
+                "users",
+                "login"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get user profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/auth/users/profile",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "auth",
+                "users",
+                "profile"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tenant Authentication",
+      "item": [
+        {
+          "name": "Register a new tenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenant-auth/signup",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenant-auth",
+                "signup"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Create a new tenant store and return authentication token",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tenant login (Form)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenant-auth/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenant-auth",
+                "login"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Authenticate tenant using form data and return JWT token",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get current tenant profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenant-auth/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenant-auth",
+                "me"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "description": "Get authenticated tenant's profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Check if subdomain exists",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenant-auth/check/subdomain/{subdomain}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenant-auth",
+                "check",
+                "subdomain",
+                "{subdomain}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "subdomain",
+                  "value": "{subdomain}",
+                  "description": "Subdomain to check"
+                }
+              ]
+            },
+            "description": "Validate if a subdomain already exists"
+          },
+          "response": []
+        },
+        {
+          "name": "Check if email exists",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenant-auth/check/email/{email}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenant-auth",
+                "check",
+                "email",
+                "{email}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "email",
+                  "value": "{email}",
+                  "description": "Email to check"
+                }
+              ]
+            },
+            "description": "Validate if a tenant email already exists"
+          },
+          "response": []
+        },
+        {
+          "name": "Check if domain exists",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenant-auth/check/domain/{domainName}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenant-auth",
+                "check",
+                "domain",
+                "{domainName}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "domainName",
+                  "value": "{domainName}",
+                  "description": "Domain name to check"
+                }
+              ]
+            },
+            "description": "Validate if a domain name already exists"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tenant User Management",
+      "item": [
+        {
+          "name": "Get user details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/users/{userId}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "users",
+                "{userId}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                },
+                {
+                  "key": "userId",
+                  "value": "{userId}",
+                  "description": "User ID"
+                }
+              ]
+            },
+            "description": "Get user details within tenant (user can access own data, admins can access any user)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/users/{userId}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "users",
+                "{userId}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                },
+                {
+                  "key": "userId",
+                  "value": "{userId}",
+                  "description": "User ID"
+                }
+              ]
+            },
+            "description": "Update user details (user can update own data, admins can update any user)",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete user from tenant",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/users/{userId}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "users",
+                "{userId}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                },
+                {
+                  "key": "userId",
+                  "value": "{userId}",
+                  "description": "User ID"
+                }
+              ]
+            },
+            "description": "Delete user from tenant (Tenant Admin only, cannot delete self)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get all users in tenant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/users",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "users"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Get all users in the authenticated user's tenant (Admin only)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add user to tenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/users",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "users"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Add new user to tenant (Tenant Admin only)",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get current user details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/users/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "users",
+                "me"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find user by email",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/users/email/{email}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "users",
+                "email",
+                "{email}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                },
+                {
+                  "key": "email",
+                  "value": "{email}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get active users in tenant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/tenants/{tenantId}/users/active",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{tenantId}",
+                "users",
+                "active"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "tenantId",
+                  "value": "{tenantId}",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Get all active users in tenant (Admin only)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

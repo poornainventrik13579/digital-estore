@@ -1,6 +1,8 @@
 package com.inventrik.digitalestore.service.tax;
 
 import com.inventrik.digitalestore.domain.tax.Tax;
+import com.inventrik.digitalestore.domain.tax.TaxStatus;
+import com.inventrik.digitalestore.domain.tax.TaxDefaultFlag;
 import com.inventrik.digitalestore.dto.request.TaxRequest;
 import com.inventrik.digitalestore.dto.request.TaxUpdateRequest;
 import com.inventrik.digitalestore.dto.response.TaxCalculationResponse;
@@ -114,28 +116,28 @@ public class TaxServiceImpl implements TaxService {
     
     @Override
     public List<TaxResponse> getActiveTaxesByTenant(Integer tenantId) {
-        return taxRepository.findActiveTaxesByTenant(tenantId).stream()
+        return taxRepository.findActiveTaxesByTenant(tenantId, TaxStatus.ACTIVE.getValue()).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
     
     @Override
     public TaxResponse getDefaultTaxByTenant(Integer tenantId) {
-        Tax tax = taxRepository.findDefaultTaxByTenant(tenantId)
+        Tax tax = taxRepository.findDefaultTaxByTenant(tenantId, TaxDefaultFlag.YES.getValue(), TaxStatus.ACTIVE.getValue())
                 .orElseThrow(() -> new ResourceNotFoundException("Default tax not found for tenant: " + tenantId));
         return mapToDTO(tax);
     }
     
     @Override
     public List<TaxResponse> getValidTaxesForDate(Integer tenantId, LocalDate date) {
-        return taxRepository.findValidTaxesForDate(tenantId, date).stream()
+        return taxRepository.findValidTaxesForDate(tenantId, date, TaxStatus.ACTIVE.getValue()).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
     
     @Override
     public TaxResponse getValidDefaultTaxForDate(Integer tenantId, LocalDate date) {
-        Tax tax = taxRepository.findValidDefaultTaxForDate(tenantId, date)
+        Tax tax = taxRepository.findValidDefaultTaxForDate(tenantId, date, TaxDefaultFlag.YES.getValue(), TaxStatus.ACTIVE.getValue())
                 .orElseThrow(() -> new ResourceNotFoundException("Valid default tax not found for tenant: " + tenantId + " and date: " + date));
         return mapToDTO(tax);
     }
@@ -144,9 +146,9 @@ public class TaxServiceImpl implements TaxService {
     @Transactional
     public TaxResponse createTax(String username, TaxRequest taxRequest) {
         if ("Y".equals(taxRequest.getDefaultFlag())) {
-            taxRepository.clearDefaultFlags(taxRequest.getTenantId(), username);
+            taxRepository.clearDefaultFlags(taxRequest.getTenantId(), username, TaxDefaultFlag.NO.getValue(), TaxDefaultFlag.YES.getValue());
         }
-        
+
         Tax tax = mapToEntity(taxRequest, username);
         Tax savedTax = taxRepository.save(tax);
         return mapToDTO(savedTax);
@@ -157,11 +159,11 @@ public class TaxServiceImpl implements TaxService {
     public TaxResponse updateTax(Integer tenantId, Integer taxId, String username, TaxUpdateRequest updateRequest) {
         Tax tax = taxRepository.findByTenantIdAndId(tenantId, taxId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tax not found with tenant id: " + tenantId + " and tax id: " + taxId));
-        
+
         if ("Y".equals(updateRequest.getDefaultFlag()) && !"Y".equals(tax.getDefaultFlag())) {
-            taxRepository.clearDefaultFlags(tenantId, username);
+            taxRepository.clearDefaultFlags(tenantId, username, TaxDefaultFlag.NO.getValue(), TaxDefaultFlag.YES.getValue());
         }
-        
+
         updateEntityFromRequest(tax, updateRequest, username);
         Tax updatedTax = taxRepository.save(tax);
         return mapToDTO(updatedTax);
@@ -180,22 +182,22 @@ public class TaxServiceImpl implements TaxService {
     public TaxResponse setAsDefaultTax(Integer tenantId, Integer taxId, String username) {
         Tax tax = taxRepository.findByTenantIdAndId(tenantId, taxId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tax not found with tenant id: " + tenantId + " and tax id: " + taxId));
-        
-        taxRepository.clearDefaultFlags(tenantId, username);
-        
+
+        taxRepository.clearDefaultFlags(tenantId, username, TaxDefaultFlag.NO.getValue(), TaxDefaultFlag.YES.getValue());
+
         tax.setAsDefault();
         tax.setModifiedBy(username);
         tax.setUpdatedBy(username);
         tax.setModified(LocalDateTime.now());
         tax.setUpdated(LocalDateTime.now());
-        
+
         Tax updatedTax = taxRepository.save(tax);
         return mapToDTO(updatedTax);
     }
     
     @Override
     public List<TaxResponse> searchTaxes(Integer tenantId, String keyword) {
-        return taxRepository.searchTaxes(tenantId, keyword).stream()
+        return taxRepository.searchTaxes(tenantId, keyword, TaxStatus.ACTIVE.getValue()).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -211,7 +213,7 @@ public class TaxServiceImpl implements TaxService {
             return new TaxCalculationResponse(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, new ArrayList<>());
         }
         
-        List<Tax> validTaxes = taxRepository.findValidTaxesForDate(tenantId, date);
+        List<Tax> validTaxes = taxRepository.findValidTaxesForDate(tenantId, date, TaxStatus.ACTIVE.getValue());
         List<TaxCalculationResponse.TaxLineItem> taxBreakdown = new ArrayList<>();
         BigDecimal totalTaxAmount = BigDecimal.ZERO;
         
@@ -246,7 +248,7 @@ public class TaxServiceImpl implements TaxService {
         }
         
         try {
-            Tax defaultTax = taxRepository.findValidDefaultTaxForDate(tenantId, LocalDate.now())
+            Tax defaultTax = taxRepository.findValidDefaultTaxForDate(tenantId, LocalDate.now(), TaxDefaultFlag.YES.getValue(), TaxStatus.ACTIVE.getValue())
                     .orElse(null);
             
             if (defaultTax == null) {
@@ -266,6 +268,6 @@ public class TaxServiceImpl implements TaxService {
     
     @Override
     public long countActiveTaxesByTenant(Integer tenantId) {
-        return taxRepository.countActiveTaxesByTenant(tenantId);
+        return taxRepository.countActiveTaxesByTenant(tenantId, TaxStatus.ACTIVE.getValue());
     }
 }

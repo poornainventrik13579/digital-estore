@@ -231,7 +231,11 @@ public class PageServiceImpl implements PageService {
     
     @Override
     public List<PageResponse> getPublicPages(Integer tenantId) {
-        return pageRepository.findPublicAndPrivatePublishedPages(tenantId).stream()
+        return pageRepository.findPublicAndPrivatePublishedPages(
+                tenantId,
+                PageStatus.PUBLISHED,
+                PageVisibility.PUBLIC,
+                PageVisibility.PRIVATE).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
