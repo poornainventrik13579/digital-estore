@@ -1,0 +1,116 @@
+package com.inventrik.digitalestore.service.tenant;
+
+import com.inventrik.digitalestore.domain.tenant.Tenant;
+import com.inventrik.digitalestore.dto.request.TenantRequest;
+import com.inventrik.digitalestore.dto.response.TenantResponse;
+import com.inventrik.digitalestore.exception.BusinessException;
+import com.inventrik.digitalestore.exception.ResourceNotFoundException;
+import com.inventrik.digitalestore.repository.TenantRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class TenantServiceImpl implements TenantService {
+
+    private final TenantRepository tenantRepository;
+
+    private TenantResponse mapToDTO(Tenant tenant) {
+        return new TenantResponse(
+            tenant.getTenantId(),
+            tenant.getShopName(),
+            tenant.getShopEmail(),
+            tenant.getShopPhone(),
+            tenant.getShopLogo(),
+            tenant.getDomainName(),
+            tenant.getSubdomain(),
+            tenant.getCountryRegion(),
+            tenant.getBaseCurrency(),
+            tenant.getMultiCurrency(),
+            tenant.getTaxId(),
+            tenant.getTimezone(),
+            tenant.getStatus(),
+            tenant.getCreated(),
+            tenant.getUpdated()
+        );
+    }
+
+    @Override
+    public List<TenantResponse> getAllTenants() {
+        return tenantRepository.findAll().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public TenantResponse getTenant(Integer tenantId) {
+        Tenant tenant = tenantRepository.findByTenantId(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+        return mapToDTO(tenant);
+    }
+
+    @Override
+    @Transactional
+    public TenantResponse createTenant(TenantRequest request, String username) {
+        if (tenantRepository.existsByShopEmail(request.getShopEmail())) {
+            throw new BusinessException("Email already exists");
+        }
+        if (request.getSubdomain() != null && tenantRepository.existsBySubdomain(request.getSubdomain())) {
+            throw new BusinessException("Subdomain already exists");
+        }
+
+        Tenant tenant = new Tenant();
+        tenant.setShopName(request.getShopName());
+        tenant.setShopEmail(request.getShopEmail());
+        tenant.setShopPhone(request.getShopPhone());
+        tenant.setShopLogo(request.getShopLogo());
+        tenant.setDomainName(request.getDomainName());
+        tenant.setSubdomain(request.getSubdomain());
+        tenant.setCountryRegion(request.getCountryRegion());
+        tenant.setStorePassword(request.getStorePassword());
+        tenant.setBaseCurrency(request.getBaseCurrency());
+        tenant.setMultiCurrency(request.getMultiCurrency());
+        tenant.setTaxId(request.getTaxId());
+        tenant.setTimezone(request.getTimezone());
+        tenant.setStatus("0");
+        tenant.setCreatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        tenant.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+
+        Tenant saved = tenantRepository.save(tenant);
+        return mapToDTO(saved);
+    }
+
+    @Override
+    @Transactional
+    public TenantResponse updateTenant(Integer tenantId, TenantRequest request, String username) {
+        Tenant tenant = tenantRepository.findByTenantId(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
+        tenant.setShopName(request.getShopName());
+        tenant.setShopPhone(request.getShopPhone());
+        tenant.setShopLogo(request.getShopLogo());
+        tenant.setDomainName(request.getDomainName());
+        tenant.setCountryRegion(request.getCountryRegion());
+        tenant.setBaseCurrency(request.getBaseCurrency());
+        tenant.setMultiCurrency(request.getMultiCurrency());
+        tenant.setTaxId(request.getTaxId());
+        tenant.setTimezone(request.getTimezone());
+        tenant.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+
+        Tenant updated = tenantRepository.save(tenant);
+        return mapToDTO(updated);
+    }
+
+    @Override
+    @Transactional
+    public void deleteTenant(Integer tenantId) {
+        if (!tenantRepository.existsById(tenantId)) {
+            throw new ResourceNotFoundException("Tenant not found with id: " + tenantId);
+        }
+        tenantRepository.deleteById(tenantId);
+    }
+}

@@ -1,0 +1,74 @@
+package com.inventrik.digitalestore.api;
+
+import com.inventrik.digitalestore.dto.request.PageRequest;
+import com.inventrik.digitalestore.dto.response.PageResponse;
+import com.inventrik.digitalestore.service.page.PageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/tenants/{tenantId}/pages")
+@RequiredArgsConstructor
+@Tag(name = "Page Management")
+@SecurityRequirement(name = "oauth2")
+public class PageController {
+
+    private final PageService pageService;
+
+    @GetMapping
+    @Operation(summary = "Get all pages for tenant")
+    public ResponseEntity<List<PageResponse>> getAllPages(@PathVariable Integer tenantId) {
+        return ResponseEntity.ok(pageService.getAllPages(tenantId));
+    }
+
+    @GetMapping("/{pageId}")
+    @Operation(summary = "Get page by ID")
+    public ResponseEntity<PageResponse> getPage(
+            @PathVariable Integer tenantId,
+            @PathVariable Long pageId) {
+        return ResponseEntity.ok(pageService.getPage(tenantId, pageId));
+    }
+
+    @GetMapping("/slug/{slug}")
+    @Operation(summary = "Get page by slug")
+    public ResponseEntity<PageResponse> getPageBySlug(
+            @PathVariable Integer tenantId,
+            @PathVariable String slug) {
+        return ResponseEntity.ok(pageService.getPageBySlug(tenantId, slug));
+    }
+
+    @PostMapping
+    @Operation(summary = "Create new page")
+    public ResponseEntity<PageResponse> createPage(
+            @PathVariable Integer tenantId,
+            @Valid @RequestBody PageRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(pageService.createPage(tenantId, request));
+    }
+
+    @PutMapping("/{pageId}")
+    @Operation(summary = "Update page")
+    public ResponseEntity<PageResponse> updatePage(
+            @PathVariable Integer tenantId,
+            @PathVariable Long pageId,
+            @Valid @RequestBody PageRequest request) {
+        return ResponseEntity.ok(pageService.updatePage(tenantId, pageId, request));
+    }
+
+    @DeleteMapping("/{pageId}")
+    @Operation(summary = "Delete page")
+    public ResponseEntity<Void> deletePage(
+            @PathVariable Integer tenantId,
+            @PathVariable Long pageId) {
+        pageService.deletePage(tenantId, pageId);
+        return ResponseEntity.noContent().build();
+    }
+}
