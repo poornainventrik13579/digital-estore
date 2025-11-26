@@ -1,0 +1,1432 @@
+{
+	"info": {
+		"_postman_id": "admin-ops-001",
+		"name": "Digital E-Store - Admin Operations",
+		"description": "Admin operations for managing store themes, pages, taxes, categories, products, and discounts",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{auth_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login as Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"auth_token\", jsonData.token);",
+									"    pm.environment.set(\"tenant_id\", 1);",
+									"    console.log(\"Token saved: \" + jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Store Theme Management",
+			"item": [
+				{
+					"name": "Create Theme - Modern Dark",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"theme_id\", jsonData.themeId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"themeName\": \"Modern Dark\",\n    \"tagline\": \"Experience Technology in Style\",\n    \"description\": \"A sleek, modern dark theme optimized for tech products\",\n    \"bannerImage\": \"https://techhub.com/banners/dark-theme.jpg\",\n    \"joinCta\": \"Join TechHub Community\",\n    \"copyrightText\": \"© 2024 TechHub Store. All rights reserved.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/themes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "themes"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Themes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/themes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "themes"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Theme",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"themeName\": \"Modern Dark Pro\",\n    \"tagline\": \"Experience Technology in Style - Premium\",\n    \"description\": \"Enhanced sleek, modern dark theme with premium features\",\n    \"bannerImage\": \"https://techhub.com/banners/dark-pro.jpg\",\n    \"joinCta\": \"Join Elite Community\",\n    \"copyrightText\": \"© 2024 TechHub Store. Premium Edition.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/themes/{{theme_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "themes", "{{theme_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Page Management (CMS)",
+			"item": [
+				{
+					"name": "Create Page - About Us",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"page_id\", jsonData.pageId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"About TechHub Store\",\n    \"slug\": \"about-us\",\n    \"content\": \"<h1>Welcome to TechHub</h1><p>We are a leading technology store committed to providing the latest gadgets and electronics at competitive prices.</p>\",\n    \"metaTitle\": \"About TechHub - Leading Technology Store\",\n    \"metaDescription\": \"Learn about TechHub Store, your trusted source for technology.\",\n    \"status\": \"PUBLISHED\",\n    \"visibility\": \"PUBLIC\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "pages"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Page - Privacy Policy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Privacy Policy\",\n    \"slug\": \"privacy-policy\",\n    \"content\": \"<h1>Privacy Policy</h1><p>Last updated: November 2024</p><h2>Information We Collect</h2><p>We collect information you provide directly to us...</p>\",\n    \"metaTitle\": \"Privacy Policy - TechHub Store\",\n    \"metaDescription\": \"Read our privacy policy.\",\n    \"status\": \"PUBLISHED\",\n    \"visibility\": \"PUBLIC\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "pages"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Pages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "pages"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Published Pages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages/published",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "pages", "published"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Page by Slug",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages/slug/about-us",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "pages", "slug", "about-us"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Page",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"About TechHub Store - Updated\",\n    \"slug\": \"about-us\",\n    \"content\": \"<h1>Welcome to TechHub</h1><p>We are a leading technology store - Now serving 50+ countries!</p>\",\n    \"metaTitle\": \"About TechHub - Leading Technology Store Worldwide\",\n    \"metaDescription\": \"Learn about TechHub Store.\",\n    \"status\": \"PUBLISHED\",\n    \"visibility\": \"PUBLIC\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/pages/{{page_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "pages", "{{page_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Tax Management",
+			"item": [
+				{
+					"name": "Create Tax - Sales Tax",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"tax_id\", jsonData.taxId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"US-SALES-TAX\",\n    \"description\": \"Standard Sales Tax for United States\",\n    \"value\": 7.50,\n    \"defaultFlag\": \"1\",\n    \"startDate\": \"2024-01-01\",\n    \"endDate\": \"2024-12-31\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Tax - VAT Standard",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"VAT-STANDARD\",\n    \"description\": \"Standard VAT Rate\",\n    \"value\": 20.00,\n    \"defaultFlag\": \"0\",\n    \"startDate\": \"2024-01-01\",\n    \"endDate\": \"2024-12-31\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Taxes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Taxes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/active",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "active"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Default Tax",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/default",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "default"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Tax",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"US-SALES-TAX\",\n    \"description\": \"Updated Sales Tax\",\n    \"value\": 8.00,\n    \"defaultFlag\": \"1\",\n    \"startDate\": \"2024-01-01\",\n    \"endDate\": \"2024-12-31\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/{{tax_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "{{tax_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Category Management",
+			"item": [
+				{
+					"name": "Create Category - Electronics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"category_id\", jsonData.categoryId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"categoryName\": \"Electronics\",\n    \"description\": \"Latest electronic devices and gadgets\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "categories"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "categories"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Category by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/{{category_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "categories", "{{category_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/active",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "categories", "active"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Category",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"categoryName\": \"Electronics & Gadgets\",\n    \"description\": \"Latest electronic devices, gadgets, and accessories\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/{{category_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "categories", "{{category_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Category",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/{{category_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "categories", "{{category_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Product Management",
+			"item": [
+				{
+					"name": "Create Product - iPhone 15",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"product_id\", jsonData.productId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productName\": \"iPhone 15 Pro Max\",\n    \"description\": \"Latest flagship iPhone with A17 Pro chip\",\n    \"categoryId\": \"{{category_id}}\",\n    \"defaultPrice\": 1199.00,\n    \"defaultCurrency\": \"USD\",\n    \"stockQuantity\": 50\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "products"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "products"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "products", "{{product_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/active",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "products", "active"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productName\": \"iPhone 15 Pro Max - Updated\",\n    \"description\": \"Latest flagship iPhone with A17 Pro chip - Now with more storage\",\n    \"categoryId\": \"{{category_id}}\",\n    \"defaultPrice\": 1299.00,\n    \"defaultCurrency\": \"USD\",\n    \"stockQuantity\": 75\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "products", "{{product_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Product",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "products", "{{product_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Discount Management",
+			"item": [
+				{
+					"name": "Create Discount - WELCOME10",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"discount_id\", jsonData.discountId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"WELCOME10\",\n    \"discountType\": \"PERCENTAGE\",\n    \"discountValue\": 10.00,\n    \"minOrderAmount\": 50.00,\n    \"maxUses\": 100,\n    \"validFrom\": \"2024-01-01T00:00:00\",\n    \"validTo\": \"2024-12-31T23:59:59\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Discounts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Discount by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/{{discount_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "{{discount_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Discount by Code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/code/WELCOME10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "code", "WELCOME10"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Discounts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/active",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "active"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Discount",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"WELCOME10\",\n    \"discountType\": \"PERCENTAGE\",\n    \"discountValue\": 15.00,\n    \"minOrderAmount\": 50.00,\n    \"maxUses\": 200,\n    \"validFrom\": \"2024-01-01T00:00:00\",\n    \"validTo\": \"2024-12-31T23:59:59\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/{{discount_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "{{discount_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Discount",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/{{discount_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "{{discount_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Discount Usage Statistics",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/{{discount_id}}/usage",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "{{discount_id}}", "usage"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cleanup Expired Discounts",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/cleanup-expired",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "cleanup-expired"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Currency Management (System Admin)",
+			"item": [
+				{
+					"name": "Get All Currencies",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/currencies",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "currencies"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Currency by Code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/currencies/USD",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "currencies", "USD"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Currency",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"currency_code\", jsonData.currencyCode);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"currencyCode\": \"EUR\",\n    \"currencyName\": \"Euro\",\n    \"isDefault\": \"0\",\n    \"exchangeRate\": 0.85,\n    \"symbol\": \"€\",\n    \"status\": \"0\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/currencies",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "currencies"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Currency",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"currencyCode\": \"EUR\",\n    \"currencyName\": \"Euro\",\n    \"isDefault\": \"0\",\n    \"exchangeRate\": 0.90,\n    \"symbol\": \"€\",\n    \"status\": \"0\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/currencies/EUR",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "currencies", "EUR"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Default Currency",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/currencies/default",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "currencies", "default"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Convert Amount",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/currencies/convert?amount=100&fromCurrency=USD&toCurrency=EUR",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "currencies", "convert"],
+							"query": [
+								{
+									"key": "amount",
+									"value": "100"
+								},
+								{
+									"key": "fromCurrency",
+									"value": "USD"
+								},
+								{
+									"key": "toCurrency",
+									"value": "EUR"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Currency",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/currencies/EUR",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "currencies", "EUR"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Bundle Management",
+			"item": [
+				{
+					"name": "Get All Bundles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Bundle",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"bundle_id\", jsonData.bundleId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bundleName\": \"Starter Pack\",\n    \"description\": \"Everything you need to get started\",\n    \"bundlePrice\": 99.99,\n    \"discount\": 10.00,\n    \"items\": [\n        {\n            \"productId\": \"{{product_id}}\",\n            \"quantity\": 1\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Order Management (Admin)",
+			"item": [
+				{
+					"name": "Get All Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "orders"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Orders by Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/status/PENDING",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "status", "PENDING"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"userId\": \"{{user_id}}\",\n    \"currency\": \"USD\",\n    \"totalAmount\": 1299.00\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/{{order_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "{{order_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Complete Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/{{order_id}}/complete",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "{{order_id}}", "complete"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/{{order_id}}/cancel",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "{{order_id}}", "cancel"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refund Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/{{order_id}}/refund",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "{{order_id}}", "refund"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Order",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/{{order_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "{{order_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Payment Management (Admin)",
+			"item": [
+				{
+					"name": "Get All Payments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "payments"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Payments by Order",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/order/{{order_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "order", "{{order_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Payments by Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/status/COMPLETED",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "status", "COMPLETED"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Confirm Payment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/{{payment_id}}/confirm",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "{{payment_id}}", "confirm"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Payment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/{{payment_id}}/cancel",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "{{payment_id}}", "cancel"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refund Payment (Full)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/{{payment_id}}/refund",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "{{payment_id}}", "refund"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Partial Refund Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refundAmount\": 100.00,\n    \"reason\": \"Partial refund requested by customer\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/{{payment_id}}/partial-refund",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "{{payment_id}}", "partial-refund"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User Management (Admin)",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "users"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/active",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "active"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find User by Username",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/username/john.doe",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "username", "john.doe"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find User by Email",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/email/john.doe@example.com",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "email", "john.doe@example.com"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "{{user_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Review Management (Admin)",
+			"item": [
+				{
+					"name": "Get Review by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/{{review_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "reviews", "{{review_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Verified Reviews",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/verified",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "reviews", "verified"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Review",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews/{{review_id}}/verify",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "reviews", "{{review_id}}", "verify"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Digital Product Management",
+			"item": [
+				{
+					"name": "Create Digital Product Details",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productId\": \"{{product_id}}\",\n    \"fileUrl\": \"https://downloads.example.com/product123.zip\",\n    \"fileSize\": 524288000,\n    \"fileFormat\": \"ZIP\",\n    \"version\": \"1.0.0\",\n    \"licenseType\": \"Single User\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/digital-product-details",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "digital-product-details"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Digital Product Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/digital-product-details",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "digital-product-details"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Digital Product Details by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/digital-product-details/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "digital-product-details", "{{product_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Digital Product Details",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fileUrl\": \"https://downloads.example.com/product123-v2.zip\",\n    \"fileSize\": 628145152,\n    \"fileFormat\": \"ZIP\",\n    \"version\": \"2.0.0\",\n    \"licenseType\": \"Single User\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/digital-product-details/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "digital-product-details", "{{product_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Digital Product Details",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/digital-product-details/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "digital-product-details", "{{product_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Download History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/{{user_id}}/download-history",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "{{user_id}}", "download-history"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Webhooks",
+			"item": [
+				{
+					"name": "Stripe Webhook Handler",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Stripe-Signature",
+								"value": "{{stripe_signature}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"payment_intent.succeeded\",\n    \"data\": {\n        \"object\": {\n            \"id\": \"pi_123456789\",\n            \"amount\": 119900,\n            \"currency\": \"usd\"\n        }\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/webhooks/stripe",
+							"host": ["{{base_url}}"],
+							"path": ["api", "webhooks", "stripe"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080"
+		}
+	]
+}

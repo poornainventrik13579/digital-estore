@@ -6,6 +6,7 @@ import com.inventrik.digitalestore.dto.request.UserUpdateRequest;
 import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.exception.BusinessException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
+import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.repository.UserRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.notification.EmailNotificationService;
@@ -23,8 +24,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-    
+
     private final UserRepository userRepository;
+    private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailNotificationService emailNotificationService;
     private final IdGeneratorService idGeneratorService;
@@ -94,7 +96,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponse createUser(Integer tenantId, String createdBy, UserRequest userRequest) {
-        // Check for duplicate username, email, phone
+        tenantRepository.findByTenantId(tenantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
         if (userRepository.existsByUsername(userRequest.getUsername())) {
             throw new BusinessException("Username already exists");
         }

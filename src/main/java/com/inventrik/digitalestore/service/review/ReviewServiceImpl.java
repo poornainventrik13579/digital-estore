@@ -6,7 +6,9 @@ import com.inventrik.digitalestore.dto.response.ProductRatingResponse;
 import com.inventrik.digitalestore.dto.response.ReviewResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.exception.ValidationException;
+import com.inventrik.digitalestore.repository.ProductRepository;
 import com.inventrik.digitalestore.repository.ReviewRepository;
+import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.service.order.OrderService;
 import com.inventrik.digitalestore.service.user.UserService;
 import com.inventrik.digitalestore.service.IdGeneratorService;
@@ -28,6 +30,8 @@ import java.util.stream.Collectors;
 public class ReviewServiceImpl implements ReviewService {
     
     private final ReviewRepository reviewRepository;
+    private final ProductRepository productRepository;
+    private final TenantRepository tenantRepository;
     private final UserService userService;
     private final OrderService orderService;
     private final IdGeneratorService idGeneratorService;
@@ -35,7 +39,13 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public ReviewResponse createReview(Integer tenantId, String username, ReviewRequest reviewRequest) {
         log.info("Creating review for product {} by user {}", reviewRequest.getProductId(), username);
-        
+
+        tenantRepository.findByTenantId(tenantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
+        productRepository.findByTenantIdAndProductId(tenantId, reviewRequest.getProductId())
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + reviewRequest.getProductId()));
+
         var user = userService.findByUsername(username);
         
         // Check if user already reviewed this product

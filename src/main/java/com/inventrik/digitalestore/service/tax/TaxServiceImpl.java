@@ -5,6 +5,7 @@ import com.inventrik.digitalestore.dto.request.TaxRequest;
 import com.inventrik.digitalestore.dto.response.TaxResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.TaxRepository;
+import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class TaxServiceImpl implements TaxService {
 
     private final TaxRepository taxRepository;
+    private final TenantRepository tenantRepository;
     private final IdGeneratorService idGeneratorService;
 
     private TaxResponse mapToDTO(Tax tax) {
@@ -53,6 +55,9 @@ public class TaxServiceImpl implements TaxService {
     @Override
     @Transactional
     public TaxResponse createTax(Integer tenantId, TaxRequest request, String username) {
+        tenantRepository.findByTenantId(tenantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
         Tax tax = new Tax();
         tax.setTenantId(tenantId);
         tax.setTaxId(idGeneratorService.generateId(tenantId, "TAX"));

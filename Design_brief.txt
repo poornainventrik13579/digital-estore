@@ -39,6 +39,7 @@ updated_by VARCHAR(2) NOT NULL,
 updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY (tenant_id,user_id)
 );
+
 CREATE TABLE Currencies (
 tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
 currency_code CHAR(3) NOT NULL, -- e.g., USD, EUR, SGD
@@ -103,6 +104,7 @@ updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 PRIMARY KEY (tenant_id,product_id)
 --FOREIGN KEY (category_id) REFERENCES Categories(category_id)
 );
+
 CREATE TABLE ProductTranslations (
 tenant_id int(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
 

@@ -6,6 +6,7 @@ import com.inventrik.digitalestore.dto.request.CategoryUpdateRequest;
 import com.inventrik.digitalestore.dto.response.CategoryResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.CategoryRepository;
+import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +21,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
-    
+
     private final CategoryRepository categoryRepository;
     private final IdGeneratorService idGeneratorService;
     private final UserService userService;
+    private final TenantRepository tenantRepository;
     
     // Utility method to convert Entity to DTO
     private CategoryResponse mapToDTO(Category category) {
@@ -55,9 +57,11 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public CategoryResponse createCategory(Integer tenantId, String username, CategoryRequest categoryRequest) {
-        // Generate a new category ID
+        tenantRepository.findByTenantId(tenantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
         Long newCategoryId = idGeneratorService.generateId(tenantId, "CATEGORY");
-        
+
         Category category = new Category();
         category.setTenantId(tenantId);
         category.setCategoryId(newCategoryId);

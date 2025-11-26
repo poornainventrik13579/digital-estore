@@ -3,7 +3,9 @@ package com.inventrik.digitalestore.service.currency;
 import com.inventrik.digitalestore.domain.currency.Currency;
 import com.inventrik.digitalestore.dto.request.CurrencyRequest;
 import com.inventrik.digitalestore.dto.response.CurrencyResponse;
+import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.CurrencyRepository;
+import com.inventrik.digitalestore.repository.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,8 +19,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class CurrencyServiceImpl implements CurrencyService {
-    
+
     private final CurrencyRepository currencyRepository;
+    private final TenantRepository tenantRepository;
     
     @Override
     @Transactional(readOnly = true)
@@ -39,6 +42,9 @@ public class CurrencyServiceImpl implements CurrencyService {
     
     @Override
     public CurrencyResponse createCurrency(Integer tenantId, CurrencyRequest request) {
+        tenantRepository.findByTenantId(tenantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
         if ("1".equals(request.getIsDefault())) {
             currencyRepository.findDefaultCurrency(tenantId)
                     .ifPresent(defaultCurrency -> {

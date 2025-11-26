@@ -33,13 +33,14 @@ public class TenantController {
     }
 
     @GetMapping("/{tenantId}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Get tenant by ID")
     public ResponseEntity<TenantResponse> getTenant(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(tenantService.getTenant(tenantId));
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create new tenant")
     public ResponseEntity<TenantResponse> createTenant(
             @Valid @RequestBody TenantRequest request,
@@ -50,7 +51,7 @@ public class TenantController {
     }
 
     @PutMapping("/{tenantId}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update tenant")
     public ResponseEntity<TenantResponse> updateTenant(
             @PathVariable Integer tenantId,

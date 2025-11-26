@@ -8,6 +8,7 @@ import com.inventrik.digitalestore.dto.response.ProductResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.CategoryRepository;
 import com.inventrik.digitalestore.repository.ProductRepository;
+import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +28,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
-    
+
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final TenantRepository tenantRepository;
     private final IdGeneratorService idGeneratorService;
     private final UserService userService;
     
@@ -89,9 +91,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductResponse createProduct(Integer tenantId, String username, ProductRequest productRequest) {
-        // Generate a new product ID
+        tenantRepository.findByTenantId(tenantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
         Long newProductId = idGeneratorService.generateId(tenantId, "PRODUCT");
-        
+
         Product product = new Product();
         product.setTenantId(tenantId);
         product.setProductId(newProductId);
@@ -108,13 +112,10 @@ public class ProductServiceImpl implements ProductService {
         product.setThumbnail(productRequest.getThumbnail());
         product.setMetadata(productRequest.getMetadata());
         
-        // Set category if provided
         if (productRequest.getCategoryId() != null) {
-            // First verify the category exists
             categoryRepository.findByTenantIdAndCategoryId(tenantId, productRequest.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + productRequest.getCategoryId()));
-            
-            // Set the category ID directly
+
             product.setCategoryId(productRequest.getCategoryId());
         }
         

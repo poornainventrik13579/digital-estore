@@ -9,6 +9,7 @@ import com.inventrik.digitalestore.dto.response.DiscountValidationResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.DiscountCodeRepository;
 import com.inventrik.digitalestore.repository.DiscountUsageRepository;
+import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +31,15 @@ public class DiscountServiceImpl implements DiscountService {
     
     private final DiscountCodeRepository discountCodeRepository;
     private final DiscountUsageRepository discountUsageRepository;
+    private final TenantRepository tenantRepository;
     private final IdGeneratorService idGeneratorService;
     private final UserService userService;
     
     @Override
     public DiscountCodeResponse createDiscountCode(Integer tenantId, DiscountCodeRequest request, String username) {
+        tenantRepository.findByTenantId(tenantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
         if (discountCodeRepository.findByTenantIdAndCodeAndStatus(tenantId, request.getCode(), "0").isPresent()) {
             throw new IllegalArgumentException("Discount code already exists: " + request.getCode());
         }

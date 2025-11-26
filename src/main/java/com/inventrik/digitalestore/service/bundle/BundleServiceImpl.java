@@ -9,6 +9,7 @@ import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.BundleItemRepository;
 import com.inventrik.digitalestore.repository.ProductBundleRepository;
 import com.inventrik.digitalestore.repository.ProductRepository;
+import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class BundleServiceImpl implements BundleService {
     private final ProductBundleRepository bundleRepository;
     private final BundleItemRepository bundleItemRepository;
     private final ProductRepository productRepository;
+    private final TenantRepository tenantRepository;
     private final IdGeneratorService idGeneratorService;
     private final UserService userService;
     
@@ -61,10 +63,13 @@ public class BundleServiceImpl implements BundleService {
     
     @Override
     public BundleResponse createBundle(Integer tenantId, BundleRequest bundleRequest, String username) {
+        tenantRepository.findByTenantId(tenantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
         if (!validateBundleComposition(tenantId, bundleRequest.getBundleItems())) {
             throw new IllegalArgumentException("Invalid bundle composition");
         }
-        
+
         Long newBundleId = idGeneratorService.generateId(tenantId, "BUNDLE");
         
         ProductBundle bundle = new ProductBundle();

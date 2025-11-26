@@ -5,6 +5,7 @@ import com.inventrik.digitalestore.dto.request.StoreThemeRequest;
 import com.inventrik.digitalestore.dto.response.StoreThemeResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.StoreThemeRepository;
+import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class StoreThemeServiceImpl implements StoreThemeService {
 
     private final StoreThemeRepository storeThemeRepository;
+    private final TenantRepository tenantRepository;
     private final IdGeneratorService idGeneratorService;
 
     private StoreThemeResponse mapToDTO(StoreTheme theme) {
@@ -53,6 +55,9 @@ public class StoreThemeServiceImpl implements StoreThemeService {
     @Override
     @Transactional
     public StoreThemeResponse createTheme(Integer tenantId, StoreThemeRequest request, String username) {
+        tenantRepository.findByTenantId(tenantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
         StoreTheme theme = new StoreTheme();
         theme.setTenantId(tenantId);
         theme.setThemeId(idGeneratorService.generateId(tenantId, "THEME").intValue());

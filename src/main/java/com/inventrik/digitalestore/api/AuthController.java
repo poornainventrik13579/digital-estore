@@ -27,9 +27,12 @@ import org.springframework.http.MediaType;
 
 import com.inventrik.digitalestore.dto.request.ForgotPasswordRequest;
 import com.inventrik.digitalestore.dto.request.SignupRequest;
+import com.inventrik.digitalestore.dto.request.TenantSignupRequest;
 import com.inventrik.digitalestore.dto.request.UserRequest;
 import com.inventrik.digitalestore.dto.request.LoginRequest;
+import com.inventrik.digitalestore.dto.response.TenantResponse;
 import com.inventrik.digitalestore.dto.response.UserResponse;
+import com.inventrik.digitalestore.service.tenant.TenantService;
 import com.inventrik.digitalestore.service.user.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -39,9 +42,24 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class AuthController {
 
     private final UserService userService;
+    private final TenantService tenantService;
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
     
+    @PostMapping("/tenant/signup")
+    public ResponseEntity<?> tenantSignup(@Valid @RequestBody TenantSignupRequest request) {
+        try {
+            TenantResponse tenant = tenantService.createTenantWithAdmin(request);
+            return ResponseEntity.ok(Map.of(
+                "message", "Tenant created successfully",
+                "tenantId", tenant.getTenantId(),
+                "shopName", tenant.getShopName()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @ModelAttribute SignupRequest signupRequest) {
         try {
@@ -52,7 +70,7 @@ public class AuthController {
             userRequest.setFirstName(signupRequest.getFirstName());
             userRequest.setLastName(signupRequest.getLastName());
             userRequest.setPhone(signupRequest.getPhone());
-            
+
             userService.createUser(signupRequest.getTenantId(), "system", userRequest);
             return ResponseEntity.ok(Map.of("message", "User registered successfully"));
         } catch (Exception e) {
@@ -75,30 +93,34 @@ public class AuthController {
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
             );
-            
+
+            UserResponse user = userService.findByUsername(authentication.getName());
+
             Instant now = Instant.now();
             List<String> authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
-            
+
             JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("http://localhost:8080")
                 .issuedAt(now)
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .subject(authentication.getName())
                 .claim("authorities", authorities)
+                .claim("tenantId", user.getTenantId())
                 .build();
-            
+
             String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
-            
+
             return ResponseEntity.ok(Map.of(
                 "access_token", token,
                 "token_type", "Bearer",
                 "expires_in", 3600,
                 "authorities", authorities,
-                "username", authentication.getName()
+                "username", authentication.getName(),
+                "tenantId", user.getTenantId()
             ));
-            
+
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
         }

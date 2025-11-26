@@ -36,11 +36,11 @@ public class Page {
     private String metaDescription;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(20)")
     private PageStatus status = PageStatus.DRAFT;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "visibility", nullable = false)
+    @Column(name = "visibility", nullable = false, columnDefinition = "VARCHAR(20)")
     private PageVisibility visibility = PageVisibility.PUBLIC;
 
     @Column(name = "is_default")

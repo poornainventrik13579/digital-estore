@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -16,99 +17,94 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/currencies")
+@RequestMapping("/api/v1/tenants/{tenantId}/currencies")
 @RequiredArgsConstructor
-@Tag(name = "Currency Management", description = "APIs for managing currencies and exchange rates")
+@Tag(name = "Currency Management")
 public class CurrencyController {
     
     private final CurrencyService currencyService;
     
     @GetMapping
-    @Operation(summary = "Get all currencies", description = "Retrieve all active currencies for a tenant")
-    public ResponseEntity<List<CurrencyResponse>> getAllCurrencies(@RequestHeader("X-Tenant-ID") Integer tenantId) {
-        List<CurrencyResponse> currencies = currencyService.getAllCurrencies(tenantId);
-        return ResponseEntity.ok(currencies);
+    @Operation(summary = "Get all currencies")
+    public ResponseEntity<List<CurrencyResponse>> getAllCurrencies(@PathVariable Integer tenantId) {
+        return ResponseEntity.ok(currencyService.getAllCurrencies(tenantId));
     }
-    
+
     @GetMapping("/{currencyCode}")
-    @Operation(summary = "Get currency by code", description = "Retrieve a specific currency by its code")
+    @Operation(summary = "Get currency by code")
     public ResponseEntity<CurrencyResponse> getCurrency(
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @PathVariable Integer tenantId,
             @PathVariable String currencyCode) {
-        CurrencyResponse currency = currencyService.getCurrency(tenantId, currencyCode);
-        return ResponseEntity.ok(currency);
+        return ResponseEntity.ok(currencyService.getCurrency(tenantId, currencyCode));
     }
-    
+
     @PostMapping
-    @Operation(summary = "Create currency", description = "Create a new currency")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @Operation(summary = "Create currency (System Admin only)")
     public ResponseEntity<CurrencyResponse> createCurrency(
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @PathVariable Integer tenantId,
             @Valid @RequestBody CurrencyRequest request) {
-        CurrencyResponse currency = currencyService.createCurrency(tenantId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(currency);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(currencyService.createCurrency(tenantId, request));
     }
-    
+
     @PutMapping("/{currencyCode}")
-    @Operation(summary = "Update currency", description = "Update an existing currency")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @Operation(summary = "Update currency (System Admin only)")
     public ResponseEntity<CurrencyResponse> updateCurrency(
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @PathVariable Integer tenantId,
             @PathVariable String currencyCode,
             @Valid @RequestBody CurrencyRequest request) {
-        CurrencyResponse currency = currencyService.updateCurrency(tenantId, currencyCode, request);
-        return ResponseEntity.ok(currency);
+        return ResponseEntity.ok(currencyService.updateCurrency(tenantId, currencyCode, request));
     }
-    
+
     @DeleteMapping("/{currencyCode}")
-    @Operation(summary = "Delete currency", description = "Delete a currency (soft delete)")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @Operation(summary = "Delete currency (System Admin only)")
     public ResponseEntity<Void> deleteCurrency(
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @PathVariable Integer tenantId,
             @PathVariable String currencyCode) {
         currencyService.deleteCurrency(tenantId, currencyCode);
         return ResponseEntity.noContent().build();
     }
-    
+
     @GetMapping("/default")
-    @Operation(summary = "Get default currency", description = "Get the default currency for a tenant")
-    public ResponseEntity<CurrencyResponse> getDefaultCurrency(@RequestHeader("X-Tenant-ID") Integer tenantId) {
-        CurrencyResponse currency = currencyService.getDefaultCurrency(tenantId);
-        return ResponseEntity.ok(currency);
+    @Operation(summary = "Get default currency")
+    public ResponseEntity<CurrencyResponse> getDefaultCurrency(@PathVariable Integer tenantId) {
+        return ResponseEntity.ok(currencyService.getDefaultCurrency(tenantId));
     }
     
     @GetMapping("/convert")
-    @Operation(summary = "Convert amount", description = "Convert amount between currencies")
+    @Operation(summary = "Convert amount")
     public ResponseEntity<Map<String, Object>> convertAmount(
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @PathVariable Integer tenantId,
             @RequestParam BigDecimal amount,
             @RequestParam String fromCurrency,
             @RequestParam String toCurrency) {
         BigDecimal convertedAmount = currencyService.convertAmount(amount, fromCurrency, toCurrency, tenantId);
         BigDecimal exchangeRate = currencyService.getExchangeRate(fromCurrency, toCurrency, tenantId);
-        
-        Map<String, Object> result = Map.of(
+
+        return ResponseEntity.ok(Map.of(
                 "originalAmount", amount,
                 "fromCurrency", fromCurrency,
                 "toCurrency", toCurrency,
                 "convertedAmount", convertedAmount,
                 "exchangeRate", exchangeRate
-        );
-        
-        return ResponseEntity.ok(result);
+        ));
     }
-    
+
     @GetMapping("/exchange-rate")
-    @Operation(summary = "Get exchange rate", description = "Get exchange rate between two currencies")
+    @Operation(summary = "Get exchange rate")
     public ResponseEntity<Map<String, Object>> getExchangeRate(
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @PathVariable Integer tenantId,
             @RequestParam String fromCurrency,
             @RequestParam String toCurrency) {
         BigDecimal exchangeRate = currencyService.getExchangeRate(fromCurrency, toCurrency, tenantId);
-        
-        Map<String, Object> result = Map.of(
+
+        return ResponseEntity.ok(Map.of(
                 "fromCurrency", fromCurrency,
                 "toCurrency", toCurrency,
                 "exchangeRate", exchangeRate
-        );
-        
-        return ResponseEntity.ok(result);
+        ));
     }
 } 

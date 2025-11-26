@@ -15,6 +15,7 @@ import com.inventrik.digitalestore.exception.BusinessException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.OrderRepository;
 import com.inventrik.digitalestore.repository.ProductRepository;
+import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.repository.UserRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.discount.DiscountService;
@@ -38,6 +39,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final TenantRepository tenantRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final DiscountService discountService;
     private final IdGeneratorService idGeneratorService;
@@ -95,9 +97,11 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public OrderResponse createOrder(Integer tenantId, String username, OrderRequest orderRequest) {
-        // Verify user exists first
+        tenantRepository.findByTenantId(tenantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
         userRepository.findByTenantIdAndUserId(tenantId, orderRequest.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + orderRequest.getUserId()));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + orderRequest.getUserId()));
         
         // Validate discount code before generating order ID
         BigDecimal finalAmount = orderRequest.getTotalAmount();
@@ -151,13 +155,11 @@ public class OrderServiceImpl implements OrderService {
         // Save order first to get the ID
         Order savedOrder = orderRepository.save(order);
         
-        // Set order items
         List<OrderItem> orderItems = new ArrayList<>();
         for (OrderItemRequest itemRequest : orderRequest.getOrderItems()) {
-            // Verify product exists
             productRepository.findByTenantIdAndProductId(tenantId, itemRequest.getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
-            
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
+
             OrderItem orderItem = new OrderItem();
             orderItem.setTenantId(tenantId);
             orderItem.setOrderId(newOrderId);

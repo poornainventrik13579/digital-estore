@@ -8,6 +8,7 @@ import com.inventrik.digitalestore.dto.response.PageResponse;
 import com.inventrik.digitalestore.exception.BusinessException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.PageRepository;
+import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 public class PageServiceImpl implements PageService {
 
     private final PageRepository pageRepository;
+    private final TenantRepository tenantRepository;
     private final IdGeneratorService idGeneratorService;
 
     private PageResponse mapToDTO(Page page) {
@@ -67,6 +69,9 @@ public class PageServiceImpl implements PageService {
     @Override
     @Transactional
     public PageResponse createPage(Integer tenantId, PageRequest request) {
+        tenantRepository.findByTenantId(tenantId)
+            .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
         if (pageRepository.findByTenantIdAndSlug(tenantId, request.getSlug()).isPresent()) {
             throw new BusinessException("Slug already exists");
         }
