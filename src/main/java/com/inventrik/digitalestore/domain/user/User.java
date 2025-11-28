@@ -81,7 +81,7 @@ public class User {
     @Column(name = "status", nullable = false, length = 2)
     private String status;
     
-    @Column(name = "created_by", nullable = false, length = 50)
+    @Column(name = "created_by", nullable = false, length = 2)
     private String createdBy;
     
     @Column(name = "created", nullable = false)

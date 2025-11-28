@@ -43,7 +43,7 @@ public class DigitalDownload {
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
     
-    @Column(name = "updated_by", nullable = false, length = 2)
+    @Column(name = "updated_by", nullable = false, length = 50)
     private String updatedBy;
     
     @Column(name = "updated", nullable = false)

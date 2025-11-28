@@ -58,7 +58,28 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
-    public List<UserResponse> getAllUsers(Integer tenantId) {
+    public List<UserResponse> getAllUsers(Integer tenantId, String status, String username, String email) {
+        if (username != null && !username.trim().isEmpty()) {
+            return userRepository.findByUsername(username).stream()
+                    .filter(user -> user.getTenantId().equals(tenantId))
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+        }
+
+        if (email != null && !email.trim().isEmpty()) {
+            return userRepository.findByEmail(email).stream()
+                    .filter(user -> user.getTenantId().equals(tenantId))
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+        }
+
+        if (status != null && !status.trim().isEmpty()) {
+            String statusCode = "ACTIVE".equalsIgnoreCase(status) ? "0" : "1";
+            return userRepository.findByTenantIdAndStatus(tenantId, statusCode).stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+        }
+
         return userRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
@@ -227,28 +248,21 @@ public class UserServiceImpl implements UserService {
         
         userRepository.deleteByTenantIdAndUserId(tenantId, userId);
     }
-    
-    @Override
-    public List<UserResponse> getActiveUsers(Integer tenantId) {
-        return userRepository.findByTenantIdAndStatus(tenantId, "0").stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-    }
-    
+
     @Override
     public UserResponse findByUsername(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
         return mapToDTO(user);
     }
-    
+
     @Override
     public UserResponse findByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
         return mapToDTO(user);
     }
-    
+
     // Helper method to generate OTP
     private String generateOTP() {
         Random random = new Random();
@@ -299,6 +313,6 @@ public class UserServiceImpl implements UserService {
         if (username == null || username.isEmpty()) {
             return "00";
         }
-        return username.length() > 2 ? username.substring(0, 2) : username;
+        return username;
     }
 }

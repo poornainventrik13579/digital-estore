@@ -41,7 +41,14 @@ public class CategoryServiceImpl implements CategoryService {
     }
     
     @Override
-    public List<CategoryResponse> getAllCategories(Integer tenantId) {
+    public List<CategoryResponse> getAllCategories(Integer tenantId, String status) {
+        if (status != null && !status.trim().isEmpty()) {
+            String statusCode = "ACTIVE".equalsIgnoreCase(status) ? "0" : "1";
+            return categoryRepository.findByTenantIdAndStatus(tenantId, statusCode).stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+        }
+
         return categoryRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
@@ -98,7 +105,7 @@ public class CategoryServiceImpl implements CategoryService {
         }
         
         // Ensure username is truncated to 2 characters as per DB schema
-        category.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        category.setUpdatedBy(username);
         category.setUpdated(LocalDateTime.now());
         
         Category updatedCategory = categoryRepository.save(category);
@@ -109,18 +116,10 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void deleteCategory(Integer tenantId, Long categoryId) {
-        // Check if category exists
         if (!categoryRepository.findByTenantIdAndCategoryId(tenantId, categoryId).isPresent()) {
             throw new ResourceNotFoundException("Category not found with id: " + categoryId);
         }
-        
+
         categoryRepository.deleteByTenantIdAndCategoryId(tenantId, categoryId);
-    }
-    
-    @Override
-    public List<CategoryResponse> getActiveCategories(Integer tenantId) {
-        return categoryRepository.findByTenantIdAndStatus(tenantId, "0").stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
     }
 }

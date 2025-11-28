@@ -27,14 +27,15 @@ import org.springframework.http.MediaType;
 
 import com.inventrik.digitalestore.dto.request.ForgotPasswordRequest;
 import com.inventrik.digitalestore.dto.request.SignupRequest;
-import com.inventrik.digitalestore.dto.request.TenantSignupRequest;
 import com.inventrik.digitalestore.dto.request.UserRequest;
 import com.inventrik.digitalestore.dto.request.LoginRequest;
-import com.inventrik.digitalestore.dto.response.TenantResponse;
+import com.inventrik.digitalestore.dto.request.TenantSignupRequest;
 import com.inventrik.digitalestore.dto.response.UserResponse;
-import com.inventrik.digitalestore.service.tenant.TenantService;
+import com.inventrik.digitalestore.dto.response.TenantResponse;
 import com.inventrik.digitalestore.service.user.UserService;
+import com.inventrik.digitalestore.service.tenant.TenantService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -45,15 +46,16 @@ public class AuthController {
     private final TenantService tenantService;
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
-    
+
     @PostMapping("/tenant/signup")
     public ResponseEntity<?> tenantSignup(@Valid @RequestBody TenantSignupRequest request) {
         try {
             TenantResponse tenant = tenantService.createTenantWithAdmin(request);
-            return ResponseEntity.ok(Map.of(
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "message", "Tenant created successfully",
                 "tenantId", tenant.getTenantId(),
-                "shopName", tenant.getShopName()
+                "shopName", tenant.getShopName(),
+                "adminUsername", request.getAdminUsername()
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -70,7 +72,7 @@ public class AuthController {
             userRequest.setFirstName(signupRequest.getFirstName());
             userRequest.setLastName(signupRequest.getLastName());
             userRequest.setPhone(signupRequest.getPhone());
-
+            
             userService.createUser(signupRequest.getTenantId(), "system", userRequest);
             return ResponseEntity.ok(Map.of("message", "User registered successfully"));
         } catch (Exception e) {
@@ -90,37 +92,39 @@ public class AuthController {
     
     private ResponseEntity<?> authenticateAndGenerateToken(LoginRequest loginRequest) {
         try {
+            // For tenant-specific users (store admins, customers): use "tenantId:username"
+            // For platform admins: use just "username"
+            String username = loginRequest.getTenantId() != null
+                    ? loginRequest.getTenantId() + ":" + loginRequest.getUsername()
+                    : loginRequest.getUsername();
+
             Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+                new UsernamePasswordAuthenticationToken(username, loginRequest.getPassword())
             );
-
-            UserResponse user = userService.findByUsername(authentication.getName());
-
+            
             Instant now = Instant.now();
             List<String> authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
-
+            
             JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("http://localhost:8080")
                 .issuedAt(now)
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .subject(authentication.getName())
                 .claim("authorities", authorities)
-                .claim("tenantId", user.getTenantId())
                 .build();
-
+            
             String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
-
+            
             return ResponseEntity.ok(Map.of(
                 "access_token", token,
                 "token_type", "Bearer",
                 "expires_in", 3600,
                 "authorities", authorities,
-                "username", authentication.getName(),
-                "tenantId", user.getTenantId()
+                "username", authentication.getName()
             ));
-
+            
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
         }

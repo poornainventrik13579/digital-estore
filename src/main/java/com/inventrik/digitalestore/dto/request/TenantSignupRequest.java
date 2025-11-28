@@ -22,6 +22,7 @@ public class TenantSignupRequest {
     @NotBlank
     private String adminEmail;
 
+    @NotBlank
     private String shopPhone;
     private String subdomain;
     private String countryRegion;

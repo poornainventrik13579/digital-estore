@@ -82,7 +82,19 @@ public class StripePaymentService implements PaymentService {
     }
     
     @Override
-    public List<PaymentResponse> getAllPayments(Integer tenantId) {
+    public List<PaymentResponse> getAllPayments(Integer tenantId, Long orderId, String status) {
+        if (orderId != null) {
+            return paymentRepository.findByTenantIdAndOrderId(tenantId, orderId).stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+        }
+
+        if (status != null && !status.trim().isEmpty()) {
+            return paymentRepository.findByTenantIdAndStatus(tenantId, status).stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+        }
+
         return paymentRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
@@ -239,7 +251,7 @@ public class StripePaymentService implements PaymentService {
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + payment.getOrderId()));
                 
                 order.setStatus("Processing");
-                order.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+                order.setUpdatedBy(username);
                 order.setUpdated(LocalDateTime.now());
                 Order savedOrder = orderRepository.save(order);
                 
@@ -273,7 +285,7 @@ public class StripePaymentService implements PaymentService {
             }
             
             // Ensure username is truncated to 2 characters as per DB schema
-            String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+            String truncatedUsername = username;
             payment.setUpdatedBy(truncatedUsername);
             payment.setUpdated(LocalDateTime.now());
             
@@ -418,7 +430,7 @@ public class StripePaymentService implements PaymentService {
                     payment.setStatus(PaymentStatus.PARTIALLY_REFUNDED.getDisplayName());
                 }
                 
-                String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+                String truncatedUsername = username;
                 payment.setUpdatedBy(truncatedUsername);
                 payment.setUpdated(LocalDateTime.now());
                 
@@ -497,11 +509,11 @@ public class StripePaymentService implements PaymentService {
                 Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + payment.getOrderId()));
                 order.setStatus("Refunded");
-                order.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+                order.setUpdatedBy(username);
                 order.setUpdated(LocalDateTime.now());
                 orderRepository.save(order);
                 
-                String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+                String truncatedUsername = username;
                 payment.setUpdatedBy(truncatedUsername);
                 payment.setUpdated(LocalDateTime.now());
                 
@@ -528,19 +540,6 @@ public class StripePaymentService implements PaymentService {
         });
     }
     
-    @Override
-    public List<PaymentResponse> getPaymentsByOrder(Integer tenantId, Long orderId) {
-        return paymentRepository.findByTenantIdAndOrderId(tenantId, orderId).stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    public List<PaymentResponse> getPaymentsByStatus(Integer tenantId, String status) {
-        return paymentRepository.findByTenantIdAndStatus(tenantId, status).stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-    }
     
     @Override
     public void handlePaymentWebhook(String payload, String signature) {

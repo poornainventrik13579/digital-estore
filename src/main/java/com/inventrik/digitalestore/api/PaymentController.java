@@ -35,9 +35,13 @@ public class PaymentController {
     
     @GetMapping
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "Get all payments")
-    public ResponseEntity<List<PaymentResponse>> getAllPayments(@PathVariable Integer tenantId) {
-        return ResponseEntity.ok(paymentService.getAllPayments(tenantId));
+    @Operation(summary = "Get all payments with optional filters: ?orderId={id} or ?status={status}")
+    public ResponseEntity<List<PaymentResponse>> getAllPayments(
+            @PathVariable Integer tenantId,
+            @RequestParam(required = false) Long orderId,
+            @RequestParam(required = false) String status) {
+
+        return ResponseEntity.ok(paymentService.getAllPayments(tenantId, orderId, status));
     }
     
     @GetMapping("/{paymentId}")
@@ -126,21 +130,4 @@ public class PaymentController {
         }
     }
     
-    @GetMapping("/order/{orderId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "Get payments by order")
-    public ResponseEntity<List<PaymentResponse>> getPaymentsByOrder(
-            @PathVariable Integer tenantId,
-            @PathVariable Long orderId) {
-        return ResponseEntity.ok(paymentService.getPaymentsByOrder(tenantId, orderId));
-    }
-    
-    @GetMapping("/status/{status}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "Get payments by status")
-    public ResponseEntity<List<PaymentResponse>> getPaymentsByStatus(
-            @PathVariable Integer tenantId,
-            @PathVariable String status) {
-        return ResponseEntity.ok(paymentService.getPaymentsByStatus(tenantId, status));
-    }
 }

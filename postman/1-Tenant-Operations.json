@@ -50,7 +50,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"shopName\": \"New Store\",\n    \"shopEmail\": \"store@example.com\",\n    \"shopPhone\": \"+1-555-9999\",\n    \"adminUsername\": \"storeadmin\",\n    \"adminPassword\": \"Admin@123\",\n    \"adminEmail\": \"admin@example.com\",\n    \"adminFirstName\": \"Store\",\n    \"adminLastName\": \"Admin\"\n}"
+							"raw": "{\n    \"shopName\": \"TechWorld Electronics\",\n    \"shopEmail\": \"contact@techworld.com\",\n    \"shopPhone\": \"+1-555-1000\",\n    \"adminUsername\": \"techworld_admin\",\n    \"adminPassword\": \"Admin@2024\",\n    \"adminEmail\": \"admin@techworld.com\",\n    \"subdomain\": \"techworld\",\n    \"countryRegion\": \"United States\",\n    \"baseCurrency\": \"USD\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/tenant/signup",

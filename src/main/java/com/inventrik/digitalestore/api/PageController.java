@@ -24,9 +24,12 @@ public class PageController {
     private final PageService pageService;
 
     @GetMapping
-    @Operation(summary = "Get all pages for tenant")
-    public ResponseEntity<List<PageResponse>> getAllPages(@PathVariable Integer tenantId) {
-        return ResponseEntity.ok(pageService.getAllPages(tenantId));
+    @Operation(summary = "Get pages for tenant with optional filters")
+    public ResponseEntity<List<PageResponse>> getAllPages(
+            @PathVariable Integer tenantId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String visibility) {
+        return ResponseEntity.ok(pageService.getAllPages(tenantId, status, visibility));
     }
 
     @GetMapping("/{pageId}")

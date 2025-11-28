@@ -82,8 +82,8 @@ public class TenantServiceImpl implements TenantService {
         tenant.setTaxId(request.getTaxId());
         tenant.setTimezone(request.getTimezone());
         tenant.setStatus("0");
-        tenant.setCreatedBy(username.length() > 2 ? username.substring(0, 2) : username);
-        tenant.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        tenant.setCreatedBy(username.substring(0, Math.min(2, username.length())));
+        tenant.setUpdatedBy(username.substring(0, Math.min(2, username.length())));
 
         Tenant saved = tenantRepository.save(tenant);
         return mapToDTO(saved);
@@ -108,15 +108,17 @@ public class TenantServiceImpl implements TenantService {
         tenant.setBaseCurrency(request.getBaseCurrency());
         tenant.setMultiCurrency(true);
         tenant.setStatus("0");
-        tenant.setCreatedBy("system");
-        tenant.setUpdatedBy("system");
+        tenant.setCreatedBy("sy");
+        tenant.setUpdatedBy("sy");
 
         Tenant savedTenant = tenantRepository.save(tenant);
 
+        // Create admin user - use shop phone for admin
         UserRequest adminUser = new UserRequest();
         adminUser.setUsername(request.getAdminUsername());
         adminUser.setPassword(request.getAdminPassword());
         adminUser.setEmail(request.getAdminEmail());
+        adminUser.setPhone(request.getShopPhone());
         adminUser.setUserRole(UserRole.ADMIN);
 
         userService.createUser(savedTenant.getTenantId(), "system", adminUser);
@@ -139,7 +141,7 @@ public class TenantServiceImpl implements TenantService {
         tenant.setMultiCurrency(request.getMultiCurrency());
         tenant.setTaxId(request.getTaxId());
         tenant.setTimezone(request.getTimezone());
-        tenant.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        tenant.setUpdatedBy(username.substring(0, Math.min(2, username.length())));
 
         Tenant updated = tenantRepository.save(tenant);
         return mapToDTO(updated);

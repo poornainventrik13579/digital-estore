@@ -81,7 +81,19 @@ public class OrderServiceImpl implements OrderService {
     }
     
     @Override
-    public List<OrderResponse> getAllOrders(Integer tenantId) {
+    public List<OrderResponse> getAllOrders(Integer tenantId, Long userId, String status) {
+        if (userId != null) {
+            return orderRepository.findByTenantIdAndUserId(tenantId, userId).stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+        }
+
+        if (status != null && !status.trim().isEmpty()) {
+            return orderRepository.findByTenantIdAndStatus(tenantId, status).stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+        }
+
         return orderRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
@@ -207,7 +219,7 @@ public class OrderServiceImpl implements OrderService {
             }
         }
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+        String truncatedUsername = username;
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());
         
@@ -231,19 +243,6 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.deleteByTenantIdAndOrderId(tenantId, orderId);
     }
     
-    @Override
-    public List<OrderResponse> getOrdersByUser(Integer tenantId, Long userId) {
-        return orderRepository.findByTenantIdAndUserId(tenantId, userId).stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    public List<OrderResponse> getOrdersByStatus(Integer tenantId, String status) {
-        return orderRepository.findByTenantIdAndStatus(tenantId, status).stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-    }
     
     @Override
     @Transactional
@@ -259,7 +258,7 @@ public class OrderServiceImpl implements OrderService {
         String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.COMPLETED.getDisplayName());
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+        String truncatedUsername = username;
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());
         
@@ -286,7 +285,7 @@ public class OrderServiceImpl implements OrderService {
         String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.CANCELLED.getDisplayName());
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+        String truncatedUsername = username;
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());
         
@@ -311,7 +310,7 @@ public class OrderServiceImpl implements OrderService {
         String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.REFUNDED.getDisplayName());
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+        String truncatedUsername = username;
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());
         

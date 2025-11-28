@@ -47,7 +47,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+							"raw": "{\n    \"tenantId\": 1,\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/login",
@@ -454,9 +454,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories/active",
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/categories?status=ACTIVE",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}", "categories", "active"]
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "categories"],
+							"query": [
+								{
+									"key": "status",
+									"value": "ACTIVE"
+								}
+							]
 						}
 					},
 					"response": []
@@ -569,9 +575,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products/active",
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/products?status=ACTIVE",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}", "products", "active"]
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "products"],
+							"query": [
+								{
+									"key": "status",
+									"value": "ACTIVE"
+								}
+							]
 						}
 					},
 					"response": []
@@ -684,9 +696,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/code/WELCOME10",
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts?code=WELCOME10",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "code", "WELCOME10"]
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts"],
+							"query": [
+								{
+									"key": "code",
+									"value": "WELCOME10"
+								}
+							]
 						}
 					},
 					"response": []
@@ -697,9 +715,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/active",
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts?status=ACTIVE",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "active"]
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts"],
+							"query": [
+								{
+									"key": "status",
+									"value": "ACTIVE"
+								}
+							]
 						}
 					},
 					"response": []
@@ -960,6 +984,140 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get Bundle by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/{{bundle_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "{{bundle_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Bundle",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bundleName\": \"Starter Pack Pro\",\n    \"description\": \"Everything you need to get started - Premium Edition\",\n    \"bundlePrice\": 149.99,\n    \"discount\": 15.00,\n    \"items\": [\n        {\n            \"productId\": \"{{product_id}}\",\n            \"quantity\": 2\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/{{bundle_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "{{bundle_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Bundle",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/{{bundle_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "{{bundle_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Calculate Bundle Price",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"productId\": \"{{product_id}}\",\n        \"quantity\": 1\n    }\n]"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/calculate-price",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "calculate-price"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Product to Bundle",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/{{bundle_id}}/products/{{product_id}}?quantity=1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "{{bundle_id}}", "products", "{{product_id}}"],
+							"query": [
+								{
+									"key": "quantity",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Product from Bundle",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/{{bundle_id}}/products/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "{{bundle_id}}", "products", "{{product_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product Quantity in Bundle",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/{{bundle_id}}/products/{{product_id}}/quantity?quantity=2",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "{{bundle_id}}", "products", "{{product_id}}", "quantity"],
+							"query": [
+								{
+									"key": "quantity",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Bundle Count",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/bundles/count",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "bundles", "count"]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -985,9 +1143,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/status/PENDING",
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders?status=PENDING",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "status", "PENDING"]
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "orders"],
+							"query": [
+								{
+									"key": "status",
+									"value": "PENDING"
+								}
+							]
 						}
 					},
 					"response": []
@@ -1090,9 +1254,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/order/{{order_id}}",
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments?orderId={{order_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "order", "{{order_id}}"]
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "payments"],
+							"query": [
+								{
+									"key": "orderId",
+									"value": "{{order_id}}"
+								}
+							]
 						}
 					},
 					"response": []
@@ -1103,9 +1273,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments/status/COMPLETED",
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/payments?status=COMPLETED",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}", "payments", "status", "COMPLETED"]
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "payments"],
+							"query": [
+								{
+									"key": "status",
+									"value": "COMPLETED"
+								}
+							]
 						}
 					},
 					"response": []
@@ -1195,9 +1371,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/active",
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users?status=ACTIVE",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "active"]
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "users"],
+							"query": [
+								{
+									"key": "status",
+									"value": "ACTIVE"
+								}
+							]
 						}
 					},
 					"response": []
@@ -1208,9 +1390,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/username/john.doe",
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users?username=john.doe",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "username", "john.doe"]
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "users"],
+							"query": [
+								{
+									"key": "username",
+									"value": "john.doe"
+								}
+							]
 						}
 					},
 					"response": []
@@ -1221,9 +1409,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users/email/john.doe@example.com",
+							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/users?email=john.doe@example.com",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}", "users", "email", "john.doe@example.com"]
+							"path": ["api", "v1", "tenants", "{{tenant_id}}", "users"],
+							"query": [
+								{
+									"key": "email",
+									"value": "john.doe@example.com"
+								}
+							]
 						}
 					},
 					"response": []

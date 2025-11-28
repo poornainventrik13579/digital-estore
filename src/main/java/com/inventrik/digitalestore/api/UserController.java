@@ -29,9 +29,14 @@ public class UserController {
     
     @GetMapping
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "Get all users")
-    public ResponseEntity<List<UserResponse>> getAllUsers(@PathVariable Integer tenantId) {
-        return ResponseEntity.ok(userService.getAllUsers(tenantId));
+    @Operation(summary = "Get users with optional filters: ?status=ACTIVE or ?username={name} or ?email={email}")
+    public ResponseEntity<List<UserResponse>> getAllUsers(
+            @PathVariable Integer tenantId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String email) {
+
+        return ResponseEntity.ok(userService.getAllUsers(tenantId, status, username, email));
     }
     
     @GetMapping("/{userId}")
@@ -101,27 +106,6 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable Integer tenantId, @PathVariable Long userId) {
         userService.deleteUser(tenantId, userId);
         return ResponseEntity.noContent().build();
-    }
-    
-    @GetMapping("/active")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "Get active users")
-    public ResponseEntity<List<UserResponse>> getActiveUsers(@PathVariable Integer tenantId) {
-        return ResponseEntity.ok(userService.getActiveUsers(tenantId));
-    }
-    
-    @GetMapping("/username/{username}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or #username == authentication.name")
-    @Operation(summary = "Find user by username")
-    public ResponseEntity<UserResponse> findByUsername(@PathVariable String username) {
-        return ResponseEntity.ok(userService.findByUsername(username));
-    }
-    
-    @GetMapping("/email/{email}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or @userService.isUserWithEmail(#email, authentication.name)")
-    @Operation(summary = "Find user by email")
-    public ResponseEntity<UserResponse> findByEmail(@PathVariable String email) {
-        return ResponseEntity.ok(userService.findByEmail(email));
     }
     
     @GetMapping("/me")

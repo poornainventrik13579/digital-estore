@@ -60,23 +60,38 @@ public class ProductServiceImpl implements ProductService {
     }
     
     @Override
-    @Cacheable(value = "products", key = "#tenantId + ':all'")
-    public List<ProductResponse> getAllProducts(Integer tenantId) {
-        return productRepository.findByTenantId(tenantId).stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    @Cacheable(value = "products", key = "#tenantId + ':page:' + #page + ':' + #size")
-    public PagedResponse<ProductResponse> getAllProductsPaginated(Integer tenantId, int page, int size) {
+    @Cacheable(value = "products", key = "#tenantId + ':page:' + #page + ':' + #size + ':' + #categoryId + ':' + #status + ':' + #keyword")
+    public PagedResponse<ProductResponse> getAllProductsPaginated(Integer tenantId, int page, int size, Long categoryId, String status, String keyword) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("created").descending());
-        Page<Product> productPage = productRepository.findByTenantId(tenantId, pageable);
-        
+        Page<Product> productPage;
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            productPage = productRepository.searchByKeyword(tenantId, keyword, pageable);
+        } else if (status != null && !status.trim().isEmpty()) {
+            String statusCode = "ACTIVE".equalsIgnoreCase(status) ? "0" : "1";
+            List<Product> products = productRepository.findByTenantIdAndStatus(tenantId, statusCode);
+            return PagedResponse.of(
+                products.stream().map(this::mapToDTO).collect(Collectors.toList()),
+                0,
+                products.size(),
+                products.size()
+            );
+        } else if (categoryId != null) {
+            List<Product> products = productRepository.findByTenantIdAndCategoryId(tenantId, categoryId);
+            return PagedResponse.of(
+                products.stream().map(this::mapToDTO).collect(Collectors.toList()),
+                0,
+                products.size(),
+                products.size()
+            );
+        } else {
+            productPage = productRepository.findByTenantId(tenantId, pageable);
+        }
+
         List<ProductResponse> products = productPage.getContent().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
-                
+
         return PagedResponse.of(products, page, size, productPage.getTotalElements());
     }
     
@@ -185,7 +200,7 @@ public class ProductServiceImpl implements ProductService {
             product.setStatus(updateRequest.getStatus());
         }
         
-        product.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        product.setUpdatedBy(username);
         product.setUpdated(LocalDateTime.now());
         
         Product updatedProduct = productRepository.save(product);
@@ -200,35 +215,7 @@ public class ProductServiceImpl implements ProductService {
         if (!productRepository.findByTenantIdAndProductId(tenantId, productId).isPresent()) {
             throw new ResourceNotFoundException("Product not found with id: " + productId);
         }
-        
+
         productRepository.deleteByTenantIdAndProductId(tenantId, productId);
-    }
-    
-    @Override
-    @Cacheable(value = "products", key = "#tenantId + ':category:' + #categoryId")
-    public List<ProductResponse> getProductsByCategory(Integer tenantId, Long categoryId) {
-        return productRepository.findByTenantIdAndCategoryId(tenantId, categoryId).stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    public List<ProductResponse> getActiveProducts(Integer tenantId) {
-        return productRepository.findByTenantIdAndStatus(tenantId, "0").stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    @Cacheable(value = "products", key = "#tenantId + ':search:' + #keyword + ':' + #page + ':' + #size")
-    public PagedResponse<ProductResponse> searchProducts(Integer tenantId, String keyword, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("created").descending());
-        Page<Product> productPage = productRepository.searchByKeyword(tenantId, keyword, pageable);
-        
-        List<ProductResponse> products = productPage.getContent().stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-                
-        return PagedResponse.of(products, page, size, productPage.getTotalElements());
     }
 }

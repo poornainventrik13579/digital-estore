@@ -26,8 +26,29 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+        User user;
+
+        // Check if username contains tenantId (format: "tenantId:username")
+        // This is used for tenant-specific users (store admins, customers)
+        if (username.contains(":")) {
+            String[] parts = username.split(":", 2);
+            try {
+                Integer tenantId = Integer.parseInt(parts[0]);
+                String actualUsername = parts[1];
+
+                // Tenant-aware lookup: for store admins and customers
+                user = userRepository.findByTenantIdAndUsername(tenantId, actualUsername)
+                        .orElseThrow(() -> new UsernameNotFoundException(
+                                "User not found with username: " + actualUsername + " in tenant: " + tenantId));
+            } catch (NumberFormatException e) {
+                throw new UsernameNotFoundException("Invalid tenant ID in username: " + username);
+            }
+        } else {
+            // Non-tenant lookup: for platform/system admins only
+            // System admins are above all tenants and don't belong to any specific tenant
+            user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+        }
         
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),

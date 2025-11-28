@@ -28,15 +28,28 @@ public class ProductController {
 
     private final ProductService productService;
     
+    /**
+     * Get all products with optional filtering
+     *
+     * Query parameters:
+     * - page: Page number (default: 0)
+     * - size: Page size (default: 20)
+     * - categoryId: Filter by category ID (optional)
+     * - status: Filter by status - "ACTIVE" or "INACTIVE" (optional)
+     * - keyword: Search by keyword (optional)
+     */
     @GetMapping
     @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get all products with pagination")
+    @Operation(summary = "Get all products with optional filters (category, status, keyword)")
     public ResponseEntity<PagedResponse<ProductResponse>> getAllProducts(
             @PathVariable Integer tenantId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        PagedResponse<ProductResponse> products = productService.getAllProductsPaginated(tenantId, page, size);
-        return ResponseEntity.ok(products);
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword) {
+
+        return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size, categoryId, status, keyword));
     }
     
     @GetMapping("/{productId}")
@@ -111,29 +124,8 @@ public class ProductController {
         productService.deleteProduct(tenantId, productId);
         return ResponseEntity.noContent().build();
     }
-    
-    @GetMapping("/category/{categoryId}")
-    @Operation(summary = "Get products by category")
-    public ResponseEntity<List<ProductResponse>> getProductsByCategory(
-            @PathVariable Integer tenantId,
-            @PathVariable Long categoryId) {
-        return ResponseEntity.ok(productService.getProductsByCategory(tenantId, categoryId));
-    }
-    
-    @GetMapping("/active")
-    @Operation(summary = "Get active products")
-    public ResponseEntity<List<ProductResponse>> getActiveProducts(@PathVariable Integer tenantId) {
-        return ResponseEntity.ok(productService.getActiveProducts(tenantId));
-    }
-    
-    @GetMapping("/search")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Search products by keyword")
-    public ResponseEntity<PagedResponse<ProductResponse>> searchProducts(
-            @PathVariable Integer tenantId,
-            @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(productService.searchProducts(tenantId, keyword, page, size));
-    }
+
+    // REMOVED: /category/{categoryId} - now use GET /products?categoryId={id}
+    // REMOVED: /active - now use GET /products?status=ACTIVE
+    // REMOVED: /search - now use GET /products?keyword={keyword}
 }

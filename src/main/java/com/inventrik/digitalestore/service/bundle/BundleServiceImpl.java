@@ -39,16 +39,29 @@ public class BundleServiceImpl implements BundleService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<BundleResponse> getAllBundles(Integer tenantId) {
+    public List<BundleResponse> getAllBundles(Integer tenantId, String status, String name, Long productId) {
+        if (productId != null) {
+            List<BundleItem> bundleItems = bundleItemRepository.findBundlesContainingProduct(tenantId, productId);
+            return bundleItems.stream()
+                    .map(BundleItem::getBundle)
+                    .distinct()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+
+        if (name != null && !name.trim().isEmpty()) {
+            return bundleRepository.findByBundleNameContaining(tenantId, name).stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+
+        if ("ACTIVE".equalsIgnoreCase(status)) {
+            return bundleRepository.findActiveBundles(tenantId).stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+
         return bundleRepository.findByTenantId(tenantId).stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public List<BundleResponse> getActiveBundles(Integer tenantId) {
-        return bundleRepository.findActiveBundles(tenantId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -138,13 +151,6 @@ public class BundleServiceImpl implements BundleService {
         bundleRepository.save(bundle);
     }
     
-    @Override
-    @Transactional(readOnly = true)
-    public List<BundleResponse> searchBundles(Integer tenantId, String name) {
-        return bundleRepository.findByBundleNameContaining(tenantId, name).stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
     
     @Override
     @Transactional(readOnly = true)
@@ -180,18 +186,6 @@ public class BundleServiceImpl implements BundleService {
         }
         
         return true;
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public List<BundleResponse> getBundlesContainingProduct(Integer tenantId, Long productId) {
-        List<BundleItem> bundleItems = bundleItemRepository.findBundlesContainingProduct(tenantId, productId);
-        
-        return bundleItems.stream()
-                .map(item -> item.getBundleId())
-                .distinct()
-                .map(bundleId -> getBundle(tenantId, bundleId))
-                .collect(Collectors.toList());
     }
     
     @Override

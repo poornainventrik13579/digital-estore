@@ -13,22 +13,29 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
     
+    // Find order by tenant and order ID
     Optional<Order> findByTenantIdAndOrderId(Integer tenantId, Long orderId);
     
+    // Find all orders for a tenant
     List<Order> findByTenantId(Integer tenantId);
     
+    // Find orders by tenant and user ID
     List<Order> findByTenantIdAndUserId(Integer tenantId, Long userId);
     
+    // Find orders by tenant and status
     List<Order> findByTenantIdAndStatus(Integer tenantId, String status);
     
+    // Delete order by tenant and order ID
     void deleteByTenantIdAndOrderId(Integer tenantId, Long orderId);
     
+    // FIXED: NEW METHOD - Find specific order item using composite key
     @Query("SELECT oi FROM Order o JOIN o.orderItems oi WHERE o.tenantId = :tenantId AND o.orderId = :orderId AND oi.orderItemId = :orderItemId")
     Optional<OrderItem> findOrderItemByTenantIdAndOrderIdAndOrderItemId(
         @Param("tenantId") Integer tenantId, 
         @Param("orderId") Long orderId, 
         @Param("orderItemId") Long orderItemId);
     
+    // Check if user has purchased a specific product
     @Query("SELECT COUNT(oi) > 0 FROM Order o JOIN o.orderItems oi WHERE o.tenantId = :tenantId AND o.userId = :userId AND oi.productId = :productId AND o.status IN ('Completed', 'Processing')")
     boolean hasUserPurchasedProduct(@Param("tenantId") Integer tenantId, @Param("userId") Long userId, @Param("productId") Long productId);
 }

@@ -70,8 +70,8 @@ public class ReviewServiceImpl implements ReviewService {
         review.setComment(reviewRequest.getComment());
         review.setVerified(hasPurchased);
         review.setStatus("0");
-        review.setCreatedBy(username.length() > 2 ? username.substring(0, 2) : username);
-        review.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        review.setCreatedBy(username);
+        review.setUpdatedBy(username);
         
         Review savedReview = reviewRepository.save(review);
         

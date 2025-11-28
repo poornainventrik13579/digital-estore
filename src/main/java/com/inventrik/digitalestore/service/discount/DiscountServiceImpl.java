@@ -79,7 +79,7 @@ public class DiscountServiceImpl implements DiscountService {
             }
         }
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+        String truncatedUsername = username;
         
         discountCode.setCode(request.getCode().toUpperCase());
         discountCode.setDiscountType(request.getDiscountType());
@@ -106,26 +106,36 @@ public class DiscountServiceImpl implements DiscountService {
     
     @Override
     @Transactional(readOnly = true)
-    public DiscountCodeResponse getDiscountCodeByCode(Integer tenantId, String code) {
-        DiscountCode discountCode = discountCodeRepository.findByTenantIdAndCodeAndStatus(tenantId, code.toUpperCase(), "0")
-                .orElseThrow(() -> new ResourceNotFoundException("Discount code not found: " + code));
-        return mapToResponse(discountCode);
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public List<DiscountCodeResponse> getAllDiscountCodes(Integer tenantId) {
-        return discountCodeRepository.findByTenantIdAndStatus(tenantId, "0").stream()
+    public List<DiscountCodeResponse> getAllDiscountCodes(Integer tenantId, String code, String status) {
+        if (code != null && !code.trim().isEmpty()) {
+            return discountCodeRepository.findByTenantIdAndCodeAndStatus(tenantId, code.toUpperCase(), "0").stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+
+        if ("ACTIVE".equalsIgnoreCase(status)) {
+            return discountCodeRepository.findActiveDiscountCodes(tenantId, "0", LocalDateTime.now()).stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+
+        if (status != null && !status.trim().isEmpty()) {
+            String statusCode = "ACTIVE".equalsIgnoreCase(status) ? "0" : "1";
+            return discountCodeRepository.findByTenantIdAndStatus(tenantId, statusCode).stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+
+        List<DiscountCodeResponse> activeDiscounts = discountCodeRepository.findByTenantIdAndStatus(tenantId, "0").stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
-    }
-    
-    @Override
-    @Transactional(readOnly = true)
-    public List<DiscountCodeResponse> getActiveDiscountCodes(Integer tenantId) {
-        return discountCodeRepository.findActiveDiscountCodes(tenantId, "0", LocalDateTime.now()).stream()
+
+        List<DiscountCodeResponse> inactiveDiscounts = discountCodeRepository.findByTenantIdAndStatus(tenantId, "1").stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+
+        activeDiscounts.addAll(inactiveDiscounts);
+        return activeDiscounts;
     }
     
     @Override
@@ -133,7 +143,7 @@ public class DiscountServiceImpl implements DiscountService {
         DiscountCode discountCode = discountCodeRepository.findById(new DiscountCode.DiscountCodePK(tenantId, discountId))
                 .orElseThrow(() -> new ResourceNotFoundException("Discount code not found with id: " + discountId));
         
-        String truncatedUsername = username.length() > 2 ? username.substring(0, 2) : username;
+        String truncatedUsername = username;
         discountCode.setStatus("-1");
         discountCode.setUpdatedBy(truncatedUsername);
         
@@ -200,7 +210,7 @@ public class DiscountServiceImpl implements DiscountService {
         
         // Atomic increment using database-level update
         int updatedRows = discountCodeRepository.incrementUsedCount(tenantId, discount.getDiscountId(), 
-            username.length() > 2 ? username.substring(0, 2) : username);
+            username);
         
         if (updatedRows == 0) {
             throw new IllegalStateException("Failed to update discount usage - discount may have been modified concurrently");

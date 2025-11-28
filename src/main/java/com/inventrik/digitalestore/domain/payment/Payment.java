@@ -53,7 +53,7 @@ public class Payment {
     @Column(name = "refund_reason", columnDefinition = "TEXT")
     private String refundReason;
     
-    @Column(name = "created_by", nullable = false, length = 50)
+    @Column(name = "created_by", nullable = false, length = 2)
     private String createdBy;
     
     @Column(name = "created", nullable = false)

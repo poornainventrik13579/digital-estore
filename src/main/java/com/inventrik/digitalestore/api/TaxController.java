@@ -25,9 +25,12 @@ public class TaxController {
     private final TaxService taxService;
 
     @GetMapping
-    @Operation(summary = "Get all taxes for tenant")
-    public ResponseEntity<List<TaxResponse>> getAllTaxes(@PathVariable Integer tenantId) {
-        return ResponseEntity.ok(taxService.getAllTaxes(tenantId));
+    @Operation(summary = "Get taxes for tenant with optional filters")
+    public ResponseEntity<List<TaxResponse>> getAllTaxes(
+            @PathVariable Integer tenantId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String defaultFlag) {
+        return ResponseEntity.ok(taxService.getAllTaxes(tenantId, status, defaultFlag));
     }
 
     @GetMapping("/{taxId}")

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 public abstract class AuditableEntity {
     
-    @Column(name = "created_by", nullable = false, length = 50)
+    @Column(name = "created_by", nullable = false, length = 2)
     private String createdBy;
     
     @Column(name = "created", nullable = false)

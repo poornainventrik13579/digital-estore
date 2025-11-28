@@ -27,11 +27,20 @@ public class CategoryController {
 
     private final CategoryService categoryService;
     
+    /**
+     * Get all categories with optional filtering
+     *
+     * Query parameters:
+     * - status: Filter by status - "ACTIVE" or "INACTIVE" (optional)
+     */
     @GetMapping
     @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get all categories")
-    public ResponseEntity<List<CategoryResponse>> getAllCategories(@PathVariable Integer tenantId) {
-        return ResponseEntity.ok(categoryService.getAllCategories(tenantId));
+    @Operation(summary = "Get all categories with optional status filter")
+    public ResponseEntity<List<CategoryResponse>> getAllCategories(
+            @PathVariable Integer tenantId,
+            @RequestParam(required = false) String status) {
+
+        return ResponseEntity.ok(categoryService.getAllCategories(tenantId, status));
     }
     
     @GetMapping("/{categoryId}")
@@ -105,12 +114,5 @@ public class CategoryController {
             @PathVariable Long categoryId) {
         categoryService.deleteCategory(tenantId, categoryId);
         return ResponseEntity.noContent().build();
-    }
-    
-    @GetMapping("/active")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get active categories")
-    public ResponseEntity<List<CategoryResponse>> getActiveCategories(@PathVariable Integer tenantId) {
-        return ResponseEntity.ok(categoryService.getActiveCategories(tenantId));
     }
 }

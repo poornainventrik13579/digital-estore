@@ -39,10 +39,23 @@ public class TaxServiceImpl implements TaxService {
     }
 
     @Override
-    public List<TaxResponse> getAllTaxes(Integer tenantId) {
-        return taxRepository.findByTenantId(tenantId).stream()
+    public List<TaxResponse> getAllTaxes(Integer tenantId, String status, String defaultFlag) {
+        List<TaxResponse> taxes = taxRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+
+        if (status != null) {
+            taxes = taxes.stream()
+                    .filter(tax -> status.equals(tax.getStatus()))
+                    .collect(Collectors.toList());
+        }
+        if (defaultFlag != null) {
+            taxes = taxes.stream()
+                    .filter(tax -> defaultFlag.equals(tax.getDefaultFlag()))
+                    .collect(Collectors.toList());
+        }
+
+        return taxes;
     }
 
     @Override
@@ -68,8 +81,8 @@ public class TaxServiceImpl implements TaxService {
         tax.setStartDate(request.getStartDate());
         tax.setEndDate(request.getEndDate());
         tax.setStatus("0");
-        tax.setCreatedBy(username.length() > 2 ? username.substring(0, 2) : username);
-        tax.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        tax.setCreatedBy(username.substring(0, Math.min(2, username.length())));
+        tax.setUpdatedBy(username.substring(0, Math.min(2, username.length())));
 
         Tax saved = taxRepository.save(tax);
         return mapToDTO(saved);
@@ -87,7 +100,7 @@ public class TaxServiceImpl implements TaxService {
         tax.setDefaultFlag(request.getDefaultFlag());
         tax.setStartDate(request.getStartDate());
         tax.setEndDate(request.getEndDate());
-        tax.setUpdatedBy(username.length() > 2 ? username.substring(0, 2) : username);
+        tax.setUpdatedBy(username.substring(0, Math.min(2, username.length())));
 
         Tax updated = taxRepository.save(tax);
         return mapToDTO(updated);

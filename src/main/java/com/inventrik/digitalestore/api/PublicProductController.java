@@ -25,9 +25,9 @@ public class PublicProductController {
             @PathVariable Integer tenantId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size));
+        return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size, null, null, null));
     }
-    
+
     @GetMapping("/{productId}")
     @Operation(summary = "Get a product by ID")
     public ResponseEntity<ProductResponse> getProduct(
@@ -35,21 +35,21 @@ public class PublicProductController {
             @PathVariable Long productId) {
         return ResponseEntity.ok(productService.getProduct(tenantId, productId));
     }
-    
+
     @GetMapping("/category/{categoryId}")
     @Operation(summary = "Get products by category")
-    public ResponseEntity<List<ProductResponse>> getProductsByCategory(
+    public ResponseEntity<PagedResponse<ProductResponse>> getProductsByCategory(
             @PathVariable Integer tenantId,
             @PathVariable Long categoryId) {
-        return ResponseEntity.ok(productService.getProductsByCategory(tenantId, categoryId));
+        return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, 0, Integer.MAX_VALUE, categoryId, null, null));
     }
-    
+
     @GetMapping("/active")
     @Operation(summary = "Get active products")
-    public ResponseEntity<List<ProductResponse>> getActiveProducts(@PathVariable Integer tenantId) {
-        return ResponseEntity.ok(productService.getActiveProducts(tenantId));
+    public ResponseEntity<PagedResponse<ProductResponse>> getActiveProducts(@PathVariable Integer tenantId) {
+        return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, 0, Integer.MAX_VALUE, null, "ACTIVE", null));
     }
-    
+
     @GetMapping("/search")
     @Operation(summary = "Search products by keyword")
     public ResponseEntity<PagedResponse<ProductResponse>> searchProducts(
@@ -57,6 +57,6 @@ public class PublicProductController {
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(productService.searchProducts(tenantId, keyword, page, size));
+        return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size, null, null, keyword));
     }
 } 

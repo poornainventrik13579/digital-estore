@@ -46,10 +46,23 @@ public class PageServiceImpl implements PageService {
     }
 
     @Override
-    public List<PageResponse> getAllPages(Integer tenantId) {
-        return pageRepository.findByTenantId(tenantId).stream()
+    public List<PageResponse> getAllPages(Integer tenantId, String status, String visibility) {
+        List<PageResponse> pages = pageRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+
+        if (status != null) {
+            pages = pages.stream()
+                    .filter(page -> status.equals(page.getStatus()))
+                    .collect(Collectors.toList());
+        }
+        if (visibility != null) {
+            pages = pages.stream()
+                    .filter(page -> visibility.equals(page.getVisibility()))
+                    .collect(Collectors.toList());
+        }
+
+        return pages;
     }
 
     @Override

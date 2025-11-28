@@ -31,35 +31,17 @@ public class BundleController {
     private final BundleService bundleService;
     
     @GetMapping
-    @Operation(summary = "Get all bundles", description = "Retrieve all product bundles for a tenant")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved bundles"),
-        @ApiResponse(responseCode = "403", description = "Access denied"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
+    @Operation(summary = "Get bundles with optional filters: ?status=ACTIVE or ?name={name} or ?productId={id}")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<List<BundleResponse>> getAllBundles(
-            @Parameter(description = "Tenant ID") @PathVariable Integer tenantId) {
-        
-        log.info("Getting all bundles for tenant: {}", tenantId);
-        List<BundleResponse> bundles = bundleService.getAllBundles(tenantId);
-        return ResponseEntity.ok(bundles);
-    }
-    
-    @GetMapping("/active")
-    @Operation(summary = "Get active bundles", description = "Retrieve only active product bundles for a tenant")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved active bundles"),
-        @ApiResponse(responseCode = "403", description = "Access denied"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<List<BundleResponse>> getActiveBundles(
-            @Parameter(description = "Tenant ID") @PathVariable Integer tenantId) {
-        
-        log.info("Getting active bundles for tenant: {}", tenantId);
-        List<BundleResponse> bundles = bundleService.getActiveBundles(tenantId);
-        return ResponseEntity.ok(bundles);
+            @PathVariable Integer tenantId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Long productId) {
+
+        log.info("Getting bundles for tenant {} with filters - status: {}, name: {}, productId: {}",
+                 tenantId, status, name, productId);
+        return ResponseEntity.ok(bundleService.getAllBundles(tenantId, status, name, productId));
     }
     
     @GetMapping("/{bundleId}")
@@ -142,23 +124,6 @@ public class BundleController {
         return ResponseEntity.noContent().build();
     }
     
-    @GetMapping("/search")
-    @Operation(summary = "Search bundles", description = "Search product bundles by name")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved search results"),
-        @ApiResponse(responseCode = "403", description = "Access denied"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<List<BundleResponse>> searchBundles(
-            @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
-            @Parameter(description = "Search term") @RequestParam String name) {
-        
-        log.info("Searching bundles: name={}, tenantId={}", name, tenantId);
-        List<BundleResponse> bundles = bundleService.searchBundles(tenantId, name);
-        return ResponseEntity.ok(bundles);
-    }
-    
     @PostMapping("/calculate-price")
     @Operation(summary = "Calculate bundle price", description = "Calculate total price for bundle items")
     @ApiResponses(value = {
@@ -175,23 +140,6 @@ public class BundleController {
         log.info("Calculating bundle price: tenantId={}", tenantId);
         BigDecimal price = bundleService.calculateBundlePrice(tenantId, bundleItems);
         return ResponseEntity.ok(price);
-    }
-    
-    @GetMapping("/product/{productId}")
-    @Operation(summary = "Get bundles containing product", description = "Get all bundles that contain a specific product")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved bundles"),
-        @ApiResponse(responseCode = "403", description = "Access denied"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<List<BundleResponse>> getBundlesContainingProduct(
-            @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
-            @Parameter(description = "Product ID") @PathVariable Long productId) {
-        
-        log.info("Getting bundles containing product: productId={}, tenantId={}", productId, tenantId);
-        List<BundleResponse> bundles = bundleService.getBundlesContainingProduct(tenantId, productId);
-        return ResponseEntity.ok(bundles);
     }
     
     @PostMapping("/{bundleId}/products/{productId}")

@@ -6,7 +6,7 @@ import com.inventrik.digitalestore.dto.response.PageResponse;
 import java.util.List;
 
 public interface PageService {
-    List<PageResponse> getAllPages(Integer tenantId);
+    List<PageResponse> getAllPages(Integer tenantId, String status, String visibility);
     PageResponse getPage(Integer tenantId, Long pageId);
     PageResponse getPageBySlug(Integer tenantId, String slug);
     PageResponse createPage(Integer tenantId, PageRequest request);

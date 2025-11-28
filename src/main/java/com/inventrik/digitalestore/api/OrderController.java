@@ -29,13 +29,25 @@ public class OrderController {
 
     private final OrderService orderService;
     
+    /**
+     * Get all orders with optional filtering
+     *
+     * Query parameters:
+     * - userId: Filter by user ID (optional)
+     * - status: Filter by status - Pending, Processing, Completed, Cancelled, Refunded, Partially Refunded (optional)
+     */
     @GetMapping
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "Get all orders")
+    @Operation(summary = "Get all orders with optional filters (userId, status)")
     public ResponseEntity<List<OrderResponse>> getAllOrders(
-            @Parameter(description = "Tenant ID", required = true) 
-            @PathVariable Integer tenantId) {
-        return ResponseEntity.ok(orderService.getAllOrders(tenantId));
+            @Parameter(description = "Tenant ID", required = true)
+            @PathVariable Integer tenantId,
+            @Parameter(description = "User ID to filter by", required = false)
+            @RequestParam(required = false) Long userId,
+            @Parameter(description = "Order status to filter by", required = false)
+            @RequestParam(required = false) String status) {
+
+        return ResponseEntity.ok(orderService.getAllOrders(tenantId, userId, status));
     }
     
     @GetMapping("/{orderId}")
@@ -124,44 +136,16 @@ public class OrderController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete an order")
     public ResponseEntity<Void> deleteOrder(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
+            @Parameter(description = "Order ID", required = true)
             @PathVariable Long orderId) {
         orderService.deleteOrder(tenantId, orderId);
         return ResponseEntity.noContent().build();
     }
-    
-    @GetMapping("/user/{userId}")
-    @Operation(summary = "Get orders by user")
-    public ResponseEntity<List<OrderResponse>> getOrdersByUser(
-            @Parameter(description = "Tenant ID", required = true) 
-            @PathVariable Integer tenantId,
-            @Parameter(description = "User ID", required = true) 
-            @PathVariable Long userId) {
-        return ResponseEntity.ok(orderService.getOrdersByUser(tenantId, userId));
-    }
-    
-    @GetMapping("/status/{status}")
-    @Operation(
-        summary = "Get orders by status",
-        description = "Retrieves orders filtered by status. Valid status values: " +
-                      "Pending, Processing, Completed, Cancelled, Refunded, Partially Refunded"
-    )
-    public ResponseEntity<List<OrderResponse>> getOrdersByStatus(
-            @Parameter(description = "Tenant ID", required = true) 
-            @PathVariable Integer tenantId,
-            @Parameter(
-                description = "Order status", 
-                required = true,
-                schema = @io.swagger.v3.oas.annotations.media.Schema(
-                    allowableValues = {"Pending", "Processing", "Completed", "Cancelled", "Refunded", "Partially Refunded"},
-                    example = "Pending"
-                )
-            ) 
-            @PathVariable String status) {
-        return ResponseEntity.ok(orderService.getOrdersByStatus(tenantId, status));
-    }
+
+    // REMOVED: /user/{userId} - now use GET /orders?userId={id}
+    // REMOVED: /status/{status} - now use GET /orders?status={status}
     
     @PostMapping("/{orderId}/complete")
     @PreAuthorize("hasRole('ROLE_USER')")

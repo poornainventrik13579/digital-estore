@@ -21,7 +21,7 @@ public class PublicCategoryController {
     @GetMapping
     @Operation(summary = "Get all categories")
     public ResponseEntity<List<CategoryResponse>> getAllCategories(@PathVariable Integer tenantId) {
-        return ResponseEntity.ok(categoryService.getAllCategories(tenantId));
+        return ResponseEntity.ok(categoryService.getAllCategories(tenantId, null));
     }
     
     @GetMapping("/{categoryId}")

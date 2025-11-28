@@ -19,11 +19,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Find active users for a tenant
     List<User> findByTenantIdAndStatus(Integer tenantId, String status);
     
-    // Find user by username
+    // Find user by username (WARNING: Not tenant-aware! Use findByTenantIdAndUsername instead)
     Optional<User> findByUsername(String username);
-    
+
+    // Find user by tenant and username (TENANT-AWARE)
+    Optional<User> findByTenantIdAndUsername(Integer tenantId, String username);
+
     // Find user by email
     Optional<User> findByEmail(String email);
+
+    // Find user by tenant and email (TENANT-AWARE)
+    Optional<User> findByTenantIdAndEmail(Integer tenantId, String email);
     
     // Find user by phone
     Optional<User> findByPhone(String phone);

@@ -93,37 +93,16 @@ public class DiscountController {
         return ResponseEntity.ok(response);
     }
     
-    @GetMapping("/code/{code}")
-    @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get discount code by code", description = "Retrieve a specific discount code by its code")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Discount code found"),
-        @ApiResponse(responseCode = "404", description = "Discount code not found")
-    })
-    public ResponseEntity<DiscountCodeResponse> getDiscountCodeByCode(
-            @PathVariable Integer tenantId,
-            @PathVariable String code) {
-        
-        DiscountCodeResponse response = discountService.getDiscountCodeByCode(tenantId, code);
-        return ResponseEntity.ok(response);
-    }
-    
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "Get all discount codes", description = "Retrieve all discount codes for the tenant")
-    @ApiResponse(responseCode = "200", description = "List of discount codes")
-    public ResponseEntity<List<DiscountCodeResponse>> getAllDiscountCodes(@PathVariable Integer tenantId) {
-        List<DiscountCodeResponse> response = discountService.getAllDiscountCodes(tenantId);
-        return ResponseEntity.ok(response);
-    }
-    
-    @GetMapping("/active")
     @PreAuthorize("hasRole('ROLE_USER')")
-    @Operation(summary = "Get active discount codes", description = "Retrieve all currently active discount codes")
-    @ApiResponse(responseCode = "200", description = "List of active discount codes")
-    public ResponseEntity<List<DiscountCodeResponse>> getActiveDiscountCodes(@PathVariable Integer tenantId) {
-        List<DiscountCodeResponse> response = discountService.getActiveDiscountCodes(tenantId);
-        return ResponseEntity.ok(response);
+    @Operation(summary = "Get discount codes with optional filters: ?code={code} or ?status=ACTIVE")
+    @ApiResponse(responseCode = "200", description = "List of discount codes")
+    public ResponseEntity<List<DiscountCodeResponse>> getAllDiscountCodes(
+            @PathVariable Integer tenantId,
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) String status) {
+
+        return ResponseEntity.ok(discountService.getAllDiscountCodes(tenantId, code, status));
     }
     
     @DeleteMapping("/{discountId}")
