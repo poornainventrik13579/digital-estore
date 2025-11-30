@@ -1,212 +1,278 @@
 {
-	"info": {
-		"_postman_id": "tenant-ops-001",
-		"name": "Digital E-Store - Tenant Operations",
-		"description": "Tenant management and configuration operations",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"auth": {
-		"type": "bearer",
-		"bearer": [
-			{
-				"key": "token",
-				"value": "{{auth_token}}",
-				"type": "string"
-			}
-		]
-	},
-	"item": [
-		{
-			"name": "Authentication",
-			"item": [
-				{
-					"name": "Tenant Signup with Admin",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 201) {",
-									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"tenant_id\", jsonData.tenantId);",
-									"    pm.environment.set(\"admin_username\", jsonData.adminUsername);",
-									"    console.log(\"Tenant ID: \" + jsonData.tenantId);",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"shopName\": \"TechWorld Electronics\",\n    \"shopEmail\": \"contact@techworld.com\",\n    \"shopPhone\": \"+1-555-1000\",\n    \"adminUsername\": \"techworld_admin\",\n    \"adminPassword\": \"Admin@2024\",\n    \"adminEmail\": \"admin@techworld.com\",\n    \"subdomain\": \"techworld\",\n    \"countryRegion\": \"United States\",\n    \"baseCurrency\": \"USD\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/tenant/signup",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "tenant", "signup"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Login as System Admin",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"auth_token\", jsonData.token);",
-									"    console.log(\"Token saved: \" + jsonData.token);",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/login",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "login"]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Tenant Management",
-			"item": [
-				{
-					"name": "Create Tenant - TechHub Store",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 201) {",
-									"    var jsonData = pm.response.json();",
-									"    pm.environment.set(\"tenant_id\", jsonData.tenantId);",
-									"    console.log(\"Tenant ID saved: \" + jsonData.tenantId);",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"shopName\": \"TechHub Store\",\n    \"shopEmail\": \"contact@techhub.com\",\n    \"shopPhone\": \"+1-555-0101\",\n    \"shopLogo\": \"https://techhub.com/logo.png\",\n    \"domainName\": \"techhub.com\",\n    \"subdomain\": \"techhub\",\n    \"countryRegion\": \"United States\",\n    \"storePassword\": \"TechHub@2024\",\n    \"baseCurrency\": \"USD\",\n    \"multiCurrency\": \"1\",\n    \"taxId\": \"US-TAX-12345\",\n    \"timezone\": \"America/New_York\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/tenants",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get All Tenants",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/tenants",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Tenant by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update Tenant",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"shopName\": \"TechHub Pro Store\",\n    \"shopEmail\": \"contact@techhub.com\",\n    \"shopPhone\": \"+1-555-0101\",\n    \"shopLogo\": \"https://techhub.com/logo-new.png\",\n    \"domainName\": \"techhub.com\",\n    \"subdomain\": \"techhub\",\n    \"countryRegion\": \"United States\",\n    \"storePassword\": \"TechHub@2024\",\n    \"baseCurrency\": \"USD\",\n    \"multiCurrency\": \"1\",\n    \"taxId\": \"US-TAX-12345\",\n    \"timezone\": \"America/New_York\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}"]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Tenant",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "tenants", "{{tenant_id}}"]
-						}
-					},
-					"response": []
-				}
-			]
-		}
-	],
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "http://localhost:8080"
-		}
-	]
+  "info": {
+    "_postman_id": "tenant-ops-001",
+    "name": "Digital E-Store - Tenant Operations",
+    "description": "Tenant management and configuration operations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Tenant Signup with Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"tenant_id\", jsonData.tenantId);",
+                  "    pm.environment.set(\"admin_username\", jsonData.adminUsername);",
+                  "    console.log(\"Tenant ID: \" + jsonData.tenantId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "inherit"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"shopName\": \"TechWorld Electronics\",\n    \"shopEmail\": \"contact@techworld.com\",\n    \"shopPhone\": \"+1-555-1000\",\n    \"adminUsername\": \"techworld_admin\",\n    \"adminPassword\": \"Admin@2024\",\n    \"adminEmail\": \"admin@techworld.com\",\n    \"subdomain\": \"techworld\",\n    \"countryRegion\": \"United States\",\n    \"baseCurrency\": \"USD\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/tenant/signup",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "tenant",
+                "signup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save access token to environment variable",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.environment.set('access_token', jsonData.access_token);",
+                  "    console.log('Access token saved:', jsonData.access_token);",
+                  "} else {",
+                  "    console.log('No access token in response');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tenant Management",
+      "item": [
+        {
+          "name": "Create Tenant - TechHub Store",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"tenant_id\", jsonData.tenantId);",
+                  "    console.log(\"Tenant ID saved: \" + jsonData.tenantId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"shopName\": \"TechHub Store\",\n    \"shopEmail\": \"contact@techhub.com\",\n    \"shopPhone\": \"+1-555-0101\",\n    \"shopLogo\": \"https://techhub.com/logo.png\",\n    \"domainName\": \"techhub.com\",\n    \"subdomain\": \"techhub\",\n    \"countryRegion\": \"United States\",\n    \"storePassword\": \"TechHub@2024\",\n    \"baseCurrency\": \"USD\",\n    \"multiCurrency\": \"1\",\n    \"taxId\": \"US-TAX-12345\",\n    \"timezone\": \"America/New_York\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tenants"
+              ]
+            },
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Tenants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tenants"
+              ]
+            },
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tenant by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{{tenant_id}}"
+              ]
+            },
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Tenant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"shopName\": \"TechHub Pro Store\",\n    \"shopEmail\": \"contact@techhub.com\",\n    \"shopPhone\": \"+1-555-0101\",\n    \"shopLogo\": \"https://techhub.com/logo-new.png\",\n    \"domainName\": \"techhub.com\",\n    \"subdomain\": \"techhub\",\n    \"countryRegion\": \"United States\",\n    \"storePassword\": \"TechHub@2024\",\n    \"baseCurrency\": \"USD\",\n    \"multiCurrency\": \"1\",\n    \"taxId\": \"US-TAX-12345\",\n    \"timezone\": \"America/New_York\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{{tenant_id}}"
+              ]
+            },
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Tenant",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tenants",
+                "{{tenant_id}}"
+              ]
+            },
+            "auth": {
+              "type": "inherit"
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    }
+  ]
 }
