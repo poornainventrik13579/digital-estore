@@ -69,21 +69,9 @@ public class ProductServiceImpl implements ProductService {
             productPage = productRepository.searchByKeyword(tenantId, keyword, pageable);
         } else if (status != null && !status.trim().isEmpty()) {
             String statusCode = "ACTIVE".equalsIgnoreCase(status) ? "0" : "1";
-            List<Product> products = productRepository.findByTenantIdAndStatus(tenantId, statusCode);
-            return PagedResponse.of(
-                products.stream().map(this::mapToDTO).collect(Collectors.toList()),
-                0,
-                products.size(),
-                products.size()
-            );
+            productPage = productRepository.findByTenantIdAndStatus(tenantId, statusCode, pageable);
         } else if (categoryId != null) {
-            List<Product> products = productRepository.findByTenantIdAndCategoryId(tenantId, categoryId);
-            return PagedResponse.of(
-                products.stream().map(this::mapToDTO).collect(Collectors.toList()),
-                0,
-                products.size(),
-                products.size()
-            );
+            productPage = productRepository.findByTenantIdAndCategoryId(tenantId, categoryId, pageable);
         } else {
             productPage = productRepository.findByTenantId(tenantId, pageable);
         }

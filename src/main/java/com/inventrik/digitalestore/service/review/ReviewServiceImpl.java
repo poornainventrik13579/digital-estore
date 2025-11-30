@@ -58,8 +58,8 @@ public class ReviewServiceImpl implements ReviewService {
         
         // Verify user purchased this product
         boolean hasPurchased = orderService.hasUserPurchasedProduct(tenantId, user.getUserId(), reviewRequest.getProductId());
-        
-        Long reviewId = idGeneratorService.generateId(tenantId, "ORDER");
+
+        Long reviewId = idGeneratorService.generateId(tenantId, "REVIEW");
         
         Review review = new Review();
         review.setTenantId(tenantId);

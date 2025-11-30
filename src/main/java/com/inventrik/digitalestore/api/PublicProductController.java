@@ -40,14 +40,19 @@ public class PublicProductController {
     @Operation(summary = "Get products by category")
     public ResponseEntity<PagedResponse<ProductResponse>> getProductsByCategory(
             @PathVariable Integer tenantId,
-            @PathVariable Long categoryId) {
-        return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, 0, Integer.MAX_VALUE, categoryId, null, null));
+            @PathVariable Long categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size, categoryId, null, null));
     }
 
     @GetMapping("/active")
     @Operation(summary = "Get active products")
-    public ResponseEntity<PagedResponse<ProductResponse>> getActiveProducts(@PathVariable Integer tenantId) {
-        return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, 0, Integer.MAX_VALUE, null, "ACTIVE", null));
+    public ResponseEntity<PagedResponse<ProductResponse>> getActiveProducts(
+            @PathVariable Integer tenantId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size, null, "ACTIVE", null));
     }
 
     @GetMapping("/search")

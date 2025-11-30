@@ -93,6 +93,7 @@ public class ReviewController {
     }
     
     @DeleteMapping("/{reviewId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Delete review", description = "Delete a review")
     public ResponseEntity<Void> deleteReview(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
@@ -128,7 +129,7 @@ public class ReviewController {
         return ResponseEntity.ok(reviews);
     }
     
-    @PutMapping("/{reviewId}/verify")
+    @PostMapping("/{reviewId}/verify")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Verify review", description = "Mark a review as verified (admin only)")
     public ResponseEntity<ReviewResponse> verifyReview(

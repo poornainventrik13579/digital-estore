@@ -196,7 +196,7 @@ public class DiscountServiceImpl implements DiscountService {
             throw new IllegalArgumentException("Order amount must be at least " + discount.getMinOrderAmount());
         }
         
-        // Check if discount has reached max uses limit (thread-safe check)
+        // Check if discount has reached max uses limit
         if (discount.getMaxUses() > 0 && discount.getUsedCount() >= discount.getMaxUses()) {
             throw new IllegalArgumentException("Discount code has reached its usage limit");
         }
@@ -208,7 +208,6 @@ public class DiscountServiceImpl implements DiscountService {
         
         recordDiscountUsage(tenantId, discount.getDiscountId(), orderId, userId, discountAmount, username);
         
-        // Atomic increment using database-level update
         int updatedRows = discountCodeRepository.incrementUsedCount(tenantId, discount.getDiscountId(), 
             username);
         

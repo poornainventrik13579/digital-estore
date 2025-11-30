@@ -132,6 +132,14 @@ public class TenantServiceImpl implements TenantService {
         Tenant tenant = tenantRepository.findByTenantId(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
 
+        // Check if email is being changed and if new email already exists
+        if (request.getShopEmail() != null && !request.getShopEmail().equals(tenant.getShopEmail())) {
+            if (tenantRepository.existsByShopEmail(request.getShopEmail())) {
+                throw new BusinessException("Email already exists");
+            }
+            tenant.setShopEmail(request.getShopEmail());
+        }
+
         tenant.setShopName(request.getShopName());
         tenant.setShopPhone(request.getShopPhone());
         tenant.setShopLogo(request.getShopLogo());

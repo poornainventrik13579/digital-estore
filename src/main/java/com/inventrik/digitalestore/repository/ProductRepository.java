@@ -28,9 +28,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     
     // Find active products for a tenant
     List<Product> findByTenantIdAndStatus(Integer tenantId, String status);
-    
+
+    // Find active products for a tenant with pagination
+    Page<Product> findByTenantIdAndStatus(Integer tenantId, String status, Pageable pageable);
+
     // Find products by category for a tenant
     List<Product> findByTenantIdAndCategoryId(Integer tenantId, Long categoryId);
+
+    // Find products by category for a tenant with pagination
+    Page<Product> findByTenantIdAndCategoryId(Integer tenantId, Long categoryId, Pageable pageable);
     
     // Delete product by tenant and product ID
     void deleteByTenantIdAndProductId(Integer tenantId, Long productId);

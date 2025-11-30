@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,7 @@ public class TaxController {
     private final TaxService taxService;
 
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get taxes for tenant with optional filters")
     public ResponseEntity<List<TaxResponse>> getAllTaxes(
             @PathVariable Integer tenantId,
@@ -34,6 +36,7 @@ public class TaxController {
     }
 
     @GetMapping("/{taxId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get tax by ID")
     public ResponseEntity<TaxResponse> getTax(
             @PathVariable Integer tenantId,
@@ -42,6 +45,7 @@ public class TaxController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create new tax")
     public ResponseEntity<TaxResponse> createTax(
             @PathVariable Integer tenantId,
@@ -53,6 +57,7 @@ public class TaxController {
     }
 
     @PutMapping("/{taxId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update tax")
     public ResponseEntity<TaxResponse> updateTax(
             @PathVariable Integer tenantId,
@@ -64,6 +69,7 @@ public class TaxController {
     }
 
     @DeleteMapping("/{taxId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete tax")
     public ResponseEntity<Void> deleteTax(
             @PathVariable Integer tenantId,

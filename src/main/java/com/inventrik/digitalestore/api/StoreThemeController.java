@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,12 +26,14 @@ public class StoreThemeController {
     private final StoreThemeService storeThemeService;
 
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get all themes for tenant")
     public ResponseEntity<List<StoreThemeResponse>> getAllThemes(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(storeThemeService.getAllThemes(tenantId));
     }
 
     @GetMapping("/{themeId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get theme by ID")
     public ResponseEntity<StoreThemeResponse> getTheme(
             @PathVariable Integer tenantId,
@@ -39,6 +42,7 @@ public class StoreThemeController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create new theme")
     public ResponseEntity<StoreThemeResponse> createTheme(
             @PathVariable Integer tenantId,
@@ -50,6 +54,7 @@ public class StoreThemeController {
     }
 
     @PutMapping("/{themeId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update theme")
     public ResponseEntity<StoreThemeResponse> updateTheme(
             @PathVariable Integer tenantId,
@@ -61,6 +66,7 @@ public class StoreThemeController {
     }
 
     @DeleteMapping("/{themeId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete theme")
     public ResponseEntity<Void> deleteTheme(
             @PathVariable Integer tenantId,

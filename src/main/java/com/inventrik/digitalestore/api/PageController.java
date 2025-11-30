@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -24,6 +25,7 @@ public class PageController {
     private final PageService pageService;
 
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get pages for tenant with optional filters")
     public ResponseEntity<List<PageResponse>> getAllPages(
             @PathVariable Integer tenantId,
@@ -33,6 +35,7 @@ public class PageController {
     }
 
     @GetMapping("/{pageId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get page by ID")
     public ResponseEntity<PageResponse> getPage(
             @PathVariable Integer tenantId,
@@ -41,6 +44,7 @@ public class PageController {
     }
 
     @GetMapping("/slug/{slug}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     @Operation(summary = "Get page by slug")
     public ResponseEntity<PageResponse> getPageBySlug(
             @PathVariable Integer tenantId,
@@ -49,6 +53,7 @@ public class PageController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create new page")
     public ResponseEntity<PageResponse> createPage(
             @PathVariable Integer tenantId,
@@ -58,6 +63,7 @@ public class PageController {
     }
 
     @PutMapping("/{pageId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update page")
     public ResponseEntity<PageResponse> updatePage(
             @PathVariable Integer tenantId,
@@ -67,6 +73,7 @@ public class PageController {
     }
 
     @DeleteMapping("/{pageId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Delete page")
     public ResponseEntity<Void> deletePage(
             @PathVariable Integer tenantId,

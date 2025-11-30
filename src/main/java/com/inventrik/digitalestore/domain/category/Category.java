@@ -49,7 +49,8 @@ public class Category {
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
     
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // Don't cascade delete products - prevent accidental data loss
+    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
     private List<Product> products = new ArrayList<>();
     
     @PrePersist

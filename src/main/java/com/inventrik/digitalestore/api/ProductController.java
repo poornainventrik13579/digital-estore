@@ -74,19 +74,6 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
     }
     
-    @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "Create a new product (Form)")
-    public ResponseEntity<ProductResponse> createProduct(
-            @PathVariable Integer tenantId,
-            @Valid @ModelAttribute ProductRequest productRequest,
-            Authentication authentication) {
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
-        ProductResponse createdProduct = productService.createProduct(tenantId, username, productRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
-    }
-    
     @PutMapping(path = "/{productId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Update a product (JSON)")
@@ -94,20 +81,6 @@ public class ProductController {
             @PathVariable Integer tenantId,
             @PathVariable Long productId,
             @Valid @RequestBody ProductUpdateRequest updateRequest,
-            Authentication authentication) {
-        
-        String username = (authentication != null) ? authentication.getName() : "system";
-        ProductResponse updatedProduct = productService.updateProduct(tenantId, productId, username, updateRequest);
-        return ResponseEntity.ok(updatedProduct);
-    }
-    
-    @PutMapping(path = "/{productId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "Update a product (Form)")
-    public ResponseEntity<ProductResponse> updateProduct(
-            @PathVariable Integer tenantId,
-            @PathVariable Long productId,
-            @Valid @ModelAttribute ProductUpdateRequest updateRequest,
             Authentication authentication) {
         
         String username = (authentication != null) ? authentication.getName() : "system";
@@ -124,8 +97,4 @@ public class ProductController {
         productService.deleteProduct(tenantId, productId);
         return ResponseEntity.noContent().build();
     }
-
-    // REMOVED: /category/{categoryId} - now use GET /products?categoryId={id}
-    // REMOVED: /active - now use GET /products?status=ACTIVE
-    // REMOVED: /search - now use GET /products?keyword={keyword}
 }

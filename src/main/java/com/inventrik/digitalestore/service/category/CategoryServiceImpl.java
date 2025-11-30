@@ -5,6 +5,7 @@ import com.inventrik.digitalestore.dto.request.CategoryRequest;
 import com.inventrik.digitalestore.dto.request.CategoryUpdateRequest;
 import com.inventrik.digitalestore.dto.response.CategoryResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
+import com.inventrik.digitalestore.exception.ValidationException;
 import com.inventrik.digitalestore.repository.CategoryRepository;
 import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
@@ -116,8 +117,12 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void deleteCategory(Integer tenantId, Long categoryId) {
-        if (!categoryRepository.findByTenantIdAndCategoryId(tenantId, categoryId).isPresent()) {
-            throw new ResourceNotFoundException("Category not found with id: " + categoryId);
+        Category category = categoryRepository.findByTenantIdAndCategoryId(tenantId, categoryId)
+            .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
+
+        // Prevent deletion if category has products
+        if (!category.getProducts().isEmpty()) {
+            throw new ValidationException("Cannot delete category with existing products. Please reassign or delete products first.");
         }
 
         categoryRepository.deleteByTenantIdAndCategoryId(tenantId, categoryId);

@@ -10,37 +10,42 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"tenant_id", "username"}),
+    @UniqueConstraint(columnNames = {"tenant_id", "email"}),
+    @UniqueConstraint(columnNames = {"tenant_id", "phone"}),
+    @UniqueConstraint(columnNames = {"tenant_id", "otp"})
+})
 @IdClass(User.UserPK.class)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
-    
+
     @Id
     @Column(name = "tenant_id", nullable = false)
     private Integer tenantId;
-    
+
     @Id
     @Column(name = "user_id")
     private Long userId;
-    
-    @Column(name = "username", nullable = false, unique = true, length = 50)
+
+    @Column(name = "username", nullable = false, length = 50)
     private String username;
-    
+
     @Column(name = "first_name", length = 50)
     private String firstName;
-    
+
     @Column(name = "last_name", length = 50)
     private String lastName;
-    
+
     @Column(name = "image", length = 256)
     private String image;
-    
-    @Column(name = "phone", unique = true, length = 100)
+
+    @Column(name = "phone", length = 100)
     private String phone;
-    
-    @Column(name = "email", unique = true, length = 100)
+
+    @Column(name = "email", length = 100)
     private String email;
     
     @Column(name = "user_type", nullable = false)
@@ -71,10 +76,10 @@ public class User {
     
     @Column(name = "tax_id", length = 50)
     private String taxId;
-    
-    @Column(name = "otp", unique = true, length = 8)
+
+    @Column(name = "otp", length = 8)
     private String otp;
-    
+
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
     

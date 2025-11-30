@@ -45,7 +45,7 @@ public class PaymentController {
     }
     
     @GetMapping("/{paymentId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Get a payment by ID")
     public ResponseEntity<PaymentResponse> getPayment(
             @PathVariable Integer tenantId,

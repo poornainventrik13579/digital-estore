@@ -60,15 +60,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserResponse> getAllUsers(Integer tenantId, String status, String username, String email) {
         if (username != null && !username.trim().isEmpty()) {
-            return userRepository.findByUsername(username).stream()
-                    .filter(user -> user.getTenantId().equals(tenantId))
+            return userRepository.findByTenantIdAndUsername(tenantId, username).stream()
                     .map(this::mapToDTO)
                     .collect(Collectors.toList());
         }
 
         if (email != null && !email.trim().isEmpty()) {
-            return userRepository.findByEmail(email).stream()
-                    .filter(user -> user.getTenantId().equals(tenantId))
+            return userRepository.findByTenantIdAndEmail(tenantId, email).stream()
                     .map(this::mapToDTO)
                     .collect(Collectors.toList());
         }
@@ -120,13 +118,13 @@ public class UserServiceImpl implements UserService {
         tenantRepository.findByTenantId(tenantId)
             .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
 
-        if (userRepository.existsByUsername(userRequest.getUsername())) {
+        if (userRepository.existsByTenantIdAndUsername(tenantId, userRequest.getUsername())) {
             throw new BusinessException("Username already exists");
         }
-        if (userRepository.existsByEmail(userRequest.getEmail())) {
+        if (userRepository.existsByTenantIdAndEmail(tenantId, userRequest.getEmail())) {
             throw new BusinessException("Email already exists");
         }
-        if (userRepository.existsByPhone(userRequest.getPhone())) {
+        if (userRequest.getPhone() != null && userRepository.existsByTenantIdAndPhone(tenantId, userRequest.getPhone())) {
             throw new BusinessException("Phone number already exists");
         }
         

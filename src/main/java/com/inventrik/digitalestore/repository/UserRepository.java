@@ -37,12 +37,21 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Delete user by tenant and user ID
     void deleteByTenantIdAndUserId(Integer tenantId, Long userId);
     
-    // Check if username exists
+    // Check if username exists (WARNING: Not tenant-aware! Use existsByTenantIdAndUsername instead)
     boolean existsByUsername(String username);
-    
-    // Check if email exists
+
+    // Check if username exists for a specific tenant (TENANT-AWARE)
+    boolean existsByTenantIdAndUsername(Integer tenantId, String username);
+
+    // Check if email exists (WARNING: Not tenant-aware! Use existsByTenantIdAndEmail instead)
     boolean existsByEmail(String email);
-    
-    // Check if phone exists
+
+    // Check if email exists for a specific tenant (TENANT-AWARE)
+    boolean existsByTenantIdAndEmail(Integer tenantId, String email);
+
+    // Check if phone exists (WARNING: Not tenant-aware! Use existsByTenantIdAndPhone instead)
     boolean existsByPhone(String phone);
+
+    // Check if phone exists for a specific tenant (TENANT-AWARE)
+    boolean existsByTenantIdAndPhone(Integer tenantId, String phone);
 }
