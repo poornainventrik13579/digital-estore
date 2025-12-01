@@ -52,7 +52,7 @@ public class UserRequest {
     @Schema(description = "User type (INDIVIDUAL or COMPANY)", example = "INDIVIDUAL", defaultValue = "INDIVIDUAL")
     private UserType userType = UserType.INDIVIDUAL;
     
-    @Schema(description = "User role (USER, ADMIN, MANAGER)", example = "USER", defaultValue = "USER")
+    @Schema(description = "User role (USER, ADMIN, TENANT)", example = "USER", defaultValue = "USER")
     private UserRole userRole = UserRole.USER;
     
     // Company specific fields (only required when userType is COMPANY)

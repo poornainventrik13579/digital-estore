@@ -39,7 +39,7 @@ public class UserUpdateRequest {
     @Schema(description = "User type (INDIVIDUAL or COMPANY)", example = "INDIVIDUAL")
     private UserType userType;
     
-    @Schema(description = "User role (USER, ADMIN, MANAGER)", example = "USER")
+    @Schema(description = "User role (USER, ADMIN, TENANT)", example = "USER")
     private UserRole userRole;
     
     // Company specific fields

@@ -41,9 +41,9 @@ public class GlobalExceptionHandler {
             } else if (exceptionMsg.contains("ROLE_USER")) {
                 detailedMessage = "Access denied. This operation requires USER privileges.";
                 requiredRole = "ROLE_USER";
-            } else if (exceptionMsg.contains("ROLE_MANAGER")) {
-                detailedMessage = "Access denied. This operation requires MANAGER privileges.";
-                requiredRole = "ROLE_MANAGER";
+            } else if (exceptionMsg.contains("ROLE_TENANT")) {
+                detailedMessage = "Access denied. This operation requires TENANT privileges.";
+                requiredRole = "ROLE_TENANT";
             }
         }
         

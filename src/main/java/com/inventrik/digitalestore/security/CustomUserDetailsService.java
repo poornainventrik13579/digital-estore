@@ -70,8 +70,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 case ADMIN:
                     authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
                     break;
-                case MANAGER:
-                    authorities.add(new SimpleGrantedAuthority("ROLE_MANAGER"));
+                case TENANT:
+                    authorities.add(new SimpleGrantedAuthority("ROLE_TENANT"));
                     break;
                 case USER:
                 default:

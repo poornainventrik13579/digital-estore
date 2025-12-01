@@ -25,7 +25,7 @@ public class PageController {
     private final PageService pageService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get pages for tenant with optional filters")
     public ResponseEntity<List<PageResponse>> getAllPages(
             @PathVariable Integer tenantId,
@@ -35,7 +35,7 @@ public class PageController {
     }
 
     @GetMapping("/{pageId}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get page by ID")
     public ResponseEntity<PageResponse> getPage(
             @PathVariable Integer tenantId,
@@ -44,7 +44,7 @@ public class PageController {
     }
 
     @GetMapping("/slug/{slug}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get page by slug")
     public ResponseEntity<PageResponse> getPageBySlug(
             @PathVariable Integer tenantId,
@@ -53,7 +53,7 @@ public class PageController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Create new page")
     public ResponseEntity<PageResponse> createPage(
             @PathVariable Integer tenantId,
@@ -63,7 +63,7 @@ public class PageController {
     }
 
     @PutMapping("/{pageId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Update page")
     public ResponseEntity<PageResponse> updatePage(
             @PathVariable Integer tenantId,
@@ -73,7 +73,7 @@ public class PageController {
     }
 
     @DeleteMapping("/{pageId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Delete page")
     public ResponseEntity<Void> deletePage(
             @PathVariable Integer tenantId,

@@ -34,7 +34,7 @@ public class CategoryController {
      * - status: Filter by status - "ACTIVE" or "INACTIVE" (optional)
      */
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get all categories with optional status filter")
     public ResponseEntity<List<CategoryResponse>> getAllCategories(
             @PathVariable Integer tenantId,
@@ -44,7 +44,7 @@ public class CategoryController {
     }
     
     @GetMapping("/{categoryId}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get a category by ID")
     public ResponseEntity<CategoryResponse> getCategory(
             @PathVariable Integer tenantId,
@@ -53,7 +53,7 @@ public class CategoryController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Create a new category (JSON)")
     public ResponseEntity<CategoryResponse> createCategoryJson(
             @PathVariable Integer tenantId,
@@ -66,7 +66,7 @@ public class CategoryController {
     }
     
     @PutMapping(path = "/{categoryId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Update a category (JSON)")
     public ResponseEntity<CategoryResponse> updateCategoryJson(
             @PathVariable Integer tenantId,
@@ -80,7 +80,7 @@ public class CategoryController {
     }
     
     @DeleteMapping("/{categoryId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Delete a category")
     public ResponseEntity<Void> deleteCategory(
             @PathVariable Integer tenantId,

@@ -6,7 +6,7 @@ package com.inventrik.digitalestore.domain.user;
 public enum UserRole {
     USER("Regular User"),
     ADMIN("Administrator"),
-    MANAGER("Manager");
+    TENANT("Tenant Admin");
     
     private final String displayName;
     

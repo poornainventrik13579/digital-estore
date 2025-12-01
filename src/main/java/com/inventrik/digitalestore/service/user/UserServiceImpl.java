@@ -130,10 +130,10 @@ public class UserServiceImpl implements UserService {
         
         // Generate a new user ID
         Long newUserId = idGeneratorService.generateId(tenantId, "USER");
-        
+
         // Generate OTP
         String otp = generateOTP();
-        
+
         User user = new User();
         user.setTenantId(tenantId);
         user.setUserId(newUserId);
@@ -145,7 +145,7 @@ public class UserServiceImpl implements UserService {
         user.setEmail(userRequest.getEmail());
         user.setUserType(userRequest.getUserType());
         user.setUserRole(userRequest.getUserRole());
-        
+
         // Set company details if user type is COMPANY
         if (userRequest.getUserType() != null && userRequest.getUserType() == com.inventrik.digitalestore.domain.user.UserType.COMPANY) {
             user.setCompanyName(userRequest.getCompanyName());
@@ -156,7 +156,7 @@ public class UserServiceImpl implements UserService {
             user.setCompanyPincode(userRequest.getCompanyPincode());
             user.setTaxId(userRequest.getTaxId());
         }
-        
+
         user.setOtp(otp);
         // Encode password
         user.setPasswordHash(passwordEncoder.encode(userRequest.getPassword()));

@@ -37,7 +37,7 @@ public class OrderController {
      * - status: Filter by status - Pending, Processing, Completed, Cancelled, Refunded, Partially Refunded (optional)
      */
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get all orders with optional filters (userId, status)")
     public ResponseEntity<List<OrderResponse>> getAllOrders(
             @Parameter(description = "Tenant ID", required = true)
@@ -51,7 +51,7 @@ public class OrderController {
     }
     
     @GetMapping("/{orderId}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get an order by ID")
     public ResponseEntity<OrderResponse> getOrder(
             @Parameter(description = "Tenant ID", required = true) 
@@ -62,7 +62,7 @@ public class OrderController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(
         summary = "Create a new order with a single product item", 
         description = "Creates a new order with a single product item. For multiple items, submit multiple orders."
@@ -99,7 +99,7 @@ public class OrderController {
     }
     
     @PutMapping(path = "/{orderId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Update an order (JSON)")
     public ResponseEntity<OrderResponse> updateOrderJson(
             @Parameter(description = "Tenant ID", required = true) 
@@ -116,7 +116,7 @@ public class OrderController {
     }
     
     @PutMapping(path = "/{orderId}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Update an order (Form)")
     public ResponseEntity<OrderResponse> updateOrder(
             @Parameter(description = "Tenant ID", required = true) 
@@ -133,7 +133,7 @@ public class OrderController {
     }
     
     @DeleteMapping("/{orderId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Delete an order")
     public ResponseEntity<Void> deleteOrder(
             @Parameter(description = "Tenant ID", required = true)
@@ -148,7 +148,7 @@ public class OrderController {
     // REMOVED: /status/{status} - now use GET /orders?status={status}
     
     @PostMapping("/{orderId}/complete")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Complete an order")
     public ResponseEntity<OrderResponse> completeOrder(
             @Parameter(description = "Tenant ID", required = true) 
@@ -164,7 +164,7 @@ public class OrderController {
     }
     
     @PostMapping("/{orderId}/cancel")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Cancel an order")
     public ResponseEntity<OrderResponse> cancelOrder(
             @Parameter(description = "Tenant ID", required = true) 
@@ -180,7 +180,7 @@ public class OrderController {
     }
     
     @PostMapping("/{orderId}/refund")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Refund an order")
     public ResponseEntity<OrderResponse> refundOrder(
             @Parameter(description = "Tenant ID", required = true) 

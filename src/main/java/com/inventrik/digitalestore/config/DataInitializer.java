@@ -30,6 +30,7 @@ public class DataInitializer {
                         newAdmin.setEmail("admin@example.com");
                         newAdmin.setPhone("1234567890");
                         newAdmin.setOtp("123456");
+                        newAdmin.setUserRole(com.inventrik.digitalestore.domain.user.UserRole.ADMIN);
                         newAdmin.setStatus("0"); // Active
                         newAdmin.setCreatedBy("sy");
                         newAdmin.setUpdatedBy("sy");
