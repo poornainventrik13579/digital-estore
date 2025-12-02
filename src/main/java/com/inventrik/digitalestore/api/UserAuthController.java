@@ -156,16 +156,4 @@ public class UserAuthController {
             ));
         }
     }
-
-    /**
-     * Get current user details
-     */
-    @GetMapping("/me")
-    @SecurityRequirement(name = "oauth2")
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
-    @Operation(summary = "Get current user")
-    public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
-        String username = authentication.getName();
-        return ResponseEntity.ok(userService.findByUsername(username));
-    }
 }

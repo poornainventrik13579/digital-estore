@@ -50,6 +50,20 @@ public class UserController {
     }
 
     /**
+     * Get current authenticated user details
+     */
+    @GetMapping("/api/v1/tenants/{tenantId}/users/me")
+    @SecurityRequirement(name = "oauth2")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @Operation(summary = "Get current user profile")
+    public ResponseEntity<UserResponse> getCurrentUser(
+            @PathVariable Integer tenantId,
+            Authentication authentication) {
+        String username = authentication.getName();
+        return ResponseEntity.ok(userService.findByUsername(username));
+    }
+
+    /**
      * Admin creates a user (not self-registration)
      */
     @PostMapping("/api/v1/tenants/{tenantId}/users")
