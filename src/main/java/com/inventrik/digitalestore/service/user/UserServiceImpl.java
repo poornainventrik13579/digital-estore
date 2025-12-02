@@ -12,6 +12,7 @@ import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.notification.EmailNotificationService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -56,7 +58,26 @@ public class UserServiceImpl implements UserService {
             user.getUpdated()
         );
     }
-    
+
+    /**
+     * Validates password complexity requirements
+     * Password must be at least 8 characters with uppercase, lowercase, and number
+     */
+    private void validatePasswordComplexity(String password) {
+        if (password == null || password.length() < 8) {
+            throw new BusinessException("Password must be at least 8 characters long");
+        }
+        if (!password.matches(".*[A-Z].*")) {
+            throw new BusinessException("Password must contain at least one uppercase letter");
+        }
+        if (!password.matches(".*[a-z].*")) {
+            throw new BusinessException("Password must contain at least one lowercase letter");
+        }
+        if (!password.matches(".*\\d.*")) {
+            throw new BusinessException("Password must contain at least one number");
+        }
+    }
+
     @Override
     public List<UserResponse> getAllUsers(Integer tenantId, String status, String username, String email) {
         if (username != null && !username.trim().isEmpty()) {
@@ -118,6 +139,9 @@ public class UserServiceImpl implements UserService {
         tenantRepository.findByTenantId(tenantId)
             .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
 
+        // Validate password complexity before proceeding
+        validatePasswordComplexity(userRequest.getPassword());
+
         if (userRepository.existsByTenantIdAndUsername(tenantId, userRequest.getUsername())) {
             throw new BusinessException("Username already exists");
         }
@@ -127,12 +151,10 @@ public class UserServiceImpl implements UserService {
         if (userRequest.getPhone() != null && userRepository.existsByTenantIdAndPhone(tenantId, userRequest.getPhone())) {
             throw new BusinessException("Phone number already exists");
         }
-        
-        // Generate a new user ID
-        Long newUserId = idGeneratorService.generateId(tenantId, "USER");
 
-        // Generate OTP
-        String otp = generateOTP();
+        Long newUserId = idGeneratorService.generateId(tenantId, "USER");
+        // TODO: OTP feature commented out - enable when email verification is ready
+        // String otp = generateOTP();
 
         User user = new User();
         user.setTenantId(tenantId);
@@ -157,19 +179,19 @@ public class UserServiceImpl implements UserService {
             user.setTaxId(userRequest.getTaxId());
         }
 
-        user.setOtp(otp);
-        // Encode password
+        // TODO: OTP feature commented out
+        // user.setOtp(otp);
         user.setPasswordHash(passwordEncoder.encode(userRequest.getPassword()));
         user.setStatus("0"); // Active status
-        // Ensure createdBy doesn't exceed 2 characters
-        user.setCreatedBy(String.format("%02d", newUserId % 98 + 1));
-        user.setUpdatedBy(String.format("%02d", newUserId % 98 + 1));
+        // Use proper audit code from createdBy parameter
+        user.setCreatedBy(getAuditCode(createdBy));
+        user.setUpdatedBy(getAuditCode(createdBy));
         user.setCreated(LocalDateTime.now());
         user.setUpdated(LocalDateTime.now());
-        
+
         User savedUser = userRepository.save(user);
         emailNotificationService.sendWelcomeEmail(savedUser);
-        
+
         return mapToDTO(savedUser);
     }
     
@@ -273,19 +295,59 @@ public class UserServiceImpl implements UserService {
         try {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
-            
-            // Generate reset token (using OTP for simplicity)
+
+            // TODO: OTP/Reset token feature commented out
+            // Generate reset token and store in OTP field
+            // String resetToken = generateOTP();
+            // user.setOtp(resetToken);
+            // user.setUpdated(LocalDateTime.now());
+            // userRepository.save(user);
+
+            // Send password reset email (without token for now)
             String resetToken = generateOTP();
-            
-            // Send password reset email
             emailNotificationService.sendPasswordResetEmail(user, resetToken);
-            
+
         } catch (ResourceNotFoundException e) {
-            // For security reasons, don't reveal if email exists or not
-            // Just log the error and return success to user
-            System.out.println("Password reset attempted for non-existent email: " + email);
+            // For security, don't reveal if email exists
+            log.warn("Password reset attempted for non-existent email: {}", email);
         }
     }
+
+    // TODO: OTP features - implement when email verification is ready
+    /*
+    @Override
+    @Transactional
+    public void resetPassword(String email, String otp, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException("Invalid email or OTP"));
+
+        if (user.getOtp() == null || !user.getOtp().equals(otp)) {
+            throw new BusinessException("Invalid or expired OTP");
+        }
+
+        validatePasswordComplexity(newPassword);
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setOtp(null); // Clear OTP after use
+        user.setUpdated(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void verifyEmail(String email, String otp) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException("Invalid email or OTP"));
+
+        if (user.getOtp() == null || !user.getOtp().equals(otp)) {
+            throw new BusinessException("Invalid or expired OTP");
+        }
+
+        user.setOtp(null); // Clear OTP after verification
+        user.setStatus("0"); // Activate user
+        user.setUpdated(LocalDateTime.now());
+        userRepository.save(user);
+    }
+    */
     
     public String getAuditCode(String username) {
         if (username == null || username.equals("system")) {

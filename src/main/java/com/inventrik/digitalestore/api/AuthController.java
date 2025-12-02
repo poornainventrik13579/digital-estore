@@ -2,6 +2,7 @@ package com.inventrik.digitalestore.api;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -40,6 +41,9 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
 
+    @Value("${app.base-url}")
+    private String appBaseUrl;
+
     /**
      * Authenticate platform admin and generate JWT token
      * Only accepts username (no tenantId)
@@ -62,7 +66,7 @@ public class AuthController {
                 .collect(Collectors.toList());
 
             JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("http://localhost:8080")
+                .issuer(appBaseUrl)
                 .issuedAt(now)
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .subject(authentication.getName())

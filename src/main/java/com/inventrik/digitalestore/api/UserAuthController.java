@@ -1,6 +1,7 @@
 package com.inventrik.digitalestore.api;
 
 import com.inventrik.digitalestore.dto.request.ForgotPasswordRequest;
+import com.inventrik.digitalestore.dto.request.LoginRequest;
 import com.inventrik.digitalestore.dto.request.SignupRequest;
 import com.inventrik.digitalestore.dto.request.UserRequest;
 import com.inventrik.digitalestore.dto.response.UserResponse;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +44,9 @@ public class UserAuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
+
+    @Value("${app.base-url}")
+    private String appBaseUrl;
 
     /**
      * User self-registration within a tenant
@@ -80,7 +85,7 @@ public class UserAuthController {
     @Operation(summary = "Login user within a tenant")
     public ResponseEntity<?> login(
             @PathVariable Integer tenantId,
-            @Valid @RequestBody SignupRequest loginRequest) {
+            @Valid @RequestBody LoginRequest loginRequest) {
         try {
             // Users use tenantId:username format
             String username = tenantId + ":" + loginRequest.getUsername();
@@ -95,7 +100,7 @@ public class UserAuthController {
                 .collect(Collectors.toList());
 
             JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("http://localhost:8080")
+                .issuer(appBaseUrl)
                 .issuedAt(now)
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .subject(authentication.getName())

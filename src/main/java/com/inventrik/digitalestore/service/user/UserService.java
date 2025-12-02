@@ -35,6 +35,10 @@ public interface UserService {
     // Forgot password functionality
     void sendPasswordResetEmail(String email);
 
+    // TODO: OTP features - implement when email verification is ready
+    // void resetPassword(String email, String otp, String newPassword);
+    // void verifyEmail(String email, String otp);
+
     // Get audit code for username
     String getAuditCode(String username);
 

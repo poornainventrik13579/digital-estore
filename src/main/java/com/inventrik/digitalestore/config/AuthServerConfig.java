@@ -48,6 +48,7 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 
@@ -58,6 +59,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 public class AuthServerConfig {
 
     private final UserDetailsService userDetailsService;
+
+    @Value("${app.base-url}")
+    private String appBaseUrl;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -84,7 +88,8 @@ public class AuthServerConfig {
     @Order(2)
     public SecurityFilterChain authApiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher("/api/v1/auth/**")
+            // Allow all authentication endpoints: platform, tenant admin, and user auth
+            .securityMatcher("/api/v1/auth/**", "/api/v1/tenants/*/auth/**")
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session
@@ -93,7 +98,7 @@ public class AuthServerConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .anyRequest().permitAll()
             );
-            
+
         return http.build();
     }
 
@@ -228,7 +233,7 @@ public class AuthServerConfig {
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder()
-                .issuer("http://localhost:8080")
+                .issuer(appBaseUrl)
                 .build();
     }
     
