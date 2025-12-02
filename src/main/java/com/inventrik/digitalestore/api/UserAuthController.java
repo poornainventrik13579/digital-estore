@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.http.HttpStatus;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
  * Handles user/customer authentication operations
  * Simplified endpoints without tenantId in URL path
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -153,6 +155,36 @@ public class UserAuthController {
             return ResponseEntity.ok(Map.of(
                 "message", "If an account with that email exists, we've sent a password reset link.",
                 "email", request.getEmail()
+            ));
+        }
+    }
+
+    /**
+     * Logout - Client should discard the JWT token
+     * This endpoint is for logging purposes and returning a success response
+     */
+    @PostMapping("/logout")
+    @SecurityRequirement(name = "oauth2")
+    @Operation(summary = "Logout user (JWT-based)")
+    public ResponseEntity<?> logout(Authentication authentication) {
+        try {
+            if (authentication != null && authentication.isAuthenticated()) {
+                String username = authentication.getName();
+                log.info("User logged out: {}", username);
+
+                return ResponseEntity.ok(Map.of(
+                    "message", "Logout successful. Please discard your access token on the client side.",
+                    "username", username
+                ));
+            }
+
+            return ResponseEntity.ok(Map.of(
+                "message", "Logout successful"
+            ));
+        } catch (Exception e) {
+            log.error("Logout error: {}", e.getMessage());
+            return ResponseEntity.ok(Map.of(
+                "message", "Logout successful"
             ));
         }
     }
