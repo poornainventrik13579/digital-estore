@@ -97,6 +97,7 @@ public class TenantAuthController {
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .subject(authentication.getName())
                 .claim("authorities", authorities)
+                .claim("tenantId", loginRequest.getTenantId()) // Add tenantId as separate claim
                 .build();
 
             String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();

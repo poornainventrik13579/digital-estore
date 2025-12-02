@@ -27,7 +27,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user;
-        String fullUsername; // Username to return in UserDetails (with tenant prefix for tenant users)
 
         // Check if username contains tenantId (format: "tenantId:username")
         // This is used for tenant-specific users (store admins, customers)
@@ -41,9 +40,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user = userRepository.findByTenantIdAndUsername(tenantId, actualUsername)
                         .orElseThrow(() -> new UsernameNotFoundException(
                                 "User not found with username: " + actualUsername + " in tenant: " + tenantId));
-
-                // For tenant users, return full username with tenant prefix for JWT
-                fullUsername = username; // e.g., "1:john"
             } catch (NumberFormatException e) {
                 throw new UsernameNotFoundException("Invalid tenant ID in username: " + username);
             }
@@ -51,13 +47,11 @@ public class CustomUserDetailsService implements UserDetailsService {
             // Non-tenant lookup: for platform/system admins only
             user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-
-            // For platform admins, return username as-is
-            fullUsername = user.getUsername();
         }
 
+        // Return just the username (without tenant prefix) - tenantId will be stored as separate JWT claim
         return new org.springframework.security.core.userdetails.User(
-                fullUsername,
+                user.getUsername(),
                 user.getPasswordHash(),
                 user.getStatus().equals("0"), // enabled
                 true, // account not expired

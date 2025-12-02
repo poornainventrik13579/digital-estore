@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 public class SignupRequest {
-    // tenantId removed - comes from path variable in UserAuthController
+    private Integer tenantId; // Optional - for tenant-scoped users
 
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50)

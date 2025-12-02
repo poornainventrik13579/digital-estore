@@ -32,13 +32,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Handles user/customer authentication operations within a tenant context
- * All endpoints are tenant-scoped with tenantId in the URL path
+ * Handles user/customer authentication operations
+ * Simplified endpoints without tenantId in URL path
  */
 @RestController
-@RequestMapping("/api/v1/tenants/{tenantId}/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "User Authentication", description = "Authentication APIs for tenant users/customers")
+@Tag(name = "User Authentication", description = "Authentication APIs for users/customers")
 public class UserAuthController {
 
     private final UserService userService;
@@ -49,15 +49,15 @@ public class UserAuthController {
     private String appBaseUrl;
 
     /**
-     * User self-registration within a tenant
+     * User self-registration
      * Public endpoint - no authentication required
      */
     @PostMapping("/signup")
     @Operation(summary = "Register a new user (public endpoint)")
-    public ResponseEntity<?> signup(
-            @PathVariable Integer tenantId,
-            @Valid @RequestBody SignupRequest request) {
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
         try {
+            Integer tenantId = request.getTenantId() != null ? request.getTenantId() : 1; // Default tenant
+
             UserRequest userRequest = new UserRequest();
             userRequest.setUsername(request.getUsername());
             userRequest.setEmail(request.getEmail());
@@ -70,7 +70,8 @@ public class UserAuthController {
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "message", "User registered successfully",
                 "userId", user.getUserId(),
-                "username", user.getUsername()
+                "username", user.getUsername(),
+                "tenantId", user.getTenantId()
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -79,16 +80,16 @@ public class UserAuthController {
 
     /**
      * Authenticate user and generate JWT token
-     * Uses tenantId:username format for authentication
+     * Uses tenantId:username format if tenantId provided, otherwise plain username
      */
     @PostMapping("/login")
-    @Operation(summary = "Login user within a tenant")
-    public ResponseEntity<?> login(
-            @PathVariable Integer tenantId,
-            @Valid @RequestBody LoginRequest loginRequest) {
+    @Operation(summary = "Login user")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
         try {
-            // Users use tenantId:username format
-            String username = tenantId + ":" + loginRequest.getUsername();
+            // Build username: if tenantId provided, use "tenantId:username" format, else just username
+            String username = loginRequest.getTenantId() != null
+                ? loginRequest.getTenantId() + ":" + loginRequest.getUsername()
+                : loginRequest.getUsername();
 
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, loginRequest.getPassword())
@@ -99,13 +100,19 @@ public class UserAuthController {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
-            JwtClaimsSet claims = JwtClaimsSet.builder()
+            JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
                 .issuer(appBaseUrl)
                 .issuedAt(now)
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .subject(authentication.getName())
-                .claim("authorities", authorities)
-                .build();
+                .claim("authorities", authorities);
+
+            // Add tenantId as separate claim if provided
+            if (loginRequest.getTenantId() != null) {
+                claimsBuilder.claim("tenantId", loginRequest.getTenantId());
+            }
+
+            JwtClaimsSet claims = claimsBuilder.build();
 
             String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
 
@@ -123,14 +130,12 @@ public class UserAuthController {
     }
 
     /**
-     * Password reset for tenant users
+     * Password reset for users
      * Public endpoint - doesn't reveal if email exists
      */
     @PostMapping("/forgot-password")
-    @Operation(summary = "Request password reset for a user")
-    public ResponseEntity<?> forgotPassword(
-            @PathVariable Integer tenantId,
-            @Valid @RequestBody ForgotPasswordRequest request) {
+    @Operation(summary = "Request password reset")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         try {
             userService.sendPasswordResetEmail(request.getEmail());
             return ResponseEntity.ok(Map.of(
@@ -153,9 +158,7 @@ public class UserAuthController {
     @SecurityRequirement(name = "oauth2")
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get current user")
-    public ResponseEntity<UserResponse> getCurrentUser(
-            @PathVariable Integer tenantId,
-            Authentication authentication) {
+    public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
         String username = authentication.getName();
         return ResponseEntity.ok(userService.findByUsername(username));
     }

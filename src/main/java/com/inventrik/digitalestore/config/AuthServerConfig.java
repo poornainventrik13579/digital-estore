@@ -88,8 +88,9 @@ public class AuthServerConfig {
     @Order(2)
     public SecurityFilterChain authApiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Allow all authentication endpoints: platform, tenant admin, and user auth
-            .securityMatcher("/api/v1/auth/**", "/api/v1/tenants/*/auth/**")
+            // Public auth endpoints (signup, login, forgot-password) - exclude /me
+            .securityMatcher("/api/v1/auth/*/login", "/api/v1/auth/*/signup", "/api/v1/auth/login",
+                            "/api/v1/auth/signup", "/api/v1/auth/forgot-password", "/api/v1/auth/*/forgot-password")
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session

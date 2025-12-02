@@ -51,9 +51,6 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
         try {
-            if (loginRequest.getTenantId() != null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Platform admin login does not require tenant ID"));
-            }
 
             // Platform admins use just username (no tenant prefix)
             Authentication authentication = authenticationManager.authenticate(

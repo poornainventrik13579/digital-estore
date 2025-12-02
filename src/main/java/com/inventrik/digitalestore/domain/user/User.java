@@ -78,7 +78,7 @@ public class User {
     private String taxId;
 
     @Column(name = "otp", length = 8)
-    private String otp;
+    private String otp = "000000"; // Default OTP value (OTP feature disabled)
 
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;

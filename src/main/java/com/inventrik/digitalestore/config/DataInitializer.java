@@ -29,7 +29,7 @@ public class DataInitializer {
                         newAdmin.setLastName("User");
                         newAdmin.setEmail("admin@example.com");
                         newAdmin.setPhone("1234567890");
-                        newAdmin.setOtp("123456");
+                        newAdmin.setOtp("000000"); // Default OTP (feature disabled)
                         newAdmin.setUserRole(com.inventrik.digitalestore.domain.user.UserRole.ADMIN);
                         newAdmin.setStatus("0"); // Active
                         newAdmin.setCreatedBy("sy");
