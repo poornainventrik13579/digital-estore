@@ -53,8 +53,11 @@ public class TenantAuthController {
      * Create new tenant with admin user
      * Public endpoint - no authentication required
      */
-    @PostMapping("/signup")
-    public ResponseEntity<?> tenantSignup(@Valid @RequestBody TenantSignupRequest request) {
+    @PostMapping(value = "/signup", consumes = {
+            "application/json",
+            "application/x-www-form-urlencoded"
+    })
+    public ResponseEntity<?> tenantSignup(@Valid @ModelAttribute TenantSignupRequest request) {
         try {
             TenantResponse tenant = tenantService.createTenantWithAdmin(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(

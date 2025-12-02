@@ -52,9 +52,12 @@ public class UserAuthController {
      * User self-registration
      * Public endpoint - no authentication required
      */
-    @PostMapping("/signup")
+    @PostMapping(value = "/signup", consumes = {
+            "application/json",
+            "application/x-www-form-urlencoded"
+    })
     @Operation(summary = "Register a new user (public endpoint)")
-    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
+    public ResponseEntity<?> signup(@Valid @ModelAttribute SignupRequest request) {
         try {
             Integer tenantId = request.getTenantId() != null ? request.getTenantId() : 1; // Default tenant
 
