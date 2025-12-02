@@ -82,9 +82,12 @@ public class UserAuthController {
      * Authenticate user and generate JWT token
      * Uses tenantId:username format if tenantId provided, otherwise plain username
      */
-    @PostMapping("/login")
+    @PostMapping(value = "/login", consumes = {
+            "application/json",
+            "application/x-www-form-urlencoded"
+    })
     @Operation(summary = "Login user")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@Valid @ModelAttribute LoginRequest loginRequest) {
         try {
             // Build username: if tenantId provided, use "tenantId:username" format, else just username
             String username = loginRequest.getTenantId() != null

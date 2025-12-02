@@ -72,8 +72,11 @@ public class TenantAuthController {
      * Authenticate tenant admin and generate JWT token
      * Uses tenantId:username format for authentication
      */
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
+    @PostMapping(value = "/login", consumes = {
+            "application/json",
+            "application/x-www-form-urlencoded"
+    })
+    public ResponseEntity<?> login(@Valid @ModelAttribute LoginRequest loginRequest) {
         try {
             if (loginRequest.getTenantId() == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Tenant ID is required for tenant admin login"));

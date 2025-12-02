@@ -48,8 +48,11 @@ public class AuthController {
      * Authenticate platform admin and generate JWT token
      * Only accepts username (no tenantId)
      */
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
+    @PostMapping(value = "/login", consumes = {
+            "application/json",
+            "application/x-www-form-urlencoded"
+    })
+    public ResponseEntity<?> login(@Valid @ModelAttribute LoginRequest loginRequest) {
         try {
 
             // Platform admins use just username (no tenant prefix)
