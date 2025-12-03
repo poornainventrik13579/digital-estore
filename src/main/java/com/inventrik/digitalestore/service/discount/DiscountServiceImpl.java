@@ -57,7 +57,7 @@ public class DiscountServiceImpl implements DiscountService {
         discountCode.setMaxUses(request.getMaxUses());
         discountCode.setUsedCount(0);
         discountCode.setValidFrom(request.getValidFrom());
-        discountCode.setValidTo(request.getValidTo());
+        discountCode.setValidTo(request.getValidUntil());
         discountCode.setStatus("0");
         discountCode.setCreatedBy(auditCode);
         discountCode.setUpdatedBy(auditCode);
@@ -87,7 +87,7 @@ public class DiscountServiceImpl implements DiscountService {
         discountCode.setMinOrderAmount(request.getMinOrderAmount());
         discountCode.setMaxUses(request.getMaxUses());
         discountCode.setValidFrom(request.getValidFrom());
-        discountCode.setValidTo(request.getValidTo());
+        discountCode.setValidTo(request.getValidUntil());
         discountCode.setUpdatedBy(truncatedUsername);
         
         DiscountCode updatedDiscountCode = discountCodeRepository.save(discountCode);
@@ -280,14 +280,14 @@ public class DiscountServiceImpl implements DiscountService {
         response.setMaxUses(discountCode.getMaxUses());
         response.setUsedCount(discountCode.getUsedCount());
         response.setValidFrom(discountCode.getValidFrom());
-        response.setValidTo(discountCode.getValidTo());
+        response.setValidUntil(discountCode.getValidTo());
         response.setStatus(discountCode.getStatus());
         response.setCreated(discountCode.getCreated());
         response.setUpdated(discountCode.getUpdated());
         response.setActive(discountCode.isActive());
         response.setValid(discountCode.isValid());
         response.setHasUsesRemaining(discountCode.hasUsesRemaining());
-        response.setRemainingUses(discountCode.getMaxUses() == 0 ? Integer.MAX_VALUE : 
+        response.setRemainingUses(discountCode.getMaxUses() == 0 ? Integer.MAX_VALUE :
                                  Math.max(0, discountCode.getMaxUses() - discountCode.getUsedCount()));
         return response;
     }

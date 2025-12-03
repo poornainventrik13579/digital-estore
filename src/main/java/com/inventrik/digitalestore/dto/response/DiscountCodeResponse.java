@@ -40,9 +40,9 @@ public class DiscountCodeResponse {
     
     @Schema(description = "Valid from date", example = "2024-01-01T00:00:00")
     private LocalDateTime validFrom;
-    
-    @Schema(description = "Valid to date", example = "2024-12-31T23:59:59")
-    private LocalDateTime validTo;
+
+    @Schema(description = "Valid until date", example = "2024-12-31T23:59:59")
+    private LocalDateTime validUntil;
     
     @Schema(description = "Status", example = "0")
     private String status;

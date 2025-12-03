@@ -104,7 +104,25 @@ public class DiscountController {
 
         return ResponseEntity.ok(discountService.getAllDiscountCodes(tenantId, code, status));
     }
-    
+
+    @GetMapping("/code/{code}")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @Operation(summary = "Get discount code by code", description = "Retrieve a specific discount code by its code string")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Discount code found"),
+        @ApiResponse(responseCode = "404", description = "Discount code not found")
+    })
+    public ResponseEntity<DiscountCodeResponse> getDiscountByCode(
+            @PathVariable Integer tenantId,
+            @PathVariable String code) {
+
+        List<DiscountCodeResponse> discounts = discountService.getAllDiscountCodes(tenantId, code, null);
+        if (discounts.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(discounts.get(0));
+    }
+
     @DeleteMapping("/{discountId}")
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Delete a discount code", description = "Soft delete a discount code")

@@ -18,18 +18,18 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/currencies")
+@RequestMapping("/api/v1/tenants/{tenantId}/currencies")
 @RequiredArgsConstructor
 @Tag(name = "Currency Management", description = "APIs for managing currencies and exchange rates")
 @SecurityRequirement(name = "oauth2")
 public class CurrencyController {
-    
+
     private final CurrencyService currencyService;
-    
+
     @GetMapping
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get all currencies", description = "Retrieve all active currencies for a tenant")
-    public ResponseEntity<List<CurrencyResponse>> getAllCurrencies(@RequestHeader("X-Tenant-ID") Integer tenantId) {
+    public ResponseEntity<List<CurrencyResponse>> getAllCurrencies(@PathVariable Integer tenantId) {
         List<CurrencyResponse> currencies = currencyService.getAllCurrencies(tenantId);
         return ResponseEntity.ok(currencies);
     }
@@ -38,7 +38,7 @@ public class CurrencyController {
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get currency by code", description = "Retrieve a specific currency by its code")
     public ResponseEntity<CurrencyResponse> getCurrency(
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @PathVariable Integer tenantId,
             @PathVariable String currencyCode) {
         CurrencyResponse currency = currencyService.getCurrency(tenantId, currencyCode);
         return ResponseEntity.ok(currency);
@@ -48,7 +48,7 @@ public class CurrencyController {
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Create currency", description = "Create a new currency")
     public ResponseEntity<CurrencyResponse> createCurrency(
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @PathVariable Integer tenantId,
             @Valid @RequestBody CurrencyRequest request) {
         CurrencyResponse currency = currencyService.createCurrency(tenantId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(currency);
@@ -58,7 +58,7 @@ public class CurrencyController {
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Update currency", description = "Update an existing currency")
     public ResponseEntity<CurrencyResponse> updateCurrency(
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @PathVariable Integer tenantId,
             @PathVariable String currencyCode,
             @Valid @RequestBody CurrencyRequest request) {
         CurrencyResponse currency = currencyService.updateCurrency(tenantId, currencyCode, request);
@@ -69,7 +69,7 @@ public class CurrencyController {
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Delete currency", description = "Delete a currency (soft delete)")
     public ResponseEntity<Void> deleteCurrency(
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @PathVariable Integer tenantId,
             @PathVariable String currencyCode) {
         currencyService.deleteCurrency(tenantId, currencyCode);
         return ResponseEntity.noContent().build();
@@ -78,7 +78,7 @@ public class CurrencyController {
     @GetMapping("/default")
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get default currency", description = "Get the default currency for a tenant")
-    public ResponseEntity<CurrencyResponse> getDefaultCurrency(@RequestHeader("X-Tenant-ID") Integer tenantId) {
+    public ResponseEntity<CurrencyResponse> getDefaultCurrency(@PathVariable Integer tenantId) {
         CurrencyResponse currency = currencyService.getDefaultCurrency(tenantId);
         return ResponseEntity.ok(currency);
     }
@@ -87,7 +87,7 @@ public class CurrencyController {
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Convert amount", description = "Convert amount between currencies")
     public ResponseEntity<Map<String, Object>> convertAmount(
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @PathVariable Integer tenantId,
             @RequestParam BigDecimal amount,
             @RequestParam String fromCurrency,
             @RequestParam String toCurrency) {
@@ -109,7 +109,7 @@ public class CurrencyController {
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get exchange rate", description = "Get exchange rate between two currencies")
     public ResponseEntity<Map<String, Object>> getExchangeRate(
-            @RequestHeader("X-Tenant-ID") Integer tenantId,
+            @PathVariable Integer tenantId,
             @RequestParam String fromCurrency,
             @RequestParam String toCurrency) {
         BigDecimal exchangeRate = currencyService.getExchangeRate(fromCurrency, toCurrency, tenantId);

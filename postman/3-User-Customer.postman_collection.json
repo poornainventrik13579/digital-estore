@@ -401,6 +401,59 @@
       ]
     },
     {
+      "name": "Public Pages",
+      "item": [
+        {
+          "name": "Get All Pages",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/pages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "public", "tenants", "{{tenant_id}}", "pages"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Page by ID",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/pages/{{page_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "public", "tenants", "{{tenant_id}}", "pages", "{{page_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Page by Slug",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/public/tenants/{{tenant_id}}/pages/slug/about-us",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "public", "tenants", "{{tenant_id}}", "pages", "slug", "about-us"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "My Orders",
       "item": [
         {

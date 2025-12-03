@@ -41,14 +41,14 @@ public class DiscountCodeRequest {
     
     @Schema(description = "Valid from date", example = "2024-01-01T00:00:00")
     private LocalDateTime validFrom;
-    
-    @Schema(description = "Valid to date", example = "2024-12-31T23:59:59")
-    private LocalDateTime validTo;
-    
-    @AssertTrue(message = "Valid to date must be after valid from date")
+
+    @Schema(description = "Valid until date", example = "2024-12-31T23:59:59")
+    private LocalDateTime validUntil;
+
+    @AssertTrue(message = "Valid until date must be after valid from date")
     public boolean isValidDateRange() {
-        if (validFrom != null && validTo != null) {
-            return validTo.isAfter(validFrom);
+        if (validFrom != null && validUntil != null) {
+            return validUntil.isAfter(validFrom);
         }
         return true;
     }

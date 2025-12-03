@@ -294,6 +294,19 @@
           "response": []
         },
         {
+          "name": "Get Theme by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/themes/{{theme_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "themes", "{{theme_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Update Theme",
           "request": {
             "method": "PUT",
@@ -571,6 +584,58 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Complete Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/{{order_id}}/complete",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "{{order_id}}", "complete"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/{{order_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "{{order_id}}", "cancel"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refund Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/{{order_id}}/refund",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "{{order_id}}", "refund"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Order",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "orders", "{{order_id}}"]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -660,6 +725,99 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Get Discount by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/{{discount_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "{{discount_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Discount by Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/code/WELCOME10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "code", "WELCOME10"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Discounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts?status=ACTIVE",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Discount Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"discountCode\": \"WELCOME10\",\n    \"orderAmount\": 100.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/validate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "validate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Discount Usage Statistics",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/{{discount_id}}/usage",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "{{discount_id}}", "usage"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cleanup Expired Discounts",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/discounts/cleanup-expired",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "discounts", "cleanup-expired"]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -675,6 +833,19 @@
               "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes",
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tax by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/taxes/{{tax_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tenants", "{{tenant_id}}", "taxes", "{{tax_id}}"]
             }
           },
           "response": []
