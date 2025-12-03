@@ -107,25 +107,18 @@ public class DiscountServiceImpl implements DiscountService {
     @Override
     @Transactional(readOnly = true)
     public List<DiscountCodeResponse> getAllDiscountCodes(Integer tenantId, String code, String status) {
+
         if (code != null && !code.trim().isEmpty()) {
             return discountCodeRepository.findByTenantIdAndCodeAndStatus(tenantId, code.toUpperCase(), "0").stream()
                     .map(this::mapToResponse)
                     .collect(Collectors.toList());
         }
-
-        if ("ACTIVE".equalsIgnoreCase(status)) {
-            return discountCodeRepository.findActiveDiscountCodes(tenantId, "0", LocalDateTime.now()).stream()
-                    .map(this::mapToResponse)
-                    .collect(Collectors.toList());
-        }
-
         if (status != null && !status.trim().isEmpty()) {
-            String statusCode = "ACTIVE".equalsIgnoreCase(status) ? "0" : "1";
+            String statusCode = "ACTIVE".equalsIgnoreCase(status) ? "0" : "-1";
             return discountCodeRepository.findByTenantIdAndStatus(tenantId, statusCode).stream()
                     .map(this::mapToResponse)
                     .collect(Collectors.toList());
         }
-
         List<DiscountCodeResponse> activeDiscounts = discountCodeRepository.findByTenantIdAndStatus(tenantId, "0").stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());

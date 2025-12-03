@@ -34,7 +34,7 @@ public class PaymentController {
     private final PaymentService paymentService;
     
     @GetMapping
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Get all payments with optional filters: ?orderId={id} or ?status={status}")
     public ResponseEntity<List<PaymentResponse>> getAllPayments(
             @PathVariable Integer tenantId,
@@ -45,7 +45,7 @@ public class PaymentController {
     }
     
     @GetMapping("/{paymentId}")
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Get a payment by ID")
     public ResponseEntity<PaymentResponse> getPayment(
             @PathVariable Integer tenantId,
@@ -54,7 +54,7 @@ public class PaymentController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Create a new payment (JSON)")
     public ResponseEntity<PaymentResponse> createPaymentJson(
             @PathVariable Integer tenantId,
@@ -67,7 +67,7 @@ public class PaymentController {
     }
     
     @PostMapping("/{paymentId}/confirm")
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Confirm a payment")
     public ResponseEntity<PaymentResponse> confirmPayment(
             @PathVariable Integer tenantId,
@@ -81,7 +81,7 @@ public class PaymentController {
     }
     
     @PostMapping("/{paymentId}/cancel")
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Cancel a payment")
     public ResponseEntity<PaymentResponse> cancelPayment(
             @PathVariable Integer tenantId,
@@ -94,7 +94,7 @@ public class PaymentController {
     }
     
     @PostMapping("/{paymentId}/refund")
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Refund a payment")
     public ResponseEntity<PaymentResponse> refundPayment(
             @PathVariable Integer tenantId,
@@ -107,7 +107,7 @@ public class PaymentController {
     }
     
     @PostMapping("/{paymentId}/partial-refund")
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Process partial refund", description = "Process a partial refund for a payment")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Partial refund processed successfully"),

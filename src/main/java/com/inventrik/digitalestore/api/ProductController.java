@@ -39,7 +39,7 @@ public class ProductController {
      * - keyword: Search by keyword (optional)
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Get all products with optional filters (category, status, keyword)")
     public ResponseEntity<PagedResponse<ProductResponse>> getAllProducts(
             @PathVariable Integer tenantId,
@@ -53,7 +53,7 @@ public class ProductController {
     }
     
     @GetMapping("/{productId}")
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Get a product by ID")
     public ResponseEntity<ProductResponse> getProduct(
             @PathVariable Integer tenantId,
@@ -62,7 +62,7 @@ public class ProductController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Create a new product (JSON)")
     public ResponseEntity<ProductResponse> createProductJson(
             @PathVariable Integer tenantId,
@@ -75,7 +75,7 @@ public class ProductController {
     }
     
     @PutMapping(path = "/{productId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Update a product (JSON)")
     public ResponseEntity<ProductResponse> updateProductJson(
             @PathVariable Integer tenantId,
@@ -89,7 +89,7 @@ public class ProductController {
     }
     
     @DeleteMapping("/{productId}")
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Delete a product")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable Integer tenantId,

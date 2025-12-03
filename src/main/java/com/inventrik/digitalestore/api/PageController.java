@@ -25,7 +25,7 @@ public class PageController {
     private final PageService pageService;
 
     @GetMapping
-    // @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    // @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Get pages for tenant with optional filters (public)")
     public ResponseEntity<List<PageResponse>> getAllPages(
             @PathVariable Integer tenantId,
@@ -35,7 +35,7 @@ public class PageController {
     }
 
     @GetMapping("/{pageId}")
-    // @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    // @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Get page by ID (public)")
     public ResponseEntity<PageResponse> getPage(
             @PathVariable Integer tenantId,
@@ -44,7 +44,7 @@ public class PageController {
     }
 
     @GetMapping("/slug/{slug}")
-    // @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    // @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Get page by slug (public)")
     public ResponseEntity<PageResponse> getPageBySlug(
             @PathVariable Integer tenantId,
@@ -53,8 +53,8 @@ public class PageController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_TENANT')")
     // @SecurityRequirement(name = "oauth2")
+    // @PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT')")
     @Operation(summary = "Create new page (admin only)")
     public ResponseEntity<PageResponse> createPage(
             @PathVariable Integer tenantId,
@@ -64,8 +64,8 @@ public class PageController {
     }
 
     @PutMapping("/{pageId}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_TENANT')")
     // @SecurityRequirement(name = "oauth2")
+    // @PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT')")
     @Operation(summary = "Update page (admin only)")
     public ResponseEntity<PageResponse> updatePage(
             @PathVariable Integer tenantId,
@@ -75,8 +75,8 @@ public class PageController {
     }
 
     @DeleteMapping("/{pageId}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_TENANT')")
     // @SecurityRequirement(name = "oauth2")
+    // @PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT')")
     @Operation(summary = "Delete page (admin only)")
     public ResponseEntity<Void> deletePage(
             @PathVariable Integer tenantId,

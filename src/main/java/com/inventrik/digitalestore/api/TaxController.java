@@ -26,7 +26,7 @@ public class TaxController {
     private final TaxService taxService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Get taxes for tenant with optional filters")
     public ResponseEntity<List<TaxResponse>> getAllTaxes(
             @PathVariable Integer tenantId,
@@ -36,7 +36,7 @@ public class TaxController {
     }
 
     @GetMapping("/{taxId}")
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Get tax by ID")
     public ResponseEntity<TaxResponse> getTax(
             @PathVariable Integer tenantId,
@@ -45,7 +45,7 @@ public class TaxController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Create new tax")
     public ResponseEntity<TaxResponse> createTax(
             @PathVariable Integer tenantId,
@@ -57,7 +57,7 @@ public class TaxController {
     }
 
     @PutMapping("/{taxId}")
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Update tax")
     public ResponseEntity<TaxResponse> updateTax(
             @PathVariable Integer tenantId,
@@ -69,7 +69,7 @@ public class TaxController {
     }
 
     @DeleteMapping("/{taxId}")
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Delete tax")
     public ResponseEntity<Void> deleteTax(
             @PathVariable Integer tenantId,

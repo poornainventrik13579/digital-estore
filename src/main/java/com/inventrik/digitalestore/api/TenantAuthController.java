@@ -147,7 +147,7 @@ public class TenantAuthController {
      */
     @GetMapping("/me")
     @SecurityRequirement(name = "oauth2")
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Get current tenant admin user")
     public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
         String username = authentication.getName();
