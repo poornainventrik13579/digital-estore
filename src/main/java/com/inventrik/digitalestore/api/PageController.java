@@ -25,7 +25,7 @@ public class PageController {
     private final PageService pageService;
 
     @GetMapping
-    // @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
+    // @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get pages for tenant with optional filters (public)")
     public ResponseEntity<List<PageResponse>> getAllPages(
             @PathVariable Integer tenantId,
@@ -35,7 +35,7 @@ public class PageController {
     }
 
     @GetMapping("/{pageId}")
-    // @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
+    // @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get page by ID (public)")
     public ResponseEntity<PageResponse> getPage(
             @PathVariable Integer tenantId,
@@ -44,7 +44,7 @@ public class PageController {
     }
 
     @GetMapping("/slug/{slug}")
-    // @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
+    // @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get page by slug (public)")
     public ResponseEntity<PageResponse> getPageBySlug(
             @PathVariable Integer tenantId,

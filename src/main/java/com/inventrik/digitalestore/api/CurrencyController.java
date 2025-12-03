@@ -27,7 +27,7 @@ public class CurrencyController {
     private final CurrencyService currencyService;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get all currencies", description = "Retrieve all active currencies for a tenant")
     public ResponseEntity<List<CurrencyResponse>> getAllCurrencies(@PathVariable Integer tenantId) {
         List<CurrencyResponse> currencies = currencyService.getAllCurrencies(tenantId);
@@ -35,7 +35,7 @@ public class CurrencyController {
     }
 
     @GetMapping("/{currencyCode}")
-    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get currency by code", description = "Retrieve a specific currency by its code")
     public ResponseEntity<CurrencyResponse> getCurrency(
             @PathVariable Integer tenantId,
@@ -45,7 +45,7 @@ public class CurrencyController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Create currency", description = "Create a new currency")
     public ResponseEntity<CurrencyResponse> createCurrency(
             @PathVariable Integer tenantId,
@@ -55,7 +55,7 @@ public class CurrencyController {
     }
 
     @PutMapping("/{currencyCode}")
-    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Update currency", description = "Update an existing currency")
     public ResponseEntity<CurrencyResponse> updateCurrency(
             @PathVariable Integer tenantId,
@@ -66,7 +66,7 @@ public class CurrencyController {
     }
 
     @DeleteMapping("/{currencyCode}")
-    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Delete currency", description = "Delete a currency (soft delete)")
     public ResponseEntity<Void> deleteCurrency(
             @PathVariable Integer tenantId,
@@ -76,7 +76,7 @@ public class CurrencyController {
     }
 
     @GetMapping("/default")
-    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get default currency", description = "Get the default currency for a tenant")
     public ResponseEntity<CurrencyResponse> getDefaultCurrency(@PathVariable Integer tenantId) {
         CurrencyResponse currency = currencyService.getDefaultCurrency(tenantId);
@@ -84,7 +84,7 @@ public class CurrencyController {
     }
 
     @GetMapping("/convert")
-    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Convert amount", description = "Convert amount between currencies")
     public ResponseEntity<Map<String, Object>> convertAmount(
             @PathVariable Integer tenantId,
@@ -106,7 +106,7 @@ public class CurrencyController {
     }
 
     @GetMapping("/exchange-rate")
-    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get exchange rate", description = "Get exchange rate between two currencies")
     public ResponseEntity<Map<String, Object>> getExchangeRate(
             @PathVariable Integer tenantId,
