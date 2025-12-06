@@ -35,6 +35,7 @@ public class PageServiceImpl implements PageService {
             page.getContent(),
             page.getMetaTitle(),
             page.getMetaDescription(),
+            page.getTemplate(),
             page.getStatus(),
             page.getVisibility(),
             page.getIsDefault(),
@@ -97,6 +98,7 @@ public class PageServiceImpl implements PageService {
         page.setContent(request.getContent());
         page.setMetaTitle(request.getMetaTitle());
         page.setMetaDescription(request.getMetaDescription());
+        page.setTemplate(request.getTemplate() != null ? request.getTemplate(): "default");
         page.setStatus(request.getStatus() != null ? request.getStatus() : PageStatus.DRAFT);
         page.setVisibility(request.getVisibility() != null ? request.getVisibility() : PageVisibility.PUBLIC);
         page.setIsDefault(request.getIsDefault() != null ? request.getIsDefault() : false);
@@ -121,6 +123,9 @@ public class PageServiceImpl implements PageService {
         page.setMetaTitle(request.getMetaTitle());
         page.setMetaDescription(request.getMetaDescription());
 
+        if (request.getTemplate() != null){
+            page.setTemplate(request.getTemplate());
+        }
         if (request.getStatus() != null) {
             PageStatus oldStatus = page.getStatus();
             page.setStatus(request.getStatus());

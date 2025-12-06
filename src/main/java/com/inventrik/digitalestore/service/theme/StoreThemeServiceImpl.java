@@ -32,6 +32,8 @@ public class StoreThemeServiceImpl implements StoreThemeService {
             theme.getBannerImage(),
             theme.getJoinCta(),
             theme.getCopyrightText(),
+            theme.getHeroTitle(),
+            theme.getHeroDescription(),
             theme.getStatus(),
             theme.getCreated(),
             theme.getUpdated()
@@ -67,6 +69,8 @@ public class StoreThemeServiceImpl implements StoreThemeService {
         theme.setBannerImage(request.getBannerImage());
         theme.setJoinCta(request.getJoinCta());
         theme.setCopyrightText(request.getCopyrightText());
+        theme.setHeroTitle(request.getHeroTitle());
+        theme.setHeroDescription(request.getHeroDescription());
         theme.setStatus("0");
         theme.setCreatedBy(username.substring(0, Math.min(2, username.length())));
         theme.setUpdatedBy(username.substring(0, Math.min(2, username.length())));
@@ -87,6 +91,10 @@ public class StoreThemeServiceImpl implements StoreThemeService {
         theme.setBannerImage(request.getBannerImage());
         theme.setJoinCta(request.getJoinCta());
         theme.setCopyrightText(request.getCopyrightText());
+
+        theme.setHeroTitle(request.getHeroTitle());
+        theme.setHeroDescription(request.getHeroDescription());
+        
         theme.setUpdatedBy(username.substring(0, Math.min(2, username.length())));
 
         StoreTheme updated = storeThemeRepository.save(theme);

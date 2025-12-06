@@ -16,6 +16,7 @@ public class PageResponse {
     private String content;
     private String metaTitle;
     private String metaDescription;
+    private String template;
     private PageStatus status;
     private PageVisibility visibility;
     private Boolean isDefault;

@@ -35,6 +35,9 @@ public class Page {
     @Column(name = "meta_description", length = 256)
     private String metaDescription;
 
+    @Column(name = "template", nullable = false, columnDefinition = "VARCHAR(20)")
+    private String template = "default";
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(20)")
     private PageStatus status = PageStatus.DRAFT;

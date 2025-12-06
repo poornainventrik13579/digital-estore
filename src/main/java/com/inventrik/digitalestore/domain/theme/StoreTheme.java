@@ -38,6 +38,12 @@ public class StoreTheme {
     @Column(name = "copyright_text", length = 256)
     private String copyrightText;
 
+    @Column(name = "hero_title", length = 256)
+    private String heroTitle;
+
+    @Column(name = "hero_description", columnDefinition =  "TEXT")
+    private String heroDescription;
+
     @Column(name = "status", nullable = false, length = 2)
     private String status;
 

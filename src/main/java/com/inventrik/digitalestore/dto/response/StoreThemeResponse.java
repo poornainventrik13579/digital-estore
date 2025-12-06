@@ -15,6 +15,8 @@ public class StoreThemeResponse {
     private String bannerImage;
     private String joinCta;
     private String copyrightText;
+    private String heroTitle;
+    private String heroDescription;
     private String status;
     private LocalDateTime created;
     private LocalDateTime updated;

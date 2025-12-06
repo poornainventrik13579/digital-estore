@@ -10,4 +10,6 @@ public class StoreThemeRequest {
     private String bannerImage;
     private String joinCta;
     private String copyrightText;
+    private String heroTitle;
+    private String heroDescription;
 }
