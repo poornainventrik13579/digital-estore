@@ -17,7 +17,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/tenants")
+@RequestMapping("/api/v1/public/tenants")
 @RequiredArgsConstructor
 @Tag(name = "Tenant Management")
 @SecurityRequirement(name = "oauth2")
@@ -26,14 +26,14 @@ public class TenantController {
     private final TenantService tenantService;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+//    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get all tenants")
     public ResponseEntity<List<TenantResponse>> getAllTenants() {
         return ResponseEntity.ok(tenantService.getAllTenants());
     }
 
     @GetMapping("/{tenantId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+//    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get tenant by ID")
     public ResponseEntity<TenantResponse> getTenant(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(tenantService.getTenant(tenantId));
