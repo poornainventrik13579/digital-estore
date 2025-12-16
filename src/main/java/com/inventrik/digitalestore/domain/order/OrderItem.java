@@ -1,5 +1,6 @@
 package com.inventrik.digitalestore.domain.order;
 
+import com.inventrik.digitalestore.domain.product.Product;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -60,6 +61,13 @@ public class OrderItem {
         @JoinColumn(name = "order_id", referencedColumnName = "order_id", insertable = false, updatable = false)
     })
     private Order order;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumns({
+        @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
+        @JoinColumn(name = "product_id", referencedColumnName = "product_id", insertable = false, updatable = false)
+    })
+    private Product product;
     
     @PrePersist
     protected void onCreate() {

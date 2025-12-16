@@ -68,6 +68,16 @@ public class OrderServiceImpl implements OrderService {
     
     // Utility method to convert OrderItem entity to OrderItemResponse DTO
     private OrderItemResponse mapToOrderItemDTO(OrderItem orderItem) {
+        String productName = null;
+        String productImageUrl = null;
+  
+        if (orderItem.getProduct() != null) {
+            productName = orderItem.getProduct().getProductName();
+            productImageUrl = orderItem.getProduct().getImage1Url();
+            if (productImageUrl == null || productImageUrl.trim().isEmpty()) {
+                productImageUrl = orderItem.getProduct().getThumbnail();
+            }
+        }
         return new OrderItemResponse(
             orderItem.getOrderItemId(),
             orderItem.getOrderId(),
@@ -76,7 +86,9 @@ public class OrderServiceImpl implements OrderService {
             orderItem.getLicenseKey(),
             orderItem.getStatus(),
             orderItem.getCreated(),
-            orderItem.getUpdated()
+            orderItem.getUpdated(),
+            productName,
+            productImageUrl
         );
     }
     

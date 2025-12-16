@@ -19,4 +19,6 @@ public class OrderItemResponse {
     private String status;
     private LocalDateTime created;
     private LocalDateTime updated;
+    private String productName;
+    private String productImageUrl;
 }
