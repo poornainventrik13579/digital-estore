@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 @Data
@@ -35,13 +36,15 @@ public class UserRequest {
     
     @Schema(description = "Phone number", example = "+1-555-123-4567", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "Phone number is required")
-    @Size(max = 100, message = "Phone number must be less than 100 characters")
+    @Pattern(regexp = "^\\+?[\\d\\s\\-()]+$", message = "Invalid phone format")
+    @Size(max = 15, message = "Phone number must be less than 15 characters")
     private String phone;
     
     @Schema(description = "Email address", example = "john.doe@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "Email is required")
+    @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Invalid email format")
     @Email(message = "Email should be valid")
-    @Size(max = 100, message = "Email must be less than 100 characters")
+    @Size(max = 320, message = "Email must be less than 320 characters")
     private String email;
     
     @Schema(description = "Password (min 8 characters)", example = "securePassword123", requiredMode = Schema.RequiredMode.REQUIRED)

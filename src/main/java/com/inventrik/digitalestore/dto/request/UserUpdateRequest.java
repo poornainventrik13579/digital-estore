@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 @Data
@@ -27,13 +28,15 @@ public class UserUpdateRequest {
     @Size(max = 256, message = "Image URL must be less than 256 characters")
     private String image;
     
-    @Schema(description = "Phone number", example = "+1-555-123-4567")
-    @Size(max = 100, message = "Phone number must be less than 100 characters")
+    @Schema(description = "Phone number", example = "+1-555-123-4567", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Pattern(regexp = "^\\+?[\\d\\s\\-()]+$", message = "Invalid phone format")
+    @Size(max = 15, message = "Phone number must be less than 15 characters")
     private String phone;
     
-    @Schema(description = "Email address", example = "john.doe@example.com")
+    @Schema(description = "Email address", example = "john.doe@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Invalid email format")
     @Email(message = "Email should be valid")
-    @Size(max = 100, message = "Email must be less than 100 characters")
+    @Size(max = 320, message = "Email must be less than 320 characters")
     private String email;
     
     @Schema(description = "User type (INDIVIDUAL or COMPANY)", example = "INDIVIDUAL")
