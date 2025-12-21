@@ -10,6 +10,6 @@ import java.util.Optional;
 @Repository
 public interface StoreThemeRepository extends JpaRepository<StoreTheme, StoreTheme.StoreThemePK> {
     List<StoreTheme> findByTenantId(Integer tenantId);
-    Optional<StoreTheme> findByTenantIdAndThemeId(Integer tenantId, Integer themeId);
-    void deleteByTenantIdAndThemeId(Integer tenantId, Integer themeId);
+    Optional<StoreTheme> findByTenantIdAndThemeId(Integer tenantId, Long themeId);
+    void deleteByTenantIdAndThemeId(Integer tenantId, Long themeId);
 }

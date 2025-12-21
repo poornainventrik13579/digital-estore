@@ -37,7 +37,7 @@ public class StoreThemePublicController {
     @Operation(summary = "Get theme by ID")
     public ResponseEntity<StoreThemeResponse> getTheme(
             @PathVariable Integer tenantId,
-            @PathVariable Integer themeId) {
+            @PathVariable Long themeId) {
         return ResponseEntity.ok(storeThemeService.getTheme(tenantId, themeId));
     }
 
