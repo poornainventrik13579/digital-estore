@@ -17,7 +17,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/public/tenants")
+@RequestMapping("/api/v1/tenants")
 @RequiredArgsConstructor
 @Tag(name = "Tenant Management")
 @SecurityRequirement(name = "oauth2")
@@ -26,21 +26,21 @@ public class TenantController {
     private final TenantService tenantService;
 
     @GetMapping
-//    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+   @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get all tenants")
     public ResponseEntity<List<TenantResponse>> getAllTenants() {
         return ResponseEntity.ok(tenantService.getAllTenants());
     }
 
     @GetMapping("/{tenantId}")
-//    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+   @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get tenant by ID")
     public ResponseEntity<TenantResponse> getTenant(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(tenantService.getTenant(tenantId));
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     @Operation(summary = "Create new tenant")
     public ResponseEntity<TenantResponse> createTenant(
             @Valid @RequestBody TenantRequest request,
@@ -51,7 +51,7 @@ public class TenantController {
     }
 
     @PutMapping("/{tenantId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     @Operation(summary = "Update tenant")
     public ResponseEntity<TenantResponse> updateTenant(
             @PathVariable Integer tenantId,
@@ -62,7 +62,7 @@ public class TenantController {
     }
 
     @DeleteMapping("/{tenantId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     @Operation(summary = "Delete tenant")
     public ResponseEntity<Void> deleteTenant(@PathVariable Integer tenantId) {
         tenantService.deleteTenant(tenantId);

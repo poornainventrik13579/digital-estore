@@ -26,14 +26,14 @@ public class StoreThemeController {
     private final StoreThemeService storeThemeService;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get all themes for tenant")
     public ResponseEntity<List<StoreThemeResponse>> getAllThemes(@PathVariable Integer tenantId) {
         return ResponseEntity.ok(storeThemeService.getAllThemes(tenantId));
     }
 
     @GetMapping("/{themeId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get theme by ID")
     public ResponseEntity<StoreThemeResponse> getTheme(
             @PathVariable Integer tenantId,
@@ -42,7 +42,7 @@ public class StoreThemeController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Create new theme")
     public ResponseEntity<StoreThemeResponse> createTheme(
             @PathVariable Integer tenantId,
@@ -54,7 +54,7 @@ public class StoreThemeController {
     }
 
     @PutMapping("/{themeId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Update theme")
     public ResponseEntity<StoreThemeResponse> updateTheme(
             @PathVariable Integer tenantId,
@@ -66,7 +66,7 @@ public class StoreThemeController {
     }
 
     @DeleteMapping("/{themeId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Delete theme")
     public ResponseEntity<Void> deleteTheme(
             @PathVariable Integer tenantId,

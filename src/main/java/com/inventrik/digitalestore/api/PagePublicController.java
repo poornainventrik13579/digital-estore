@@ -16,16 +16,16 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/tenants/{tenantId}/pages")
+@RequestMapping("/api/v1/public/tenants/{tenantId}/pages")
 @RequiredArgsConstructor
 @Tag(name = "Page Management")
-@SecurityRequirement(name = "oauth2")
-public class PageController {
+// @SecurityRequirement(name = "oauth2")
+public class PagePublicController {
 
     private final PageService pageService;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
+    // @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get pages for tenant with optional filters (public)")
     public ResponseEntity<List<PageResponse>> getAllPages(
             @PathVariable Integer tenantId,
@@ -35,7 +35,7 @@ public class PageController {
     }
 
     @GetMapping("/{pageId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
+    // @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get page by ID (public)")
     public ResponseEntity<PageResponse> getPage(
             @PathVariable Integer tenantId,
@@ -44,41 +44,11 @@ public class PageController {
     }
 
     @GetMapping("/slug/{slug}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
+    // @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get page by slug (public)")
     public ResponseEntity<PageResponse> getPageBySlug(
             @PathVariable Integer tenantId,
             @PathVariable String slug) {
         return ResponseEntity.ok(pageService.getPageBySlug(tenantId, slug));
-    }
-
-    @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT')")
-    @Operation(summary = "Create new page (admin only)")
-    public ResponseEntity<PageResponse> createPage(
-            @PathVariable Integer tenantId,
-            @Valid @RequestBody PageRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(pageService.createPage(tenantId, request));
-    }
-
-    @PutMapping("/{pageId}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT')")
-    @Operation(summary = "Update page (admin only)")
-    public ResponseEntity<PageResponse> updatePage(
-            @PathVariable Integer tenantId,
-            @PathVariable Long pageId,
-            @Valid @RequestBody PageRequest request) {
-        return ResponseEntity.ok(pageService.updatePage(tenantId, pageId, request));
-    }
-
-    @DeleteMapping("/{pageId}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT')")
-    @Operation(summary = "Delete page (admin only)")
-    public ResponseEntity<Void> deletePage(
-            @PathVariable Integer tenantId,
-            @PathVariable Long pageId) {
-        pageService.deletePage(tenantId, pageId);
-        return ResponseEntity.noContent().build();
     }
 }
