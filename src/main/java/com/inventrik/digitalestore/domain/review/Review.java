@@ -23,13 +23,13 @@ public class Review {
     
     @Id
     @Column(name = "review_id")
-    private Long reviewId;
-    
+    private String reviewId;
+
     @Column(name = "product_id", nullable = false)
-    private Long productId;
-    
+    private String productId;
+
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private String userId;
     
     @Column(name = "rating", nullable = false)
     private Integer rating;
@@ -82,19 +82,19 @@ public class Review {
     
     public static class ReviewPK implements Serializable {
         private Integer tenantId;
-        private Long reviewId;
-        
+        private String reviewId;
+
         public ReviewPK() {}
-        
-        public ReviewPK(Integer tenantId, Long reviewId) {
+
+        public ReviewPK(Integer tenantId, String reviewId) {
             this.tenantId = tenantId;
             this.reviewId = reviewId;
         }
-        
+
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getReviewId() { return reviewId; }
-        public void setReviewId(Long reviewId) { this.reviewId = reviewId; }
+        public String getReviewId() { return reviewId; }
+        public void setReviewId(String reviewId) { this.reviewId = reviewId; }
         
         @Override
         public boolean equals(Object o) {

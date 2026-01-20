@@ -50,6 +50,6 @@ public class ProductRequest {
     private String thumbnail;
     
     private String metadata;
-    
-    private Long categoryId;
+
+    private String categoryId;
 }

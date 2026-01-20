@@ -11,9 +11,9 @@ import java.util.Optional;
 @Repository
 public interface ProductPriceRepository extends JpaRepository<ProductPrice, ProductPriceId> {
     
-    List<ProductPrice> findByTenantIdAndProductIdAndStatus(Integer tenantId, Long productId, String status);
-    
-    Optional<ProductPrice> findByTenantIdAndProductIdAndCurrencyCodeAndStatus(Integer tenantId, Long productId, String currencyCode, String status);
+    List<ProductPrice> findByTenantIdAndProductIdAndStatus(Integer tenantId, String productId, String status);
+
+    Optional<ProductPrice> findByTenantIdAndProductIdAndCurrencyCodeAndStatus(Integer tenantId, String productId, String currencyCode, String status);
     
     List<ProductPrice> findByTenantIdAndStatus(Integer tenantId, String status);
 } 

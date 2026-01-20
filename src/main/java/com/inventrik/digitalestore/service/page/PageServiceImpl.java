@@ -67,7 +67,7 @@ public class PageServiceImpl implements PageService {
     }
 
     @Override
-    public PageResponse getPage(Integer tenantId, Long pageId) {
+    public PageResponse getPage(Integer tenantId, String pageId) {
         Page page = pageRepository.findByTenantIdAndPageId(tenantId, pageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Page not found"));
         return mapToDTO(page);
@@ -114,7 +114,7 @@ public class PageServiceImpl implements PageService {
 
     @Override
     @Transactional
-    public PageResponse updatePage(Integer tenantId, Long pageId, PageRequest request) {
+    public PageResponse updatePage(Integer tenantId, String pageId, PageRequest request) {
         Page page = pageRepository.findByTenantIdAndPageId(tenantId, pageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Page not found"));
 
@@ -144,7 +144,7 @@ public class PageServiceImpl implements PageService {
 
     @Override
     @Transactional
-    public void deletePage(Integer tenantId, Long pageId) {
+    public void deletePage(Integer tenantId, String pageId) {
         if (!pageRepository.findByTenantIdAndPageId(tenantId, pageId).isPresent()) {
             throw new ResourceNotFoundException("Page not found");
         }

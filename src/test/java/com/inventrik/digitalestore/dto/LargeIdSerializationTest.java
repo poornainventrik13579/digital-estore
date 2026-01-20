@@ -26,9 +26,9 @@ public class LargeIdSerializationTest {
 
     @Test
     public void testUserIdSerializedAsString() throws Exception {
-        // Create a large user ID similar to what IdGeneratorService generates
-        Long largeUserId = Math.abs(UUID.randomUUID().getMostSignificantBits());
-        
+        // Create a large user ID as String (UUID-based)
+        String largeUserId = UUID.randomUUID().toString().replace("-", "");
+
         UserResponse userResponse = new UserResponse(
             largeUserId, 1, "testuser", "Test", "User", null,
             "+1-555-0001", "test@example.com", UserType.INDIVIDUAL,
@@ -38,24 +38,20 @@ public class LargeIdSerializationTest {
 
         // Serialize to JSON
         String json = objectMapper.writeValueAsString(userResponse);
-        
+
         // Verify that userId appears as a string in JSON (surrounded by quotes)
-        assertTrue(json.contains("\"userId\":\"" + largeUserId + "\""), 
+        assertTrue(json.contains("\"userId\":\"" + largeUserId + "\""),
                    "UserId should be serialized as a string: " + json);
-        
-        // Verify it doesn't appear as a number (without quotes)
-        assertFalse(json.contains("\"userId\":" + largeUserId + ","), 
-                    "UserId should not be serialized as a number");
-        
+
         System.out.println("✅ Large UserId: " + largeUserId);
         System.out.println("✅ JSON contains userId as string: " + json.contains("\"userId\":\"" + largeUserId + "\""));
     }
 
     @Test
     public void testOrderIdSerializedAsString() throws Exception {
-        Long largeOrderId = Math.abs(UUID.randomUUID().getMostSignificantBits());
-        Long largeUserId = Math.abs(UUID.randomUUID().getMostSignificantBits());
-        
+        String largeOrderId = UUID.randomUUID().toString().replace("-", "");
+        String largeUserId = UUID.randomUUID().toString().replace("-", "");
+
         OrderResponse orderResponse = new OrderResponse(
             largeOrderId, 1, largeUserId, LocalDateTime.now(),
             "USD", new BigDecimal("99.99"), new BigDecimal("1.0"),
@@ -63,21 +59,21 @@ public class LargeIdSerializationTest {
         );
 
         String json = objectMapper.writeValueAsString(orderResponse);
-        
+
         assertTrue(json.contains("\"orderId\":\"" + largeOrderId + "\""),
                    "OrderId should be serialized as a string");
         assertTrue(json.contains("\"userId\":\"" + largeUserId + "\""),
                    "UserId should be serialized as a string");
-        
+
         System.out.println("✅ Large OrderId: " + largeOrderId + ", UserId: " + largeUserId);
         System.out.println("✅ JSON contains both IDs as strings");
     }
 
     @Test
     public void testProductIdSerializedAsString() throws Exception {
-        Long largeProductId = Math.abs(UUID.randomUUID().getMostSignificantBits());
-        Long largeCategoryId = Math.abs(UUID.randomUUID().getMostSignificantBits());
-        
+        String largeProductId = UUID.randomUUID().toString().replace("-", "");
+        String largeCategoryId = UUID.randomUUID().toString().replace("-", "");
+
         ProductResponse productResponse = new ProductResponse(
             largeProductId, 1, "Test Product", "Description",
             new BigDecimal("29.99"), "USD", null, null, null, null, null,
@@ -86,12 +82,12 @@ public class LargeIdSerializationTest {
         );
 
         String json = objectMapper.writeValueAsString(productResponse);
-        
+
         assertTrue(json.contains("\"productId\":\"" + largeProductId + "\""),
                    "ProductId should be serialized as a string");
         assertTrue(json.contains("\"categoryId\":\"" + largeCategoryId + "\""),
                    "CategoryId should be serialized as a string");
-        
+
         System.out.println("✅ Large ProductId: " + largeProductId + ", CategoryId: " + largeCategoryId);
         System.out.println("✅ JSON contains both IDs as strings");
     }
@@ -100,14 +96,14 @@ public class LargeIdSerializationTest {
     public void testJavaScriptSafeInteger() {
         // Test that shows the problem with JavaScript Number.MAX_SAFE_INTEGER
         Long maxSafeInt = 9007199254740991L; // JavaScript Number.MAX_SAFE_INTEGER
-        Long largeUserId = Math.abs(UUID.randomUUID().getMostSignificantBits());
-        
+        String largeUserId = UUID.randomUUID().toString().replace("-", "");
+
         System.out.println("JavaScript MAX_SAFE_INTEGER: " + maxSafeInt);
-        System.out.println("Generated Large UserId: " + largeUserId);
-        System.out.println("Is UserId larger than MAX_SAFE_INTEGER? " + (largeUserId > maxSafeInt));
-        
-        // Most UUID-based IDs will be larger than JavaScript's safe integer range
-        assertTrue(largeUserId > maxSafeInt, 
-                   "Generated userId should exceed JavaScript's safe integer range");
+        System.out.println("Generated Large UserId (String): " + largeUserId);
+        System.out.println("UserId length: " + largeUserId.length() + " characters");
+
+        // UUID-based IDs are 32-character hex strings, well beyond JavaScript's safe integer
+        assertTrue(largeUserId.length() == 32,
+                   "Generated userId should be 32 characters (UUID without dashes)");
     }
 } 

@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DownloadHistoryResponse {
-    private Long downloadId;
-    private Long orderItemId;
+    private String downloadId;
+    private String orderItemId;
     private LocalDateTime downloadDate;
     private String ipAddress;
     private String status;

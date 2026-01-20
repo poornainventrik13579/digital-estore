@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DigitalProductDetailsResponse {
-    private Long productId;
+    private String productId;
     private Integer tenantId;
     private String fileUrl;
     private Integer fileSize;

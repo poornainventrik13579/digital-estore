@@ -25,14 +25,14 @@ public class OrderItem {
     
     @Id
     @Column(name = "order_id", nullable = false)
-    private Long orderId;
-    
+    private String orderId;
+
     @Id
     @Column(name = "order_item_id")
-    private Long orderItemId;
-    
+    private String orderItemId;
+
     @Column(name = "product_id", nullable = false)
-    private Long productId;
+    private String productId;
     
     @Column(name = "price_at_purchase", nullable = false, precision = 10, scale = 2)
     private BigDecimal priceAtPurchase;
@@ -82,23 +82,23 @@ public class OrderItem {
     
     public static class OrderItemPK implements Serializable {
         private Integer tenantId;
-        private Long orderId;
-        private Long orderItemId;
-        
+        private String orderId;
+        private String orderItemId;
+
         public OrderItemPK() {}
-        
-        public OrderItemPK(Integer tenantId, Long orderId, Long orderItemId) {
+
+        public OrderItemPK(Integer tenantId, String orderId, String orderItemId) {
             this.tenantId = tenantId;
             this.orderId = orderId;
             this.orderItemId = orderItemId;
         }
-        
+
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getOrderId() { return orderId; }
-        public void setOrderId(Long orderId) { this.orderId = orderId; }
-        public Long getOrderItemId() { return orderItemId; }
-        public void setOrderItemId(Long orderItemId) { this.orderItemId = orderItemId; }
+        public String getOrderId() { return orderId; }
+        public void setOrderId(String orderId) { this.orderId = orderId; }
+        public String getOrderItemId() { return orderItemId; }
+        public void setOrderItemId(String orderItemId) { this.orderItemId = orderItemId; }
         
         @Override
         public boolean equals(Object o) {

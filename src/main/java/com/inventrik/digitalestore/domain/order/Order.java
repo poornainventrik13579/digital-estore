@@ -26,10 +26,10 @@ public class Order {
     
     @Id
     @Column(name = "order_id")
-    private Long orderId;
-    
+    private String orderId;
+
     @Column(name = "user_id")
-    private Long userId;
+    private String userId;
     
     @Column(name = "order_date", nullable = false)
     private LocalDateTime orderDate;
@@ -76,7 +76,6 @@ public class Order {
     public void addOrderItem(OrderItem orderItem) {
         orderItems.add(orderItem);
         orderItem.setOrder(this);
-        orderItem.setOrderId(this.orderId);
         orderItem.setTenantId(this.tenantId);
     }
     
@@ -88,20 +87,20 @@ public class Order {
     
     public static class OrderPK implements Serializable {
         private Integer tenantId;
-        private Long orderId;
-        
+        private String orderId;
+
         public OrderPK() {}
-        
-        public OrderPK(Integer tenantId, Long orderId) {
+
+        public OrderPK(Integer tenantId, String orderId) {
             this.tenantId = tenantId;
             this.orderId = orderId;
         }
-        
+
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getOrderId() { return orderId; }
-        public void setOrderId(Long orderId) { this.orderId = orderId; }
-        
+        public String getOrderId() { return orderId; }
+        public void setOrderId(String orderId) { this.orderId = orderId; }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -109,7 +108,7 @@ public class Order {
             OrderPK orderPK = (OrderPK) o;
             return Objects.equals(tenantId, orderPK.tenantId) && Objects.equals(orderId, orderPK.orderId);
         }
-        
+
         @Override
         public int hashCode() {
             return Objects.hash(tenantId, orderId);

@@ -40,7 +40,7 @@ public class TaxController {
     @Operation(summary = "Get tax by ID")
     public ResponseEntity<TaxResponse> getTax(
             @PathVariable Integer tenantId,
-            @PathVariable Long taxId) {
+            @PathVariable String taxId) {
         return ResponseEntity.ok(taxService.getTax(tenantId, taxId));
     }
 
@@ -61,7 +61,7 @@ public class TaxController {
     @Operation(summary = "Update tax")
     public ResponseEntity<TaxResponse> updateTax(
             @PathVariable Integer tenantId,
-            @PathVariable Long taxId,
+            @PathVariable String taxId,
             @Valid @RequestBody TaxRequest request,
             Authentication authentication) {
         String username = (authentication != null) ? authentication.getName() : "system";
@@ -73,7 +73,7 @@ public class TaxController {
     @Operation(summary = "Delete tax")
     public ResponseEntity<Void> deleteTax(
             @PathVariable Integer tenantId,
-            @PathVariable Long taxId) {
+            @PathVariable String taxId) {
         taxService.deleteTax(tenantId, taxId);
         return ResponseEntity.noContent().build();
     }

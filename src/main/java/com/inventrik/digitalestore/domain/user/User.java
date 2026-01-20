@@ -28,7 +28,7 @@ public class User {
 
     @Id
     @Column(name = "user_id")
-    private Long userId;
+    private String userId;
 
     @Column(name = "username", nullable = false, length = 50)
     private String username;
@@ -111,20 +111,20 @@ public class User {
     
     public static class UserPK implements Serializable {
         private Integer tenantId;
-        private Long userId;
-        
+        private String userId;
+
         public UserPK() {}
-        
-        public UserPK(Integer tenantId, Long userId) {
+
+        public UserPK(Integer tenantId, String userId) {
             this.tenantId = tenantId;
             this.userId = userId;
         }
-        
+
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getUserId() { return userId; }
-        public void setUserId(Long userId) { this.userId = userId; }
-        
+        public String getUserId() { return userId; }
+        public void setUserId(String userId) { this.userId = userId; }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -132,7 +132,7 @@ public class User {
             UserPK userPK = (UserPK) o;
             return Objects.equals(tenantId, userPK.tenantId) && Objects.equals(userId, userPK.userId);
         }
-        
+
         @Override
         public int hashCode() {
             return Objects.hash(tenantId, userId);

@@ -14,18 +14,18 @@ public interface ProductBundleRepository extends JpaRepository<ProductBundle, Pr
     
     List<ProductBundle> findByTenantIdAndStatus(Integer tenantId, String status);
     
-    Optional<ProductBundle> findByTenantIdAndBundleIdAndStatus(Integer tenantId, Long bundleId, String status);
-    
+    Optional<ProductBundle> findByTenantIdAndBundleIdAndStatus(Integer tenantId, String bundleId, String status);
+
     List<ProductBundle> findByTenantId(Integer tenantId);
-    
-    Optional<ProductBundle> findByTenantIdAndBundleId(Integer tenantId, Long bundleId);
-    
+
+    Optional<ProductBundle> findByTenantIdAndBundleId(Integer tenantId, String bundleId);
+
     @Query("SELECT pb FROM ProductBundle pb WHERE pb.tenantId = :tenantId AND pb.status = '0' ORDER BY pb.created DESC")
     List<ProductBundle> findActiveBundles(@Param("tenantId") Integer tenantId);
-    
+
     @Query("SELECT pb FROM ProductBundle pb WHERE pb.tenantId = :tenantId AND pb.bundleName LIKE %:name% AND pb.status = '0'")
     List<ProductBundle> findByBundleNameContaining(@Param("tenantId") Integer tenantId, @Param("name") String name);
-    
+
     @Query("SELECT COUNT(pb) FROM ProductBundle pb WHERE pb.tenantId = :tenantId AND pb.status = '0'")
-    Long countActiveBundles(@Param("tenantId") Integer tenantId);
+    Integer countActiveBundles(@Param("tenantId") Integer tenantId);
 } 

@@ -22,7 +22,7 @@ public class PaymentAudit {
     private String auditId;
     
     @Column(name = "payment_id")
-    private Long paymentId;
+    private String paymentId;
     
     @Column(name = "event_type", nullable = false)
     private String eventType;

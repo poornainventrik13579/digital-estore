@@ -61,7 +61,7 @@ public class ProductServiceImpl implements ProductService {
     
     @Override
     @Cacheable(value = "products", key = "#tenantId + ':page:' + #page + ':' + #size + ':' + #categoryId + ':' + #status + ':' + #keyword")
-    public PagedResponse<ProductResponse> getAllProductsPaginated(Integer tenantId, int page, int size, Long categoryId, String status, String keyword) {
+    public PagedResponse<ProductResponse> getAllProductsPaginated(Integer tenantId, int page, int size, String categoryId, String status, String keyword) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("created").descending());
         Page<Product> productPage;
 
@@ -85,19 +85,19 @@ public class ProductServiceImpl implements ProductService {
     
     @Override
     @Cacheable(value = "products", key = "#tenantId + ':product:' + #productId")
-    public ProductResponse getProduct(Integer tenantId, Long productId) {
+    public ProductResponse getProduct(Integer tenantId, String productId) {
         Product product = productRepository.findByTenantIdAndProductId(tenantId, productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
         return mapToDTO(product);
     }
-    
+
     @Override
     @Transactional
     public ProductResponse createProduct(Integer tenantId, String username, ProductRequest productRequest) {
         tenantRepository.findByTenantId(tenantId)
             .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
 
-        Long newProductId = idGeneratorService.generateId(tenantId, "PRODUCT");
+        String newProductId = idGeneratorService.generateId(tenantId, "PRODUCT");
 
         Product product = new Product();
         product.setTenantId(tenantId);
@@ -136,7 +136,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
-    public ProductResponse updateProduct(Integer tenantId, Long productId, String username, ProductUpdateRequest updateRequest) {
+    public ProductResponse updateProduct(Integer tenantId, String productId, String username, ProductUpdateRequest updateRequest) {
         Product product = productRepository.findByTenantIdAndProductId(tenantId, productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
         
@@ -199,7 +199,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
-    public void deleteProduct(Integer tenantId, Long productId) {
+    public void deleteProduct(Integer tenantId, String productId) {
         if (!productRepository.findByTenantIdAndProductId(tenantId, productId).isPresent()) {
             throw new ResourceNotFoundException("Product not found with id: " + productId);
         }

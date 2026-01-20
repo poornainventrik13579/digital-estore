@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS ProductBundles;
 -- Create ProductBundles table with correct lowercase name
 CREATE TABLE productbundles (
     tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    bundle_id BIGINT(15) NOT NULL,
+    bundle_id VARCHAR(32) NOT NULL,
     bundle_name VARCHAR(100) NOT NULL,
     description TEXT,
     bundle_price DECIMAL(10, 2) NOT NULL,
@@ -27,9 +27,9 @@ CREATE TABLE productbundles (
 -- Create BundleItems table with correct lowercase name
 CREATE TABLE bundleitems (
     tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    bundle_item_id BIGINT(15) NOT NULL,
-    bundle_id BIGINT(15) NOT NULL,
-    product_id BIGINT(15) NOT NULL,
+    bundle_item_id VARCHAR(32) NOT NULL,
+    bundle_id VARCHAR(32) NOT NULL,
+    product_id VARCHAR(32) NOT NULL,
     quantity INT NOT NULL DEFAULT 1,
     status VARCHAR(2) NOT NULL DEFAULT '0', -- 0: ACTIVE, -1: INACTIVE
     created_by VARCHAR(2) NOT NULL,

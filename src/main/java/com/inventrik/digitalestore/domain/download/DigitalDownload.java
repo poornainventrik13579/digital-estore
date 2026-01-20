@@ -23,10 +23,10 @@ public class DigitalDownload {
     
     @Id
     @Column(name = "download_id")
-    private Long downloadId;
-    
+    private String downloadId;
+
     @Column(name = "order_item_id", nullable = false)
-    private Long orderItemId;
+    private String orderItemId;
     
     @Column(name = "download_date", nullable = false)
     private LocalDateTime downloadDate;
@@ -63,19 +63,19 @@ public class DigitalDownload {
     
     public static class DigitalDownloadPK implements Serializable {
         private Integer tenantId;
-        private Long downloadId;
-        
+        private String downloadId;
+
         public DigitalDownloadPK() {}
-        
-        public DigitalDownloadPK(Integer tenantId, Long downloadId) {
+
+        public DigitalDownloadPK(Integer tenantId, String downloadId) {
             this.tenantId = tenantId;
             this.downloadId = downloadId;
         }
-        
+
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getDownloadId() { return downloadId; }
-        public void setDownloadId(Long downloadId) { this.downloadId = downloadId; }
+        public String getDownloadId() { return downloadId; }
+        public void setDownloadId(String downloadId) { this.downloadId = downloadId; }
         
         @Override
         public boolean equals(Object o) {

@@ -11,6 +11,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class ProductPriceId implements Serializable {
     private Integer tenantId;
-    private Long productId;
+    private String productId;
     private String currencyCode;
 } 

@@ -3,9 +3,9 @@
 
 CREATE TABLE reviews (
     tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    review_id BIGINT(15) NOT NULL,
-    product_id BIGINT(15) NOT NULL,
-    user_id BIGINT(15) NOT NULL,
+    review_id VARCHAR(32) NOT NULL,
+    product_id VARCHAR(32) NOT NULL,
+    user_id VARCHAR(32) NOT NULL,
     rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
     comment TEXT,
     review_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

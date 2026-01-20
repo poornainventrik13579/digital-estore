@@ -25,5 +25,5 @@ public class ValidateDiscountRequest {
     private BigDecimal orderAmount;
     
     @Schema(description = "User ID for usage validation", example = "12345")
-    private Long userId;
+    private String userId;
 } 

@@ -43,8 +43,8 @@ public class ProductUpdateRequest {
     private String thumbnail;
     
     private String metadata;
-    
-    private Long categoryId;
-    
+
+    private String categoryId;
+
     private String status;
 }

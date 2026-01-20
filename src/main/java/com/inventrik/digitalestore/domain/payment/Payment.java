@@ -24,10 +24,10 @@ public class Payment {
     
     @Id
     @Column(name = "payment_id")
-    private Long paymentId;
-    
+    private String paymentId;
+
     @Column(name = "order_id", nullable = false)
-    private Long orderId;
+    private String orderId;
     
     @Column(name = "currency", length = 3)
     private String currency;
@@ -94,20 +94,20 @@ public class Payment {
     
     public static class PaymentPK implements Serializable {
         private Integer tenantId;
-        private Long paymentId;
-        
+        private String paymentId;
+
         public PaymentPK() {}
-        
-        public PaymentPK(Integer tenantId, Long paymentId) {
+
+        public PaymentPK(Integer tenantId, String paymentId) {
             this.tenantId = tenantId;
             this.paymentId = paymentId;
         }
-        
+
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getPaymentId() { return paymentId; }
-        public void setPaymentId(Long paymentId) { this.paymentId = paymentId; }
-        
+        public String getPaymentId() { return paymentId; }
+        public void setPaymentId(String paymentId) { this.paymentId = paymentId; }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -115,7 +115,7 @@ public class Payment {
             PaymentPK paymentPK = (PaymentPK) o;
             return Objects.equals(tenantId, paymentPK.tenantId) && Objects.equals(paymentId, paymentPK.paymentId);
         }
-        
+
         @Override
         public int hashCode() {
             return Objects.hash(tenantId, paymentId);

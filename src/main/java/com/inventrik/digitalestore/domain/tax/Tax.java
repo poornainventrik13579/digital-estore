@@ -20,7 +20,7 @@ public class Tax {
 
     @Id
     @Column(name = "tax_id")
-    private Long taxId;
+    private String taxId;
 
     @Column(name = "code", nullable = false, length = 255)
     private String code;
@@ -68,19 +68,19 @@ public class Tax {
 
     public static class TaxPK implements Serializable {
         private Integer tenantId;
-        private Long taxId;
+        private String taxId;
 
         public TaxPK() {}
 
-        public TaxPK(Integer tenantId, Long taxId) {
+        public TaxPK(Integer tenantId, String taxId) {
             this.tenantId = tenantId;
             this.taxId = taxId;
         }
 
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getTaxId() { return taxId; }
-        public void setTaxId(Long taxId) { this.taxId = taxId; }
+        public String getTaxId() { return taxId; }
+        public void setTaxId(String taxId) { this.taxId = taxId; }
 
         @Override
         public boolean equals(Object o) {

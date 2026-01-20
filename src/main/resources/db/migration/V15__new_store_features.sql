@@ -29,7 +29,7 @@ CREATE TABLE tenants (
 -- Create StoreThemes table
 CREATE TABLE store_themes (
     tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    theme_id INT(10) NOT NULL,
+    theme_id VARCHAR(32) NOT NULL,
     theme_name VARCHAR(100),
     tagline VARCHAR(256),
     description VARCHAR(256),
@@ -48,7 +48,7 @@ CREATE TABLE store_themes (
 -- Create Pages table
 CREATE TABLE pages (
     tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    page_id BIGINT(15) NOT NULL,
+    page_id VARCHAR(32) NOT NULL,
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(100) NOT NULL,
     content LONGTEXT,
@@ -70,7 +70,7 @@ CREATE TABLE pages (
 -- Create Taxes table
 CREATE TABLE taxes (
     tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    tax_id BIGINT(15) NOT NULL,
+    tax_id VARCHAR(32) NOT NULL,
     code VARCHAR(255) NOT NULL,
     description VARCHAR(255),
     value DECIMAL(10, 2) NOT NULL,

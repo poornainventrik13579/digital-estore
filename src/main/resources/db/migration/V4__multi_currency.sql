@@ -15,7 +15,7 @@ CREATE TABLE currencies (
 
 CREATE TABLE product_prices (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    product_id BIGINT NOT NULL,
+    product_id VARCHAR(32) NOT NULL,
     currency_code VARCHAR(3) NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     status VARCHAR(2) NOT NULL,

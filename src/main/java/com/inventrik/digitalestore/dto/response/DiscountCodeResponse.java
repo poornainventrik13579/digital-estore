@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class DiscountCodeResponse {
     
     @Schema(description = "Discount ID", example = "12345")
-    private Long discountId;
+    private String discountId;
     
     @Schema(description = "Tenant ID", example = "1")
     private Integer tenantId;

@@ -49,7 +49,7 @@ public interface DiscountCodeRepository extends JpaRepository<DiscountCode, Disc
     @Modifying
     @Query("UPDATE DiscountCode d SET d.usedCount = d.usedCount + 1, d.updatedBy = :updatedBy, d.updated = CURRENT_TIMESTAMP " +
            "WHERE d.tenantId = :tenantId AND d.discountId = :discountId AND (d.maxUses = 0 OR d.usedCount < d.maxUses)")
-    int incrementUsedCount(@Param("tenantId") Integer tenantId, 
-                          @Param("discountId") Long discountId, 
+    int incrementUsedCount(@Param("tenantId") Integer tenantId,
+                          @Param("discountId") String discountId,
                           @Param("updatedBy") String updatedBy);
 } 

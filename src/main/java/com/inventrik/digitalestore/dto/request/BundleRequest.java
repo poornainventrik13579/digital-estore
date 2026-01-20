@@ -42,10 +42,9 @@ public class BundleRequest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BundleItemRequest {
-        
+
         @NotNull(message = "Product ID is required")
-        @Positive(message = "Product ID must be positive")
-        private Long productId;
+        private String productId;
         
         @NotNull(message = "Quantity is required")
         @Min(value = 1, message = "Quantity must be at least 1")

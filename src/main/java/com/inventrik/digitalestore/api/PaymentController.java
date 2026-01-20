@@ -6,6 +6,7 @@ import com.inventrik.digitalestore.dto.response.PaymentResponse;
 import com.inventrik.digitalestore.exception.payment.InsufficientRefundAmountException;
 import com.inventrik.digitalestore.exception.payment.PaymentNotFoundException;
 import com.inventrik.digitalestore.exception.payment.PaymentProcessingException;
+import com.inventrik.digitalestore.security.TenantSecurity;
 import com.inventrik.digitalestore.service.payment.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,24 +33,36 @@ import java.util.List;
 public class PaymentController {
 
     private final PaymentService paymentService;
-    
+    private final TenantSecurity tenantSecurity;
+
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
-    @Operation(summary = "Get all payments with optional filters: ?orderId={id} or ?status={status}")
+    @Operation(summary = "Get all payments (latest first). Regular users see only their payments.")
     public ResponseEntity<List<PaymentResponse>> getAllPayments(
             @PathVariable Integer tenantId,
-            @RequestParam(required = false) Long orderId,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String orderId,
+            @RequestParam(required = false) String status,
+            Authentication authentication) {
 
-        return ResponseEntity.ok(paymentService.getAllPayments(tenantId, orderId, status));
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        boolean isTenant = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_TENANT"));
+
+        String username = authentication.getName();
+
+        return ResponseEntity.ok(paymentService.getAllPayments(tenantId, username, isAdmin || isTenant, orderId, status));
     }
-    
+
     @GetMapping("/{paymentId}")
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get a payment by ID")
     public ResponseEntity<PaymentResponse> getPayment(
             @PathVariable Integer tenantId,
-            @PathVariable Long paymentId) {
+            @PathVariable String paymentId) {
         return ResponseEntity.ok(paymentService.getPayment(tenantId, paymentId));
     }
     
@@ -71,10 +84,10 @@ public class PaymentController {
     @Operation(summary = "Confirm a payment")
     public ResponseEntity<PaymentResponse> confirmPayment(
             @PathVariable Integer tenantId,
-            @PathVariable Long paymentId,
+            @PathVariable String paymentId,
             @RequestParam String transactionId,
             Authentication authentication) {
-        
+
         String username = (authentication != null) ? authentication.getName() : "system";
         PaymentResponse confirmedPayment = paymentService.confirmPayment(tenantId, paymentId, transactionId, username);
         return ResponseEntity.ok(confirmedPayment);
@@ -85,9 +98,9 @@ public class PaymentController {
     @Operation(summary = "Cancel a payment")
     public ResponseEntity<PaymentResponse> cancelPayment(
             @PathVariable Integer tenantId,
-            @PathVariable Long paymentId,
+            @PathVariable String paymentId,
             Authentication authentication) {
-        
+
         String username = (authentication != null) ? authentication.getName() : "system";
         PaymentResponse cancelledPayment = paymentService.cancelPayment(tenantId, paymentId, username);
         return ResponseEntity.ok(cancelledPayment);
@@ -98,9 +111,9 @@ public class PaymentController {
     @Operation(summary = "Refund a payment")
     public ResponseEntity<PaymentResponse> refundPayment(
             @PathVariable Integer tenantId,
-            @PathVariable Long paymentId,
+            @PathVariable String paymentId,
             Authentication authentication) {
-        
+
         String username = (authentication != null) ? authentication.getName() : "system";
         PaymentResponse refundedPayment = paymentService.refundPayment(tenantId, paymentId, username);
         return ResponseEntity.ok(refundedPayment);
@@ -116,10 +129,10 @@ public class PaymentController {
     })
     public ResponseEntity<PaymentResponse> partialRefundPayment(
             @PathVariable Integer tenantId,
-            @PathVariable Long paymentId,
+            @PathVariable String paymentId,
             @Valid @RequestBody PartialRefundRequest refundRequest,
             Authentication authentication) {
-        
+
         try {
             PaymentResponse response = paymentService.partialRefundPayment(tenantId, paymentId, refundRequest, authentication.getName());
             return ResponseEntity.ok(response);

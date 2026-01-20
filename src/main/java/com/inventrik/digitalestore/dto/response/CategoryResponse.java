@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CategoryResponse {
-    private Long categoryId;
+    private String categoryId;
     private Integer tenantId;
     private String categoryName;
     private String description;

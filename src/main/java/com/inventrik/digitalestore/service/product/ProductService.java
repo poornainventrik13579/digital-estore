@@ -10,17 +10,17 @@ import java.util.List;
 public interface ProductService {
 
     // Get all products for a tenant with optional filters (status, categoryId, keyword) and pagination
-    PagedResponse<ProductResponse> getAllProductsPaginated(Integer tenantId, int page, int size, Long categoryId, String status, String keyword);
+    PagedResponse<ProductResponse> getAllProductsPaginated(Integer tenantId, int page, int size, String categoryId, String status, String keyword);
 
     // Get a single product by ID
-    ProductResponse getProduct(Integer tenantId, Long productId);
+    ProductResponse getProduct(Integer tenantId, String productId);
 
     // Create a new product
     ProductResponse createProduct(Integer tenantId, String username, ProductRequest productRequest);
 
     // Update an existing product
-    ProductResponse updateProduct(Integer tenantId, Long productId, String username, ProductUpdateRequest updateRequest);
+    ProductResponse updateProduct(Integer tenantId, String productId, String username, ProductUpdateRequest updateRequest);
 
     // Delete a product
-    void deleteProduct(Integer tenantId, Long productId);
+    void deleteProduct(Integer tenantId, String productId);
 }

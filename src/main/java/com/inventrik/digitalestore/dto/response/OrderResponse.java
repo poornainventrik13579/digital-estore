@@ -12,9 +12,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderResponse {
-    private Long orderId;
+    private String orderId;
     private Integer tenantId;
-    private Long userId;
+    private String userId;
     private LocalDateTime orderDate;
     private String currency;
     private BigDecimal totalAmount;

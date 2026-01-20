@@ -48,7 +48,7 @@ public class StoreThemeServiceImpl implements StoreThemeService {
     }
 
     @Override
-    public StoreThemeResponse getTheme(Integer tenantId, Long themeId) {
+    public StoreThemeResponse getTheme(Integer tenantId, String themeId) {
         StoreTheme theme = storeThemeRepository.findByTenantIdAndThemeId(tenantId, themeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Theme not found"));
         return mapToDTO(theme);
@@ -81,7 +81,7 @@ public class StoreThemeServiceImpl implements StoreThemeService {
 
     @Override
     @Transactional
-    public StoreThemeResponse updateTheme(Integer tenantId, Long themeId, StoreThemeRequest request, String username) {
+    public StoreThemeResponse updateTheme(Integer tenantId, String themeId, StoreThemeRequest request, String username) {
         StoreTheme theme = storeThemeRepository.findByTenantIdAndThemeId(tenantId, themeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Theme not found"));
 
@@ -103,7 +103,7 @@ public class StoreThemeServiceImpl implements StoreThemeService {
 
     @Override
     @Transactional
-    public void deleteTheme(Integer tenantId, Long themeId) {
+    public void deleteTheme(Integer tenantId, String themeId) {
         if (!storeThemeRepository.findByTenantIdAndThemeId(tenantId, themeId).isPresent()) {
             throw new ResourceNotFoundException("Theme not found");
         }

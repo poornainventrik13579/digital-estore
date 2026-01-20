@@ -4,6 +4,7 @@ import com.inventrik.digitalestore.dto.request.OrderFormRequest;
 import com.inventrik.digitalestore.dto.request.OrderRequest;
 import com.inventrik.digitalestore.dto.request.OrderUpdateRequest;
 import com.inventrik.digitalestore.dto.response.OrderResponse;
+import com.inventrik.digitalestore.security.TenantSecurity;
 import com.inventrik.digitalestore.service.order.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,72 +29,87 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final TenantSecurity tenantSecurity;
     
     /**
      * Get all orders with optional filtering
      *
      * Query parameters:
-     * - userId: Filter by user ID (optional)
      * - status: Filter by status - Pending, Processing, Completed, Cancelled, Refunded, Partially Refunded (optional)
+     *
+     * Regular users can only see their own orders. Admins and Tenants can see all orders.
      */
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
-    @Operation(summary = "Get all orders with optional filters (userId, status)")
+    @Operation(summary = "Get all orders (latest first). Regular users see only their orders.")
     public ResponseEntity<List<OrderResponse>> getAllOrders(
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "User ID to filter by", required = false)
-            @RequestParam(required = false) Long userId,
             @Parameter(description = "Order status to filter by", required = false)
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            Authentication authentication) {
 
-        return ResponseEntity.ok(orderService.getAllOrders(tenantId, userId, status));
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        boolean isTenant = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_TENANT"));
+
+        String username = authentication.getName();
+
+        return ResponseEntity.ok(orderService.getAllOrders(tenantId, username, isAdmin || isTenant, status));
     }
     
     @GetMapping("/{orderId}")
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get an order by ID")
     public ResponseEntity<OrderResponse> getOrder(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
-            @PathVariable Long orderId) {
+            @Parameter(description = "Order ID", required = true)
+            @PathVariable String orderId,
+            Authentication authentication) {
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         return ResponseEntity.ok(orderService.getOrder(tenantId, orderId));
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(
-        summary = "Create a new order with a single product item", 
+        summary = "Create a new order with a single product item",
         description = "Creates a new order with a single product item. For multiple items, submit multiple orders."
     )
     public ResponseEntity<OrderResponse> createOrder(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Valid @ModelAttribute OrderFormRequest formRequest,
             Authentication authentication) {
-        
+
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         String username = (authentication != null) ? authentication.getName() : "system";
-        
+
         OrderRequest orderRequest = formRequest.toOrderRequest();
-        
+
         OrderResponse createdOrder = orderService.createOrder(tenantId, username, orderRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
     }
     
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
-        summary = "Create a new order with multiple items (JSON)", 
+        summary = "Create a new order with multiple items (JSON)",
         description = "Creates a new order with multiple items using JSON body"
     )
     public ResponseEntity<OrderResponse> createOrderJson(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Valid @RequestBody OrderRequest orderRequest,
             Authentication authentication) {
-        
+
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         String username = (authentication != null) ? authentication.getName() : "system";
-        
+
         OrderResponse createdOrder = orderService.createOrder(tenantId, username, orderRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
     }
@@ -102,15 +118,16 @@ public class OrderController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Update an order (JSON)")
     public ResponseEntity<OrderResponse> updateOrderJson(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
-            @PathVariable Long orderId,
+            @Parameter(description = "Order ID", required = true)
+            @PathVariable String orderId,
             @Valid @RequestBody OrderUpdateRequest updateRequest,
             Authentication authentication) {
-        
+
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         String username = (authentication != null) ? authentication.getName() : "system";
-        
+
         OrderResponse updatedOrder = orderService.updateOrder(tenantId, orderId, username, updateRequest);
         return ResponseEntity.ok(updatedOrder);
     }
@@ -119,15 +136,16 @@ public class OrderController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Update an order (Form)")
     public ResponseEntity<OrderResponse> updateOrder(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
-            @PathVariable Long orderId,
+            @Parameter(description = "Order ID", required = true)
+            @PathVariable String orderId,
             @Valid @ModelAttribute OrderUpdateRequest updateRequest,
             Authentication authentication) {
-        
+
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         String username = (authentication != null) ? authentication.getName() : "system";
-        
+
         OrderResponse updatedOrder = orderService.updateOrder(tenantId, orderId, username, updateRequest);
         return ResponseEntity.ok(updatedOrder);
     }
@@ -139,7 +157,9 @@ public class OrderController {
             @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
             @Parameter(description = "Order ID", required = true)
-            @PathVariable Long orderId) {
+            @PathVariable String orderId,
+            Authentication authentication) {
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         orderService.deleteOrder(tenantId, orderId);
         return ResponseEntity.noContent().build();
     }
@@ -151,14 +171,15 @@ public class OrderController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Complete an order")
     public ResponseEntity<OrderResponse> completeOrder(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
-            @PathVariable Long orderId,
+            @Parameter(description = "Order ID", required = true)
+            @PathVariable String orderId,
             Authentication authentication) {
-        
+
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         String username = (authentication != null) ? authentication.getName() : "system";
-        
+
         OrderResponse completedOrder = orderService.completeOrder(tenantId, orderId, username);
         return ResponseEntity.ok(completedOrder);
     }
@@ -167,14 +188,15 @@ public class OrderController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Cancel an order")
     public ResponseEntity<OrderResponse> cancelOrder(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
-            @PathVariable Long orderId,
+            @Parameter(description = "Order ID", required = true)
+            @PathVariable String orderId,
             Authentication authentication) {
-        
+
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         String username = (authentication != null) ? authentication.getName() : "system";
-        
+
         OrderResponse cancelledOrder = orderService.cancelOrder(tenantId, orderId, username);
         return ResponseEntity.ok(cancelledOrder);
     }
@@ -183,14 +205,15 @@ public class OrderController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Refund an order")
     public ResponseEntity<OrderResponse> refundOrder(
-            @Parameter(description = "Tenant ID", required = true) 
+            @Parameter(description = "Tenant ID", required = true)
             @PathVariable Integer tenantId,
-            @Parameter(description = "Order ID", required = true) 
-            @PathVariable Long orderId,
+            @Parameter(description = "Order ID", required = true)
+            @PathVariable String orderId,
             Authentication authentication) {
-        
+
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         String username = (authentication != null) ? authentication.getName() : "system";
-        
+
         OrderResponse refundedOrder = orderService.refundOrder(tenantId, orderId, username);
         return ResponseEntity.ok(refundedOrder);
     }

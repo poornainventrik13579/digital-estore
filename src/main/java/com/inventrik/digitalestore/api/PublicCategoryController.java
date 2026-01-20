@@ -28,7 +28,7 @@ public class PublicCategoryController {
     @Operation(summary = "Get a category by ID")
     public ResponseEntity<CategoryResponse> getCategory(
             @PathVariable Integer tenantId,
-            @PathVariable Long categoryId) {
+            @PathVariable String categoryId) {
         return ResponseEntity.ok(categoryService.getCategory(tenantId, categoryId));
     }
 } 

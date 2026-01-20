@@ -23,7 +23,7 @@ public class DataInitializer {
                     .orElseGet(() -> {
                         User newAdmin = new User();
                         newAdmin.setTenantId(1);
-                        newAdmin.setUserId(1L);
+                        newAdmin.setUserId("10000000000000000000000000000001"); // Fixed UUID for admin
                         newAdmin.setUsername("admin");
                         newAdmin.setFirstName("Admin");
                         newAdmin.setLastName("User");

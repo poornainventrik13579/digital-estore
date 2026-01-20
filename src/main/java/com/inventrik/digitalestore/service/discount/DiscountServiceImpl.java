@@ -44,9 +44,9 @@ public class DiscountServiceImpl implements DiscountService {
             throw new IllegalArgumentException("Discount code already exists: " + request.getCode());
         }
         
-        Long newDiscountId = idGeneratorService.generateId(tenantId, "DISCOUNT");
+        String newDiscountId = String.valueOf(idGeneratorService.generateId(tenantId, "DISCOUNT"));
         String auditCode = userService.getAuditCode(username);
-        
+
         DiscountCode discountCode = new DiscountCode();
         discountCode.setTenantId(tenantId);
         discountCode.setDiscountId(newDiscountId);
@@ -69,7 +69,7 @@ public class DiscountServiceImpl implements DiscountService {
     }
     
     @Override
-    public DiscountCodeResponse updateDiscountCode(Integer tenantId, Long discountId, DiscountCodeRequest request, String username) {
+    public DiscountCodeResponse updateDiscountCode(Integer tenantId, String discountId, DiscountCodeRequest request, String username) {
         DiscountCode discountCode = discountCodeRepository.findById(new DiscountCode.DiscountCodePK(tenantId, discountId))
                 .orElseThrow(() -> new ResourceNotFoundException("Discount code not found with id: " + discountId));
         
@@ -98,7 +98,7 @@ public class DiscountServiceImpl implements DiscountService {
     
     @Override
     @Transactional(readOnly = true)
-    public DiscountCodeResponse getDiscountCode(Integer tenantId, Long discountId) {
+    public DiscountCodeResponse getDiscountCode(Integer tenantId, String discountId) {
         DiscountCode discountCode = discountCodeRepository.findById(new DiscountCode.DiscountCodePK(tenantId, discountId))
                 .orElseThrow(() -> new ResourceNotFoundException("Discount code not found with id: " + discountId));
         return mapToResponse(discountCode);
@@ -132,7 +132,7 @@ public class DiscountServiceImpl implements DiscountService {
     }
     
     @Override
-    public void deleteDiscountCode(Integer tenantId, Long discountId, String username) {
+    public void deleteDiscountCode(Integer tenantId, String discountId, String username) {
         DiscountCode discountCode = discountCodeRepository.findById(new DiscountCode.DiscountCodePK(tenantId, discountId))
                 .orElseThrow(() -> new ResourceNotFoundException("Discount code not found with id: " + discountId));
         
@@ -180,44 +180,42 @@ public class DiscountServiceImpl implements DiscountService {
     
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public BigDecimal applyDiscountToOrder(Integer tenantId, String discountCode, Long orderId, Long userId, BigDecimal orderAmount, String username) {
+    public BigDecimal applyDiscountToOrder(Integer tenantId, String discountCode, String orderId, String userId, BigDecimal orderAmount, String username) {
         DiscountCode discount = discountCodeRepository.findValidDiscountCode(
                 tenantId, discountCode.toUpperCase(), "0", LocalDateTime.now())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired discount code: " + discountCode));
-        
+
         if (orderAmount.compareTo(discount.getMinOrderAmount()) < 0) {
             throw new IllegalArgumentException("Order amount must be at least " + discount.getMinOrderAmount());
         }
-        
-        // Check if discount has reached max uses limit
+
         if (discount.getMaxUses() > 0 && discount.getUsedCount() >= discount.getMaxUses()) {
             throw new IllegalArgumentException("Discount code has reached its usage limit");
         }
-        
+
+        int updatedRows = discountCodeRepository.incrementUsedCount(tenantId, discount.getDiscountId(), username);
+
+        if (updatedRows == 0) {
+            throw new IllegalStateException("Failed to update discount usage - discount may have been modified concurrently");
+        }
+
         BigDecimal discountAmount = discount.calculateDiscount(orderAmount);
         if (discountAmount.compareTo(orderAmount) > 0) {
             discountAmount = orderAmount;
         }
-        
+
         recordDiscountUsage(tenantId, discount.getDiscountId(), orderId, userId, discountAmount, username);
-        
-        int updatedRows = discountCodeRepository.incrementUsedCount(tenantId, discount.getDiscountId(), 
-            username);
-        
-        if (updatedRows == 0) {
-            throw new IllegalStateException("Failed to update discount usage - discount may have been modified concurrently");
-        }
-        
+
         log.info("Applied discount {} to order {}, amount: {}", discountCode, orderId, discountAmount);
-        
+
         return discountAmount;
     }
     
     @Override
-    public void recordDiscountUsage(Integer tenantId, Long discountId, Long orderId, Long userId, BigDecimal discountAmount, String username) {
-        Long newUsageId = idGeneratorService.generateId(tenantId, "DISCOUNT_USAGE");
+    public void recordDiscountUsage(Integer tenantId, String discountId, String orderId, String userId, BigDecimal discountAmount, String username) {
+        String newUsageId = idGeneratorService.generateId(tenantId, "DISCOUNT_USAGE");
         String auditCode = userService.getAuditCode(username);
-        
+
         DiscountUsage usage = new DiscountUsage();
         usage.setTenantId(tenantId);
         usage.setUsageId(newUsageId);
@@ -237,13 +235,15 @@ public class DiscountServiceImpl implements DiscountService {
     @Override
     public void deactivateExpiredDiscounts(Integer tenantId) {
         List<DiscountCode> expiredDiscounts = discountCodeRepository.findExpiredDiscountCodes(tenantId, LocalDateTime.now(), "0");
-        
+
+        String auditCode = userService.getAuditCode("system");
+
         for (DiscountCode discount : expiredDiscounts) {
             discount.setStatus("-1");
-            discount.setUpdatedBy("sy");
+            discount.setUpdatedBy(auditCode);
             discountCodeRepository.save(discount);
         }
-        
+
         if (!expiredDiscounts.isEmpty()) {
             log.info("Deactivated {} expired discount codes for tenant {}", expiredDiscounts.size(), tenantId);
         }
@@ -251,13 +251,13 @@ public class DiscountServiceImpl implements DiscountService {
     
     @Override
     @Transactional(readOnly = true)
-    public long getDiscountUsageCount(Integer tenantId, Long discountId) {
+    public long getDiscountUsageCount(Integer tenantId, String discountId) {
         return discountUsageRepository.countUsageByDiscountId(tenantId, discountId, "0");
     }
     
     @Override
     @Transactional(readOnly = true)
-    public BigDecimal getTotalDiscountAmountUsed(Integer tenantId, Long discountId) {
+    public BigDecimal getTotalDiscountAmountUsed(Integer tenantId, String discountId) {
         Double total = discountUsageRepository.getTotalDiscountAmountUsed(tenantId, discountId, "0");
         return total != null ? BigDecimal.valueOf(total) : BigDecimal.ZERO;
     }

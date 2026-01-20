@@ -93,7 +93,15 @@ public class OrderServiceImpl implements OrderService {
     }
     
     @Override
-    public List<OrderResponse> getAllOrders(Integer tenantId, Long userId, String status) {
+    public List<OrderResponse> getAllOrders(Integer tenantId, String username, boolean canAccessAllOrders, String status) {
+        String userId = null;
+
+        if (!canAccessAllOrders) {
+            userId = userRepository.findByTenantIdAndUsername(tenantId, username)
+                    .map(user -> user.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+        }
+
         if (userId != null) {
             return orderRepository.findByTenantIdAndUserId(tenantId, userId).stream()
                     .map(this::mapToDTO)
@@ -110,9 +118,9 @@ public class OrderServiceImpl implements OrderService {
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
-    
+
     @Override
-    public OrderResponse getOrder(Integer tenantId, Long orderId) {
+    public OrderResponse getOrder(Integer tenantId, String orderId) {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         return mapToDTO(order);
@@ -126,35 +134,19 @@ public class OrderServiceImpl implements OrderService {
 
         userRepository.findByTenantIdAndUserId(tenantId, orderRequest.getUserId())
             .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + orderRequest.getUserId()));
-        
-        // Validate discount code before generating order ID
+
+        String newOrderId = idGeneratorService.generateId(tenantId, "ORDER");
         BigDecimal finalAmount = orderRequest.getTotalAmount();
         BigDecimal discountAmount = BigDecimal.ZERO;
-        
-        if (orderRequest.getDiscountCode() != null && !orderRequest.getDiscountCode().trim().isEmpty()) {
-            // Validate discount code without applying it yet
-            DiscountValidationResponse validation = discountService.validateDiscountCode(tenantId, 
-                new ValidateDiscountRequest(orderRequest.getDiscountCode().trim(), orderRequest.getTotalAmount(), orderRequest.getUserId()));
-            
-            if (!validation.isValid()) {
-                throw new BusinessException("Invalid discount code: " + validation.getMessage());
-            }
-            discountAmount = validation.getDiscountAmount();
-            finalAmount = validation.getFinalAmount();
-        }
-        
-        // Generate order ID only after all validations pass
-        Long newOrderId = idGeneratorService.generateId(tenantId, "ORDER");
-        
-        // Now apply the discount if valid
+
         if (orderRequest.getDiscountCode() != null && !orderRequest.getDiscountCode().trim().isEmpty()) {
             try {
                 discountAmount = discountService.applyDiscountToOrder(
-                    tenantId, 
-                    orderRequest.getDiscountCode().trim(), 
-                    newOrderId, 
-                    orderRequest.getUserId(), 
-                    orderRequest.getTotalAmount(), 
+                    tenantId,
+                    orderRequest.getDiscountCode().trim(),
+                    newOrderId,
+                    orderRequest.getUserId(),
+                    orderRequest.getTotalAmount(),
                     username
                 );
                 finalAmount = orderRequest.getTotalAmount().subtract(discountAmount);
@@ -162,7 +154,31 @@ public class OrderServiceImpl implements OrderService {
                 throw new BusinessException("Failed to apply discount code: " + e.getMessage());
             }
         }
-        
+
+        BigDecimal itemsTotal = BigDecimal.ZERO;
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (OrderItemRequest itemRequest : orderRequest.getOrderItems()) {
+            productRepository.findByTenantIdAndProductId(tenantId, itemRequest.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
+
+            BigDecimal itemPrice = itemRequest.getPriceAtPurchase();
+            itemsTotal = itemsTotal.add(itemPrice);
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setTenantId(tenantId);
+            orderItem.setOrderId(newOrderId);
+            orderItem.setOrderItemId(idGeneratorService.generateId(tenantId, "ORDER_ITEM"));
+            orderItem.setProductId(itemRequest.getProductId());
+            orderItem.setPriceAtPurchase(itemPrice);
+            orderItem.setLicenseKey(itemRequest.getLicenseKey());
+            orderItem.setStatus("0");
+            orderItem.setCreatedBy(userService.getAuditCode(username));
+            orderItem.setUpdatedBy(userService.getAuditCode(username));
+            orderItem.setCreated(LocalDateTime.now());
+            orderItem.setUpdated(LocalDateTime.now());
+            orderItems.add(orderItem);
+        }
+
         Order order = new Order();
         order.setTenantId(tenantId);
         order.setOrderId(newOrderId);
@@ -172,93 +188,88 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalAmount(finalAmount);
         order.setExchangeRate(orderRequest.getExchangeRate());
         order.setStatus(OrderStatus.PENDING.getDisplayName());
-        
         order.setCreatedBy(userService.getAuditCode(username));
         order.setUpdatedBy(userService.getAuditCode(username));
-        
-        // Save order first to get the ID
-        Order savedOrder = orderRepository.save(order);
-        
-        List<OrderItem> orderItems = new ArrayList<>();
-        for (OrderItemRequest itemRequest : orderRequest.getOrderItems()) {
-            productRepository.findByTenantIdAndProductId(tenantId, itemRequest.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
 
-            OrderItem orderItem = new OrderItem();
-            orderItem.setTenantId(tenantId);
-            orderItem.setOrderId(newOrderId);
-            orderItem.setOrderItemId(idGeneratorService.generateId(tenantId, "ORDER_ITEM"));
-            orderItem.setProductId(itemRequest.getProductId());
-            orderItem.setPriceAtPurchase(itemRequest.getPriceAtPurchase());
-            orderItem.setLicenseKey(itemRequest.getLicenseKey());
-            orderItem.setStatus("0");
-            orderItem.setCreatedBy(userService.getAuditCode(username));
-            orderItem.setUpdatedBy(userService.getAuditCode(username));
-            orderItem.setCreated(LocalDateTime.now());
-            orderItem.setUpdated(LocalDateTime.now());
-            orderItems.add(orderItem);
-        }
-        
-        // Add items to the order
+        Order savedOrder = orderRepository.save(order);
+
         for (OrderItem item : orderItems) {
             savedOrder.getOrderItems().add(item);
             item.setOrder(savedOrder);
         }
-        
-        // Save again with items
+
         savedOrder = orderRepository.save(savedOrder);
-        
-        // Publish order created event (optional)
+
         eventPublisher.publishEvent(new OrderStatusChangeEvent(savedOrder, null, savedOrder.getStatus()));
-        
+
         return mapToDTO(savedOrder);
     }
     
     @Override
     @Transactional
-    public OrderResponse updateOrder(Integer tenantId, Long orderId, String username, OrderUpdateRequest updateRequest) {
+    public OrderResponse updateOrder(Integer tenantId, String orderId, String username, OrderUpdateRequest updateRequest) {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
-        
+
         String oldStatus = order.getStatus();
-        
+
         if (updateRequest.getStatus() != null) {
+            OrderStatus newStatus;
             try {
-                OrderStatus.fromDisplayName(updateRequest.getStatus());
-                order.setStatus(updateRequest.getStatus());
+                newStatus = OrderStatus.fromDisplayName(updateRequest.getStatus());
             } catch (IllegalArgumentException e) {
                 throw new BusinessException("Invalid order status: " + updateRequest.getStatus());
             }
+
+            if (!isValidStatusTransition(order.getStatus(), updateRequest.getStatus())) {
+                throw new BusinessException("Invalid status transition from '" + order.getStatus() + "' to '" + updateRequest.getStatus() + "'");
+            }
+
+            order.setStatus(updateRequest.getStatus());
         }
-        
+
         String truncatedUsername = username;
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());
-        
+
         Order updatedOrder = orderRepository.save(order);
-        
-        // If status has changed, publish an event
+
         if (!oldStatus.equals(updatedOrder.getStatus())) {
             eventPublisher.publishEvent(new OrderStatusChangeEvent(updatedOrder, oldStatus, updatedOrder.getStatus()));
         }
-        
+
         return mapToDTO(updatedOrder);
+    }
+
+    private boolean isValidStatusTransition(String currentStatus, String newStatus) {
+        if (currentStatus.equals(newStatus)) {
+            return true;
+        }
+
+        return switch (currentStatus) {
+            case "Pending" -> List.of("Processing", "Cancelled", "Payment Failed").contains(newStatus);
+            case "Processing" -> List.of("Completed", "Cancelled", "Refunded").contains(newStatus);
+            case "Completed" -> List.of("Refunded", "Partially Refunded").contains(newStatus);
+            case "Cancelled", "Refunded", "Payment Failed" -> false;
+            case "Partially Refunded" -> "Refunded".equals(newStatus);
+            default -> false;
+        };
     }
     
     @Override
     @Transactional
-    public void deleteOrder(Integer tenantId, Long orderId) {
+    public void deleteOrder(Integer tenantId, String orderId) {
         if (!orderRepository.findByTenantIdAndOrderId(tenantId, orderId).isPresent()) {
             throw new ResourceNotFoundException("Order not found with id: " + orderId);
         }
-        
+
         orderRepository.deleteByTenantIdAndOrderId(tenantId, orderId);
     }
-    
-    
+
+
     @Override
     @Transactional
-    public OrderResponse completeOrder(Integer tenantId, Long orderId, String username) {
+    public OrderResponse completeOrder(Integer tenantId, String orderId, String username) {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         
@@ -284,7 +295,7 @@ public class OrderServiceImpl implements OrderService {
     
     @Override
     @Transactional
-    public OrderResponse cancelOrder(Integer tenantId, Long orderId, String username) {
+    public OrderResponse cancelOrder(Integer tenantId, String orderId, String username) {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         
@@ -311,7 +322,7 @@ public class OrderServiceImpl implements OrderService {
     
     @Override
     @Transactional
-    public OrderResponse refundOrder(Integer tenantId, Long orderId, String username) {
+    public OrderResponse refundOrder(Integer tenantId, String orderId, String username) {
         Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         
@@ -336,7 +347,7 @@ public class OrderServiceImpl implements OrderService {
     
     @Override
     @Transactional(readOnly = true)
-    public boolean hasUserPurchasedProduct(Integer tenantId, Long userId, Long productId) {
+    public boolean hasUserPurchasedProduct(Integer tenantId, String userId, String productId) {
         return orderRepository.hasUserPurchasedProduct(tenantId, userId, productId);
     }
 }

@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class StoreThemeResponse {
     private Integer tenantId;
-    private Long themeId;
+    private String themeId;
     private String themeName;
     private String tagline;
     private String description;

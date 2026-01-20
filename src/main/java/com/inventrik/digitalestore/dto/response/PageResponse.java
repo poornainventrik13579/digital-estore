@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class PageResponse {
     private Integer tenantId;
-    private Long pageId;
+    private String pageId;
     private String title;
     private String slug;
     private String content;

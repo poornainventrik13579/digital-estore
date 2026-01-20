@@ -56,19 +56,19 @@ public class CategoryServiceImpl implements CategoryService {
     }
     
     @Override
-    public CategoryResponse getCategory(Integer tenantId, Long categoryId) {
+    public CategoryResponse getCategory(Integer tenantId, String categoryId) {
         Category category = categoryRepository.findByTenantIdAndCategoryId(tenantId, categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
         return mapToDTO(category);
     }
-    
+
     @Override
     @Transactional
     public CategoryResponse createCategory(Integer tenantId, String username, CategoryRequest categoryRequest) {
         tenantRepository.findByTenantId(tenantId)
             .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
 
-        Long newCategoryId = idGeneratorService.generateId(tenantId, "CATEGORY");
+        String newCategoryId = idGeneratorService.generateId(tenantId, "CATEGORY");
 
         Category category = new Category();
         category.setTenantId(tenantId);
@@ -91,7 +91,7 @@ public class CategoryServiceImpl implements CategoryService {
     
     @Override
     @Transactional
-    public CategoryResponse updateCategory(Integer tenantId, Long categoryId, String username, CategoryUpdateRequest updateRequest) {
+    public CategoryResponse updateCategory(Integer tenantId, String categoryId, String username, CategoryUpdateRequest updateRequest) {
         Category category = categoryRepository.findByTenantIdAndCategoryId(tenantId, categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
         
@@ -116,7 +116,7 @@ public class CategoryServiceImpl implements CategoryService {
     
     @Override
     @Transactional
-    public void deleteCategory(Integer tenantId, Long categoryId) {
+    public void deleteCategory(Integer tenantId, String categoryId) {
         Category category = categoryRepository.findByTenantIdAndCategoryId(tenantId, categoryId)
             .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
 

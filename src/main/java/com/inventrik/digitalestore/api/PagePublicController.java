@@ -39,7 +39,7 @@ public class PagePublicController {
     @Operation(summary = "Get page by ID (public)")
     public ResponseEntity<PageResponse> getPage(
             @PathVariable Integer tenantId,
-            @PathVariable Long pageId) {
+            @PathVariable String pageId) {
         return ResponseEntity.ok(pageService.getPage(tenantId, pageId));
     }
 

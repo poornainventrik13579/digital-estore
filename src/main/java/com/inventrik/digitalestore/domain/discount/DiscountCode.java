@@ -24,7 +24,7 @@ public class DiscountCode {
     
     @Id
     @Column(name = "discount_id")
-    private Long discountId;
+    private String discountId;
     
     @Column(name = "code", nullable = false, length = 50)
     private String code;
@@ -103,9 +103,10 @@ public class DiscountCode {
         if (!canBeUsed() || orderAmount.compareTo(minOrderAmount) < 0) {
             return BigDecimal.ZERO;
         }
-        
+
         if (discountType == DiscountType.PERCENTAGE) {
-            return orderAmount.multiply(discountValue).divide(new BigDecimal(100));
+            return orderAmount.multiply(discountValue)
+                    .divide(new BigDecimal(100), 2, java.math.RoundingMode.HALF_UP);
         } else {
             return discountValue;
         }
@@ -113,19 +114,19 @@ public class DiscountCode {
     
     public static class DiscountCodePK implements Serializable {
         private Integer tenantId;
-        private Long discountId;
-        
+        private String discountId;
+
         public DiscountCodePK() {}
-        
-        public DiscountCodePK(Integer tenantId, Long discountId) {
+
+        public DiscountCodePK(Integer tenantId, String discountId) {
             this.tenantId = tenantId;
             this.discountId = discountId;
         }
-        
+
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getDiscountId() { return discountId; }
-        public void setDiscountId(Long discountId) { this.discountId = discountId; }
+        public String getDiscountId() { return discountId; }
+        public void setDiscountId(String discountId) { this.discountId = discountId; }
         
         @Override
         public boolean equals(Object o) {

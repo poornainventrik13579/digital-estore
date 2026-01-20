@@ -4,6 +4,7 @@ import com.inventrik.digitalestore.dto.request.DiscountCodeRequest;
 import com.inventrik.digitalestore.dto.request.ValidateDiscountRequest;
 import com.inventrik.digitalestore.dto.response.DiscountCodeResponse;
 import com.inventrik.digitalestore.dto.response.DiscountValidationResponse;
+import com.inventrik.digitalestore.security.TenantSecurity;
 import com.inventrik.digitalestore.service.discount.DiscountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -30,11 +31,12 @@ import java.util.Map;
 @Tag(name = "Discount Management", description = "APIs for managing discount codes")
 @SecurityRequirement(name = "oauth2")
 public class DiscountController {
-    
+
     private final DiscountService discountService;
+    private final TenantSecurity tenantSecurity;
     
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Create a new discount code", description = "Create a new discount code for the tenant")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Discount code created successfully"),
@@ -45,7 +47,9 @@ public class DiscountController {
             @PathVariable Integer tenantId,
             @Valid @RequestBody DiscountCodeRequest request,
             Authentication authentication) {
-        
+
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
+
         try {
             DiscountCodeResponse response = discountService.createDiscountCode(tenantId, request, authentication.getName());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -56,7 +60,7 @@ public class DiscountController {
     }
     
     @PutMapping("/{discountId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Update a discount code", description = "Update an existing discount code")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Discount code updated successfully"),
@@ -65,10 +69,12 @@ public class DiscountController {
     })
     public ResponseEntity<DiscountCodeResponse> updateDiscountCode(
             @PathVariable Integer tenantId,
-            @PathVariable Long discountId,
+            @PathVariable String discountId,
             @Valid @RequestBody DiscountCodeRequest request,
             Authentication authentication) {
-        
+
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
+
         try {
             DiscountCodeResponse response = discountService.updateDiscountCode(tenantId, discountId, request, authentication.getName());
             return ResponseEntity.ok(response);
@@ -87,8 +93,8 @@ public class DiscountController {
     })
     public ResponseEntity<DiscountCodeResponse> getDiscountCode(
             @PathVariable Integer tenantId,
-            @PathVariable Long discountId) {
-        
+            @PathVariable String discountId) {
+
         DiscountCodeResponse response = discountService.getDiscountCode(tenantId, discountId);
         return ResponseEntity.ok(response);
     }
@@ -132,9 +138,9 @@ public class DiscountController {
     })
     public ResponseEntity<Void> deleteDiscountCode(
             @PathVariable Integer tenantId,
-            @PathVariable Long discountId,
+            @PathVariable String discountId,
             Authentication authentication) {
-        
+
         discountService.deleteDiscountCode(tenantId, discountId, authentication.getName());
         return ResponseEntity.noContent().build();
     }
@@ -160,17 +166,17 @@ public class DiscountController {
     @ApiResponse(responseCode = "200", description = "Usage statistics")
     public ResponseEntity<Map<String, Object>> getDiscountUsageStats(
             @PathVariable Integer tenantId,
-            @PathVariable Long discountId) {
-        
+            @PathVariable String discountId) {
+
         long usageCount = discountService.getDiscountUsageCount(tenantId, discountId);
         BigDecimal totalAmount = discountService.getTotalDiscountAmountUsed(tenantId, discountId);
-        
+
         Map<String, Object> stats = Map.of(
             "usageCount", usageCount,
             "totalDiscountAmount", totalAmount,
             "discountId", discountId
         );
-        
+
         return ResponseEntity.ok(stats);
     }
     

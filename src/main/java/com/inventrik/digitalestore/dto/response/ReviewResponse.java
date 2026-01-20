@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ReviewResponse {
     
-    private Long reviewId;
-    private Long productId;
-    private Long userId;
+    private String reviewId;
+    private String productId;
+    private String userId;
     private String username;
     private Integer rating;
     private String comment;

@@ -48,7 +48,7 @@ public class CategoryController {
     @Operation(summary = "Get a category by ID")
     public ResponseEntity<CategoryResponse> getCategory(
             @PathVariable Integer tenantId,
-            @PathVariable Long categoryId) {
+            @PathVariable String categoryId) {
         return ResponseEntity.ok(categoryService.getCategory(tenantId, categoryId));
     }
     
@@ -70,10 +70,10 @@ public class CategoryController {
     @Operation(summary = "Update a category (JSON)")
     public ResponseEntity<CategoryResponse> updateCategoryJson(
             @PathVariable Integer tenantId,
-            @PathVariable Long categoryId,
+            @PathVariable String categoryId,
             @Valid @RequestBody CategoryUpdateRequest updateRequest,
             Authentication authentication) {
-        
+
         String username = (authentication != null) ? authentication.getName() : "system";
         CategoryResponse updatedCategory = categoryService.updateCategory(tenantId, categoryId, username, updateRequest);
         return ResponseEntity.ok(updatedCategory);
@@ -84,7 +84,7 @@ public class CategoryController {
     @Operation(summary = "Delete a category")
     public ResponseEntity<Void> deleteCategory(
             @PathVariable Integer tenantId,
-            @PathVariable Long categoryId) {
+            @PathVariable String categoryId) {
         categoryService.deleteCategory(tenantId, categoryId);
         return ResponseEntity.noContent().build();
     }

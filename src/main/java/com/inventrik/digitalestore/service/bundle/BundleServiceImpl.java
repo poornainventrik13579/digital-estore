@@ -39,7 +39,7 @@ public class BundleServiceImpl implements BundleService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<BundleResponse> getAllBundles(Integer tenantId, String status, String name, Long productId) {
+    public List<BundleResponse> getAllBundles(Integer tenantId, String status, String name, String productId) {
         if (productId != null) {
             List<BundleItem> bundleItems = bundleItemRepository.findBundlesContainingProduct(tenantId, productId);
             return bundleItems.stream()
@@ -68,12 +68,12 @@ public class BundleServiceImpl implements BundleService {
     
     @Override
     @Transactional(readOnly = true)
-    public BundleResponse getBundle(Integer tenantId, Long bundleId) {
+    public BundleResponse getBundle(Integer tenantId, String bundleId) {
         ProductBundle bundle = bundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bundle not found with id: " + bundleId));
         return mapToResponse(bundle);
     }
-    
+
     @Override
     public BundleResponse createBundle(Integer tenantId, BundleRequest bundleRequest, String username) {
         tenantRepository.findByTenantId(tenantId)
@@ -83,7 +83,7 @@ public class BundleServiceImpl implements BundleService {
             throw new IllegalArgumentException("Invalid bundle composition");
         }
 
-        Long newBundleId = idGeneratorService.generateId(tenantId, "BUNDLE");
+        String newBundleId = idGeneratorService.generateId(tenantId, "BUNDLE");
         
         ProductBundle bundle = new ProductBundle();
         bundle.setTenantId(tenantId);
@@ -102,7 +102,7 @@ public class BundleServiceImpl implements BundleService {
         ProductBundle savedBundle = bundleRepository.save(bundle);
         
         for (BundleRequest.BundleItemRequest itemRequest : bundleRequest.getBundleItems()) {
-            Long newItemId = idGeneratorService.generateId(tenantId, "BUNDLE_ITEM");
+            String newItemId = idGeneratorService.generateId(tenantId, "BUNDLE_ITEM");
             
             BundleItem bundleItem = new BundleItem();
             bundleItem.setTenantId(tenantId);
@@ -123,7 +123,7 @@ public class BundleServiceImpl implements BundleService {
     }
     
     @Override
-    public BundleResponse updateBundle(Integer tenantId, Long bundleId, BundleRequest bundleRequest, String username) {
+    public BundleResponse updateBundle(Integer tenantId, String bundleId, BundleRequest bundleRequest, String username) {
         ProductBundle bundle = bundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bundle not found with id: " + bundleId));
         
@@ -140,7 +140,7 @@ public class BundleServiceImpl implements BundleService {
     }
     
     @Override
-    public void deleteBundle(Integer tenantId, Long bundleId, String username) {
+    public void deleteBundle(Integer tenantId, String bundleId, String username) {
         ProductBundle bundle = bundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bundle not found with id: " + bundleId));
         
@@ -189,7 +189,7 @@ public class BundleServiceImpl implements BundleService {
     }
     
     @Override
-    public BundleResponse addProductToBundle(Integer tenantId, Long bundleId, Long productId, Integer quantity, String username) {
+    public BundleResponse addProductToBundle(Integer tenantId, String bundleId, String productId, Integer quantity, String username) {
         ProductBundle bundle = bundleRepository.findByTenantIdAndBundleId(tenantId, bundleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bundle not found with id: " + bundleId));
         
@@ -216,7 +216,7 @@ public class BundleServiceImpl implements BundleService {
     }
     
     @Override
-    public BundleResponse removeProductFromBundle(Integer tenantId, Long bundleId, Long productId, String username) {
+    public BundleResponse removeProductFromBundle(Integer tenantId, String bundleId, String productId, String username) {
         List<BundleItem> bundleItems = bundleItemRepository.findByTenantIdAndBundleIdAndStatus(tenantId, bundleId, "0");
         
         bundleItems.stream()
@@ -234,7 +234,7 @@ public class BundleServiceImpl implements BundleService {
     }
     
     @Override
-    public BundleResponse updateProductQuantityInBundle(Integer tenantId, Long bundleId, Long productId, Integer quantity, String username) {
+    public BundleResponse updateProductQuantityInBundle(Integer tenantId, String bundleId, String productId, Integer quantity, String username) {
         List<BundleItem> bundleItems = bundleItemRepository.findByTenantIdAndBundleIdAndStatus(tenantId, bundleId, "0");
         
         bundleItems.stream()
@@ -259,7 +259,7 @@ public class BundleServiceImpl implements BundleService {
     
     @Override
     @Transactional(readOnly = true)
-    public Long getBundleCount(Integer tenantId) {
+    public Integer getBundleCount(Integer tenantId) {
         return bundleRepository.countActiveBundles(tenantId);
     }
     

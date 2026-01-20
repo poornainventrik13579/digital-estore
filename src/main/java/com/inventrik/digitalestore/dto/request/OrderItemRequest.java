@@ -16,7 +16,7 @@ public class OrderItemRequest {
     
     @Schema(description = "Product ID", example = "123456789", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Product ID is required")
-    private Long productId;
+    private String productId;
     
     @Schema(description = "Price at purchase", example = "29.99", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Price at purchase is required")

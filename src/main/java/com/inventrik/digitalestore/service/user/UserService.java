@@ -12,16 +12,16 @@ public interface UserService {
     List<UserResponse> getAllUsers(Integer tenantId, String status, String username, String email);
 
     // Get a single user by ID
-    UserResponse getUser(Integer tenantId, Long userId);
+    UserResponse getUser(Integer tenantId, String userId);
 
     // Create a new user
     UserResponse createUser(Integer tenantId, String createdBy, UserRequest userRequest);
 
     // Update an existing user
-    UserResponse updateUser(Integer tenantId, Long userId, String updatedBy, UserUpdateRequest updateRequest);
+    UserResponse updateUser(Integer tenantId, String userId, String updatedBy, UserUpdateRequest updateRequest);
 
     // Delete a user
-    void deleteUser(Integer tenantId, Long userId);
+    void deleteUser(Integer tenantId, String userId);
 
     // Find user by username (for authentication)
     UserResponse findByUsername(String username);
@@ -29,7 +29,7 @@ public interface UserService {
     // Find user by email (for authentication)
     UserResponse findByEmail(String email);
 
-    boolean isCurrentUser(Integer tenantId, Long userId, String username);
+    boolean isCurrentUser(Integer tenantId, String userId, String username);
     boolean isUserWithEmail(String email, String username);
 
     // Forgot password functionality

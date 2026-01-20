@@ -59,7 +59,7 @@ public class TaxServiceImpl implements TaxService {
     }
 
     @Override
-    public TaxResponse getTax(Integer tenantId, Long taxId) {
+    public TaxResponse getTax(Integer tenantId, String taxId) {
         Tax tax = taxRepository.findByTenantIdAndTaxId(tenantId, taxId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tax not found"));
         return mapToDTO(tax);
@@ -90,7 +90,7 @@ public class TaxServiceImpl implements TaxService {
 
     @Override
     @Transactional
-    public TaxResponse updateTax(Integer tenantId, Long taxId, TaxRequest request, String username) {
+    public TaxResponse updateTax(Integer tenantId, String taxId, TaxRequest request, String username) {
         Tax tax = taxRepository.findByTenantIdAndTaxId(tenantId, taxId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tax not found"));
 
@@ -108,7 +108,7 @@ public class TaxServiceImpl implements TaxService {
 
     @Override
     @Transactional
-    public void deleteTax(Integer tenantId, Long taxId) {
+    public void deleteTax(Integer tenantId, String taxId) {
         if (!taxRepository.findByTenantIdAndTaxId(tenantId, taxId).isPresent()) {
             throw new ResourceNotFoundException("Tax not found");
         }

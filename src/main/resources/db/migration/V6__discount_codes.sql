@@ -4,7 +4,7 @@
 -- Create DiscountCodes table
 CREATE TABLE discount_codes (
     tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    discount_id BIGINT(15) NOT NULL,
+    discount_id VARCHAR(32) NOT NULL,
     code VARCHAR(50) NOT NULL,
     discount_type ENUM('PERCENTAGE', 'FIXED') NOT NULL DEFAULT 'PERCENTAGE',
     discount_value DECIMAL(10, 2) NOT NULL,
@@ -28,10 +28,10 @@ CREATE TABLE discount_codes (
 -- Create DiscountUsage table to track usage
 CREATE TABLE discount_usage (
     tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    usage_id BIGINT(15) NOT NULL,
-    discount_id BIGINT(15) NOT NULL,
-    order_id BIGINT(15) NOT NULL,
-    user_id BIGINT(15) NOT NULL,
+    usage_id VARCHAR(32) NOT NULL,
+    discount_id VARCHAR(32) NOT NULL,
+    order_id VARCHAR(32) NOT NULL,
+    user_id VARCHAR(32) NOT NULL,
     discount_amount DECIMAL(10, 2) NOT NULL,
     used_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(2) NOT NULL DEFAULT '0', -- 0: ACTIVE, -1: INACTIVE

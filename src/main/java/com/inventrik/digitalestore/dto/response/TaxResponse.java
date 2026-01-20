@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class TaxResponse {
     private Integer tenantId;
-    private Long taxId;
+    private String taxId;
     private String code;
     private String description;
     private BigDecimal value;

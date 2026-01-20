@@ -26,7 +26,7 @@ public class Category {
     
     @Id
     @Column(name = "category_id")
-    private Long categoryId;
+    private String categoryId;
     
     @Column(name = "category_name", nullable = false, length = 50)
     private String categoryName;
@@ -76,20 +76,20 @@ public class Category {
     
     public static class CategoryPK implements Serializable {
         private Integer tenantId;
-        private Long categoryId;
-        
+        private String categoryId;
+
         public CategoryPK() {}
-        
-        public CategoryPK(Integer tenantId, Long categoryId) {
+
+        public CategoryPK(Integer tenantId, String categoryId) {
             this.tenantId = tenantId;
             this.categoryId = categoryId;
         }
-        
+
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getCategoryId() { return categoryId; }
-        public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
-        
+        public String getCategoryId() { return categoryId; }
+        public void setCategoryId(String categoryId) { this.categoryId = categoryId; }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -97,7 +97,7 @@ public class Category {
             CategoryPK that = (CategoryPK) o;
             return Objects.equals(tenantId, that.tenantId) && Objects.equals(categoryId, that.categoryId);
         }
-        
+
         @Override
         public int hashCode() {
             return Objects.hash(tenantId, categoryId);

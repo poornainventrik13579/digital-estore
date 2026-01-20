@@ -25,10 +25,10 @@ public class Product {
     
     @Id
     @Column(name = "product_id")
-    private Long productId;
-    
+    private String productId;
+
     @Column(name = "category_id")
-    private Long categoryId;
+    private String categoryId;
     
     @Column(name = "product_name", nullable = false, length = 100)
     private String productName;
@@ -99,30 +99,30 @@ public class Product {
         updated = LocalDateTime.now();
     }
     
-    public Long getCategoryId() {
+    public String getCategoryId() {
         return categoryId;
     }
-    
-    public void setCategoryId(Long categoryId) {
+
+    public void setCategoryId(String categoryId) {
         this.categoryId = categoryId;
     }
-    
+
     public static class ProductPK implements Serializable {
         private Integer tenantId;
-        private Long productId;
-        
+        private String productId;
+
         public ProductPK() {}
-        
-        public ProductPK(Integer tenantId, Long productId) {
+
+        public ProductPK(Integer tenantId, String productId) {
             this.tenantId = tenantId;
             this.productId = productId;
         }
-        
+
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getProductId() { return productId; }
-        public void setProductId(Long productId) { this.productId = productId; }
-        
+        public String getProductId() { return productId; }
+        public void setProductId(String productId) { this.productId = productId; }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -130,7 +130,7 @@ public class Product {
             ProductPK productPK = (ProductPK) o;
             return Objects.equals(tenantId, productPK.tenantId) && Objects.equals(productId, productPK.productId);
         }
-        
+
         @Override
         public int hashCode() {
             return Objects.hash(tenantId, productId);

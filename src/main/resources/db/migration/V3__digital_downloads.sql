@@ -4,8 +4,8 @@
 -- Create DigitalDownloads table (EXACTLY as per design brief)
 CREATE TABLE IF NOT EXISTS digital_downloads (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    download_id BIGINT NOT NULL,
-    order_item_id BIGINT NOT NULL,
+    download_id VARCHAR(32) NOT NULL,
+    order_item_id VARCHAR(32) NOT NULL,
     download_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ip_address VARCHAR(45),
     status VARCHAR(2) NOT NULL DEFAULT '0', -- 0:ACTIVE , -1 INACTIVE

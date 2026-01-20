@@ -24,13 +24,13 @@ public class BundleItem {
     
     @Id
     @Column(name = "bundle_item_id")
-    private Long bundleItemId;
-    
+    private String bundleItemId;
+
     @Column(name = "bundle_id", nullable = false)
-    private Long bundleId;
-    
+    private String bundleId;
+
     @Column(name = "product_id", nullable = false)
-    private Long productId;
+    private String productId;
     
     @Column(name = "quantity", nullable = false)
     private Integer quantity = 1;
@@ -77,19 +77,19 @@ public class BundleItem {
     
     public static class BundleItemPK implements Serializable {
         private Integer tenantId;
-        private Long bundleItemId;
-        
+        private String bundleItemId;
+
         public BundleItemPK() {}
-        
-        public BundleItemPK(Integer tenantId, Long bundleItemId) {
+
+        public BundleItemPK(Integer tenantId, String bundleItemId) {
             this.tenantId = tenantId;
             this.bundleItemId = bundleItemId;
         }
-        
+
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getBundleItemId() { return bundleItemId; }
-        public void setBundleItemId(Long bundleItemId) { this.bundleItemId = bundleItemId; }
+        public String getBundleItemId() { return bundleItemId; }
+        public void setBundleItemId(String bundleItemId) { this.bundleItemId = bundleItemId; }
         
         @Override
         public boolean equals(Object o) {

@@ -32,7 +32,7 @@ public class PublicProductController {
     @Operation(summary = "Get a product by ID")
     public ResponseEntity<ProductResponse> getProduct(
             @PathVariable Integer tenantId,
-            @PathVariable Long productId) {
+            @PathVariable String productId) {
         return ResponseEntity.ok(productService.getProduct(tenantId, productId));
     }
 
@@ -40,7 +40,7 @@ public class PublicProductController {
     @Operation(summary = "Get products by category")
     public ResponseEntity<PagedResponse<ProductResponse>> getProductsByCategory(
             @PathVariable Integer tenantId,
-            @PathVariable Long categoryId,
+            @PathVariable String categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size, categoryId, null, null));

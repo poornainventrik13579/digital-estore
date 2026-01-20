@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserResponse {
-    private Long userId;
+    private String userId;
     private Integer tenantId;
     private String username;
     private String firstName;

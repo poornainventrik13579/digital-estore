@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderItemResponse {
-    private Long orderItemId;
-    private Long orderId;
-    private Long productId;
+    private String orderItemId;
+    private String orderId;
+    private String productId;
     private BigDecimal priceAtPurchase;
     private String licenseKey;
     private String status;

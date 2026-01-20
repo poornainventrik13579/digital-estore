@@ -23,19 +23,19 @@ public class ProductPriceServiceImpl implements ProductPriceService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<ProductPrice> getProductPrices(Integer tenantId, Long productId) {
+    public List<ProductPrice> getProductPrices(Integer tenantId, String productId) {
         return productPriceRepository.findByTenantIdAndProductIdAndStatus(tenantId, productId, "0");
     }
-    
+
     @Override
     @Transactional(readOnly = true)
-    public ProductPrice getProductPrice(Integer tenantId, Long productId, String currencyCode) {
+    public ProductPrice getProductPrice(Integer tenantId, String productId, String currencyCode) {
         return productPriceRepository.findByTenantIdAndProductIdAndCurrencyCodeAndStatus(tenantId, productId, currencyCode, "0")
                 .orElseThrow(() -> new RuntimeException("Product price not found"));
     }
-    
+
     @Override
-    public ProductPrice createProductPrice(Integer tenantId, Long productId, String currencyCode, BigDecimal price) {
+    public ProductPrice createProductPrice(Integer tenantId, String productId, String currencyCode, BigDecimal price) {
         ProductPrice productPrice = new ProductPrice();
         productPrice.setTenantId(tenantId);
         productPrice.setProductId(productId);
@@ -49,25 +49,25 @@ public class ProductPriceServiceImpl implements ProductPriceService {
     }
     
     @Override
-    public ProductPrice updateProductPrice(Integer tenantId, Long productId, String currencyCode, BigDecimal price) {
+    public ProductPrice updateProductPrice(Integer tenantId, String productId, String currencyCode, BigDecimal price) {
         ProductPrice productPrice = getProductPrice(tenantId, productId, currencyCode);
         productPrice.setPrice(price);
         productPrice.setUpdatedBy("1");
-        
+
         return productPriceRepository.save(productPrice);
     }
-    
+
     @Override
-    public void deleteProductPrice(Integer tenantId, Long productId, String currencyCode) {
+    public void deleteProductPrice(Integer tenantId, String productId, String currencyCode) {
         ProductPrice productPrice = getProductPrice(tenantId, productId, currencyCode);
         productPrice.setStatus("-1");
         productPrice.setUpdatedBy("1");
         productPriceRepository.save(productPrice);
     }
-    
+
     @Override
     @Transactional(readOnly = true)
-    public BigDecimal getProductPriceInCurrency(Integer tenantId, Long productId, String currencyCode) {
+    public BigDecimal getProductPriceInCurrency(Integer tenantId, String productId, String currencyCode) {
         return productPriceRepository.findByTenantIdAndProductIdAndCurrencyCodeAndStatus(tenantId, productId, currencyCode, "0")
                 .map(ProductPrice::getPrice)
                 .orElseGet(() -> {

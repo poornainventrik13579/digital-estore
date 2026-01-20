@@ -18,7 +18,7 @@ public class Page {
 
     @Id
     @Column(name = "page_id")
-    private Long pageId;
+    private String pageId;
 
     @Column(name = "title", nullable = false, length = 255)
     private String title;
@@ -74,19 +74,19 @@ public class Page {
 
     public static class PagePK implements Serializable {
         private Integer tenantId;
-        private Long pageId;
+        private String pageId;
 
         public PagePK() {}
 
-        public PagePK(Integer tenantId, Long pageId) {
+        public PagePK(Integer tenantId, String pageId) {
             this.tenantId = tenantId;
             this.pageId = pageId;
         }
 
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getPageId() { return pageId; }
-        public void setPageId(Long pageId) { this.pageId = pageId; }
+        public String getPageId() { return pageId; }
+        public void setPageId(String pageId) { this.pageId = pageId; }
 
         @Override
         public boolean equals(Object o) {

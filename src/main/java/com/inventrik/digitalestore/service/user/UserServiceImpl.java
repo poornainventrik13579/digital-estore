@@ -105,14 +105,14 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
-    public UserResponse getUser(Integer tenantId, Long userId) {
+    public UserResponse getUser(Integer tenantId, String userId) {
         User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         return mapToDTO(user);
     }
-    
+
     @Override
-    public boolean isCurrentUser(Integer tenantId, Long userId, String username) {
+    public boolean isCurrentUser(Integer tenantId, String userId, String username) {
         try {
             User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
@@ -152,7 +152,7 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("Phone number already exists");
         }
 
-        Long newUserId = idGeneratorService.generateId(tenantId, "USER");
+        String newUserId = idGeneratorService.generateId(tenantId, "USER");
         // TODO: OTP feature commented out - enable when email verification is ready
         // String otp = generateOTP();
 
@@ -197,7 +197,7 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional
-    public UserResponse updateUser(Integer tenantId, Long userId, String updatedBy, UserUpdateRequest updateRequest) {
+    public UserResponse updateUser(Integer tenantId, String userId, String updatedBy, UserUpdateRequest updateRequest) {
         User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         
@@ -261,11 +261,11 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional
-    public void deleteUser(Integer tenantId, Long userId) {
+    public void deleteUser(Integer tenantId, String userId) {
         if (!userRepository.findByTenantIdAndUserId(tenantId, userId).isPresent()) {
             throw new ResourceNotFoundException("User not found with id: " + userId);
         }
-        
+
         userRepository.deleteByTenantIdAndUserId(tenantId, userId);
     }
 
@@ -356,10 +356,12 @@ public class UserServiceImpl implements UserService {
         if (username.equals("webhook")) {
             return "99";
         }
-        
+
         try {
             UserResponse user = findByUsername(username);
-            return String.format("%02d", user.getUserId() % 98 + 1);
+            // Generate a 2-digit code from the userId string hash
+            int hash = Math.abs(user.getUserId().hashCode()) % 98 + 1;
+            return String.format("%02d", hash);
         } catch (Exception e) {
             int hash = Math.abs(username.hashCode()) % 89 + 10;
             return String.format("%02d", hash);

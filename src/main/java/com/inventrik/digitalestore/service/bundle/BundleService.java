@@ -8,36 +8,25 @@ import java.util.List;
 
 public interface BundleService {
 
-    // Get all bundles for a tenant with optional filters (status, name, productId)
-    List<BundleResponse> getAllBundles(Integer tenantId, String status, String name, Long productId);
+    List<BundleResponse> getAllBundles(Integer tenantId, String status, String name, String productId);
 
-    // Get a single bundle by ID
-    BundleResponse getBundle(Integer tenantId, Long bundleId);
+    BundleResponse getBundle(Integer tenantId, String bundleId);
 
-    // Create a new bundle
     BundleResponse createBundle(Integer tenantId, BundleRequest bundleRequest, String username);
 
-    // Update an existing bundle
-    BundleResponse updateBundle(Integer tenantId, Long bundleId, BundleRequest bundleRequest, String username);
+    BundleResponse updateBundle(Integer tenantId, String bundleId, BundleRequest bundleRequest, String username);
 
-    // Delete/deactivate a bundle
-    void deleteBundle(Integer tenantId, Long bundleId, String username);
+    void deleteBundle(Integer tenantId, String bundleId, String username);
 
-    // Calculate bundle pricing
     BigDecimal calculateBundlePrice(Integer tenantId, List<BundleRequest.BundleItemRequest> bundleItems);
 
-    // Validate bundle composition
     boolean validateBundleComposition(Integer tenantId, List<BundleRequest.BundleItemRequest> bundleItems);
 
-    // Add product to existing bundle
-    BundleResponse addProductToBundle(Integer tenantId, Long bundleId, Long productId, Integer quantity, String username);
+    BundleResponse addProductToBundle(Integer tenantId, String bundleId, String productId, Integer quantity, String username);
 
-    // Remove product from bundle
-    BundleResponse removeProductFromBundle(Integer tenantId, Long bundleId, Long productId, String username);
+    BundleResponse removeProductFromBundle(Integer tenantId, String bundleId, String productId, String username);
 
-    // Update product quantity in bundle
-    BundleResponse updateProductQuantityInBundle(Integer tenantId, Long bundleId, Long productId, Integer quantity, String username);
+    BundleResponse updateProductQuantityInBundle(Integer tenantId, String bundleId, String productId, Integer quantity, String username);
 
-    // Get bundle statistics
-    Long getBundleCount(Integer tenantId);
+    Integer getBundleCount(Integer tenantId);
 } 

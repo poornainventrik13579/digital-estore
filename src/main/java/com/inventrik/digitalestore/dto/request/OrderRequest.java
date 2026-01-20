@@ -21,7 +21,7 @@ public class OrderRequest {
     
     @Schema(description = "User ID", example = "123456789", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "User ID is required")
-    private Long userId;
+    private String userId;
     
     @Schema(description = "Currency code", example = "USD", requiredMode = Schema.RequiredMode.REQUIRED)
     @Size(min = 3, max = 3, message = "Currency code must be exactly 3 characters")

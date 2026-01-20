@@ -18,7 +18,7 @@ public class StoreTheme {
 
     @Id
     @Column(name = "theme_id")
-    private Long themeId;
+    private String themeId;
 
     @Column(name = "theme_name", length = 100)
     private String themeName;
@@ -72,19 +72,19 @@ public class StoreTheme {
 
     public static class StoreThemePK implements Serializable {
         private Integer tenantId;
-        private Long themeId;
+        private String themeId;
 
         public StoreThemePK() {}
 
-        public StoreThemePK(Integer tenantId, Long themeId) {
+        public StoreThemePK(Integer tenantId, String themeId) {
             this.tenantId = tenantId;
             this.themeId = themeId;
         }
 
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getThemeId() { return themeId; }
-        public void setThemeId(Long themeId) { this.themeId = themeId; }
+        public String getThemeId() { return themeId; }
+        public void setThemeId(String themeId) { this.themeId = themeId; }
 
         @Override
         public boolean equals(Object o) {

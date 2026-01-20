@@ -39,7 +39,7 @@ public class PageController {
     @Operation(summary = "Get page by ID (public)")
     public ResponseEntity<PageResponse> getPage(
             @PathVariable Integer tenantId,
-            @PathVariable Long pageId) {
+            @PathVariable String pageId) {
         return ResponseEntity.ok(pageService.getPage(tenantId, pageId));
     }
 
@@ -53,7 +53,7 @@ public class PageController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Create new page (admin only)")
     public ResponseEntity<PageResponse> createPage(
             @PathVariable Integer tenantId,
@@ -63,21 +63,21 @@ public class PageController {
     }
 
     @PutMapping("/{pageId}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Update page (admin only)")
     public ResponseEntity<PageResponse> updatePage(
             @PathVariable Integer tenantId,
-            @PathVariable Long pageId,
+            @PathVariable String pageId,
             @Valid @RequestBody PageRequest request) {
         return ResponseEntity.ok(pageService.updatePage(tenantId, pageId, request));
     }
 
     @DeleteMapping("/{pageId}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Delete page (admin only)")
     public ResponseEntity<Void> deletePage(
             @PathVariable Integer tenantId,
-            @PathVariable Long pageId) {
+            @PathVariable String pageId) {
         pageService.deletePage(tenantId, pageId);
         return ResponseEntity.noContent().build();
     }

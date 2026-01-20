@@ -111,7 +111,7 @@ public class PaymentEventLogger {
      * @param eventType The webhook event type
      * @param eventData The webhook event data
      */
-    public void logWebhookEvent(Long paymentId, String eventType, String eventData) {
+    public void logWebhookEvent(String paymentId, String eventType, String eventData) {
         PaymentAudit audit = new PaymentAudit();
         audit.setAuditId(UUID.randomUUID().toString());
         audit.setPaymentId(paymentId);

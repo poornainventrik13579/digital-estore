@@ -24,7 +24,7 @@ public class ProductPrice extends AuditableEntity {
     
     @Id
     @Column(name = "product_id")
-    private Long productId;
+    private String productId;
     
     @Id
     @Column(name = "currency_code", length = 3)

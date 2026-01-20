@@ -12,9 +12,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -24,122 +24,113 @@ import java.util.List;
 @Slf4j
 @Tag(name = "Reviews", description = "Review management operations")
 public class ReviewController {
-    
+
     private final ReviewService reviewService;
-    
+
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
-    @Operation(summary = "Create a new review", description = "Create a review for a product")
+    @Operation(summary = "Create a new review (requires login)")
     public ResponseEntity<ReviewResponse> createReview(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Valid @RequestBody ReviewRequest reviewRequest,
             Authentication authentication) {
-        
+
         log.info("Creating review for product {} by user {}", reviewRequest.getProductId(), authentication.getName());
-        
         ReviewResponse response = reviewService.createReview(tenantId, authentication.getName(), reviewRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    
+
     @GetMapping("/product/{productId}")
-    @Operation(summary = "Get product reviews", description = "Get all reviews for a specific product")
+    @Operation(summary = "Get product reviews (PUBLIC)")
     public ResponseEntity<List<ReviewResponse>> getProductReviews(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
-            @Parameter(description = "Product ID", required = true) @PathVariable Long productId) {
-        
+            @Parameter(description = "Product ID", required = true) @PathVariable String productId) {
+
         log.info("Fetching reviews for product: {}", productId);
-        
         List<ReviewResponse> reviews = reviewService.getProductReviews(tenantId, productId);
         return ResponseEntity.ok(reviews);
     }
-    
+
     @GetMapping("/user/{userId}")
-    @Operation(summary = "Get user reviews", description = "Get all reviews by a specific user")
+    @Operation(summary = "Get user reviews (PUBLIC)")
     public ResponseEntity<List<ReviewResponse>> getUserReviews(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
-            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
-        
+            @Parameter(description = "User ID", required = true) @PathVariable String userId) {
+
         log.info("Fetching reviews for user: {}", userId);
-        
         List<ReviewResponse> reviews = reviewService.getUserReviews(tenantId, userId);
         return ResponseEntity.ok(reviews);
     }
-    
+
     @GetMapping("/{reviewId}")
-    @Operation(summary = "Get review by ID", description = "Get a specific review by its ID")
+    @Operation(summary = "Get review by ID (PUBLIC)")
     public ResponseEntity<ReviewResponse> getReview(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
-            @Parameter(description = "Review ID", required = true) @PathVariable Long reviewId) {
-        
+            @Parameter(description = "Review ID", required = true) @PathVariable String reviewId) {
+
         log.info("Fetching review: {}", reviewId);
-        
         ReviewResponse review = reviewService.getReview(tenantId, reviewId);
         return ResponseEntity.ok(review);
     }
-    
+
     @PutMapping("/{reviewId}")
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
-    @Operation(summary = "Update review", description = "Update an existing review")
+    @Operation(summary = "Update review (requires login, can only update own reviews)")
     public ResponseEntity<ReviewResponse> updateReview(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
-            @Parameter(description = "Review ID", required = true) @PathVariable Long reviewId,
+            @Parameter(description = "Review ID", required = true) @PathVariable String reviewId,
             @Valid @RequestBody ReviewRequest reviewRequest,
             Authentication authentication) {
-        
+
         log.info("Updating review {} by user {}", reviewId, authentication.getName());
-        
         ReviewResponse response = reviewService.updateReview(tenantId, reviewId, reviewRequest, authentication.getName());
         return ResponseEntity.ok(response);
     }
-    
+
     @DeleteMapping("/{reviewId}")
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
-    @Operation(summary = "Delete review", description = "Delete a review")
+    @Operation(summary = "Delete review (requires login, can only delete own reviews)")
     public ResponseEntity<Void> deleteReview(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
-            @Parameter(description = "Review ID", required = true) @PathVariable Long reviewId,
+            @Parameter(description = "Review ID", required = true) @PathVariable String reviewId,
             Authentication authentication) {
-        
+
         log.info("Deleting review {} by user {}", reviewId, authentication.getName());
-        
         reviewService.deleteReview(tenantId, reviewId, authentication.getName());
         return ResponseEntity.noContent().build();
     }
-    
+
     @GetMapping("/product/{productId}/rating")
-    @Operation(summary = "Get product rating statistics", description = "Get average rating and distribution for a product")
+    @Operation(summary = "Get product rating statistics (PUBLIC)")
     public ResponseEntity<ProductRatingResponse> getProductRating(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
-            @Parameter(description = "Product ID", required = true) @PathVariable Long productId) {
-        
+            @Parameter(description = "Product ID", required = true) @PathVariable String productId) {
+
         log.info("Fetching rating statistics for product: {}", productId);
-        
         ProductRatingResponse rating = reviewService.getProductRating(tenantId, productId);
         return ResponseEntity.ok(rating);
     }
-    
+
     @GetMapping("/verified")
-    @Operation(summary = "Get verified reviews", description = "Get all verified reviews")
+    @Operation(summary = "Get verified reviews (PUBLIC)")
     public ResponseEntity<List<ReviewResponse>> getVerifiedReviews(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId) {
-        
+
         log.info("Fetching verified reviews for tenant: {}", tenantId);
-        
         List<ReviewResponse> reviews = reviewService.getVerifiedReviews(tenantId);
         return ResponseEntity.ok(reviews);
     }
-    
+
     @PostMapping("/{reviewId}/verify")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
-    @Operation(summary = "Verify review", description = "Mark a review as verified (admin only)")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
+    @Operation(summary = "Verify review (admin/tenant only)")
     public ResponseEntity<ReviewResponse> verifyReview(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
-            @Parameter(description = "Review ID", required = true) @PathVariable Long reviewId,
+            @Parameter(description = "Review ID", required = true) @PathVariable String reviewId,
             Authentication authentication) {
-        
+
         log.info("Verifying review {} by admin {}", reviewId, authentication.getName());
-        
         ReviewResponse response = reviewService.verifyReview(tenantId, reviewId, authentication.getName());
         return ResponseEntity.ok(response);
     }
-} 
+}

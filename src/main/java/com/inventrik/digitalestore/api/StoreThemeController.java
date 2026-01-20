@@ -37,7 +37,7 @@ public class StoreThemeController {
     @Operation(summary = "Get theme by ID")
     public ResponseEntity<StoreThemeResponse> getTheme(
             @PathVariable Integer tenantId,
-            @PathVariable Long themeId) {
+            @PathVariable String themeId) {
         return ResponseEntity.ok(storeThemeService.getTheme(tenantId, themeId));
     }
 
@@ -58,7 +58,7 @@ public class StoreThemeController {
     @Operation(summary = "Update theme")
     public ResponseEntity<StoreThemeResponse> updateTheme(
             @PathVariable Integer tenantId,
-            @PathVariable Long themeId,
+            @PathVariable String themeId,
             @Valid @RequestBody StoreThemeRequest request,
             Authentication authentication) {
         String username = (authentication != null) ? authentication.getName() : "system";
@@ -70,7 +70,7 @@ public class StoreThemeController {
     @Operation(summary = "Delete theme")
     public ResponseEntity<Void> deleteTheme(
             @PathVariable Integer tenantId,
-            @PathVariable Long themeId) {
+            @PathVariable String themeId) {
         storeThemeService.deleteTheme(tenantId, themeId);
         return ResponseEntity.noContent().build();
     }

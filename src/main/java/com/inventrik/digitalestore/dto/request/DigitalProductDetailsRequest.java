@@ -17,7 +17,7 @@ public class DigitalProductDetailsRequest {
     
     @Schema(description = "Product ID", example = "123456789", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Product ID is required")
-    private Long productId;
+    private String productId;
     
     @Schema(description = "File URL or path", example = "/files/product123.pdf", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "File URL is required")

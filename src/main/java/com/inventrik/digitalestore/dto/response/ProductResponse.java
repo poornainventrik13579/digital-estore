@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductResponse {
-    private Long productId;
+    private String productId;
     private Integer tenantId;
     private String productName;
     private String description;
@@ -25,7 +25,7 @@ public class ProductResponse {
     private String banner;
     private String thumbnail;
     private String metadata;
-    private Long categoryId;
+    private String categoryId;
     private String status;
     private LocalDateTime created;
     private LocalDateTime updated;

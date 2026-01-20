@@ -23,7 +23,7 @@ public class OrderFormRequest {
     
     @Schema(description = "User ID", example = "123456789", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "User ID is required")
-    private Long userId;
+    private String userId;
     
     @Schema(description = "Currency code", example = "USD", requiredMode = Schema.RequiredMode.REQUIRED)
     @Size(min = 3, max = 3, message = "Currency code must be exactly 3 characters")
@@ -42,7 +42,7 @@ public class OrderFormRequest {
     // Single product order
     @Schema(description = "Product ID", example = "123", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Product ID is required")
-    private Long productId;
+    private String productId;
     
     @Schema(description = "Price at purchase", example = "29.99", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Price is required")

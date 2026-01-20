@@ -20,7 +20,7 @@ public interface PaymentAuditRepository extends JpaRepository<PaymentAudit, Stri
      * @param paymentId The payment ID
      * @return List of audit logs
      */
-    List<PaymentAudit> findByPaymentIdOrderByTimestampDesc(Long paymentId);
+    List<PaymentAudit> findByPaymentIdOrderByTimestampDesc(String paymentId);
     
     /**
      * Find audit logs by event type.

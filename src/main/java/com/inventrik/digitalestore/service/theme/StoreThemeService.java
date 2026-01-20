@@ -7,8 +7,8 @@ import java.util.List;
 
 public interface StoreThemeService {
     List<StoreThemeResponse> getAllThemes(Integer tenantId);
-    StoreThemeResponse getTheme(Integer tenantId, Long themeId);
+    StoreThemeResponse getTheme(Integer tenantId, String themeId);
     StoreThemeResponse createTheme(Integer tenantId, StoreThemeRequest request, String username);
-    StoreThemeResponse updateTheme(Integer tenantId, Long themeId, StoreThemeRequest request, String username);
-    void deleteTheme(Integer tenantId, Long themeId);
+    StoreThemeResponse updateTheme(Integer tenantId, String themeId, StoreThemeRequest request, String username);
+    void deleteTheme(Integer tenantId, String themeId);
 }

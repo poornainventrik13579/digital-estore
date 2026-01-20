@@ -8,30 +8,21 @@ import java.util.List;
 
 public interface OrderService {
 
-    // Get all orders for a tenant with optional filters (userId, status)
-    List<OrderResponse> getAllOrders(Integer tenantId, Long userId, String status);
+    List<OrderResponse> getAllOrders(Integer tenantId, String username, boolean canAccessAllOrders, String status);
 
-    // Get a single order by ID
-    OrderResponse getOrder(Integer tenantId, Long orderId);
+    OrderResponse getOrder(Integer tenantId, String orderId);
 
-    // Create a new order
     OrderResponse createOrder(Integer tenantId, String username, OrderRequest orderRequest);
 
-    // Update an existing order (e.g., change status)
-    OrderResponse updateOrder(Integer tenantId, Long orderId, String username, OrderUpdateRequest updateRequest);
+    OrderResponse updateOrder(Integer tenantId, String orderId, String username, OrderUpdateRequest updateRequest);
 
-    // Delete an order
-    void deleteOrder(Integer tenantId, Long orderId);
+    void deleteOrder(Integer tenantId, String orderId);
 
-    // Complete an order
-    OrderResponse completeOrder(Integer tenantId, Long orderId, String username);
+    OrderResponse completeOrder(Integer tenantId, String orderId, String username);
 
-    // Cancel an order
-    OrderResponse cancelOrder(Integer tenantId, Long orderId, String username);
+    OrderResponse cancelOrder(Integer tenantId, String orderId, String username);
 
-    // Refund an order (full refund)
-    OrderResponse refundOrder(Integer tenantId, Long orderId, String username);
+    OrderResponse refundOrder(Integer tenantId, String orderId, String username);
 
-    // Check if user has purchased a specific product
-    boolean hasUserPurchasedProduct(Integer tenantId, Long userId, Long productId);
+    boolean hasUserPurchasedProduct(Integer tenantId, String userId, String productId);
 }

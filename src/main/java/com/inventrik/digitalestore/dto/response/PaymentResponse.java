@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentResponse {
-    private Long paymentId;
+    private String paymentId;
     private Integer tenantId;
-    private Long orderId;
+    private String orderId;
     private String currency;
     private LocalDateTime paymentDate;
     private BigDecimal amount;

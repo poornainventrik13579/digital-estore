@@ -11,8 +11,8 @@ import java.util.Optional;
 @Repository
 public interface PageRepository extends JpaRepository<Page, Page.PagePK> {
     List<Page> findByTenantId(Integer tenantId);
-    Optional<Page> findByTenantIdAndPageId(Integer tenantId, Long pageId);
+    Optional<Page> findByTenantIdAndPageId(Integer tenantId, String pageId);
     Optional<Page> findByTenantIdAndSlug(Integer tenantId, String slug);
     List<Page> findByTenantIdAndStatus(Integer tenantId, PageStatus status);
-    void deleteByTenantIdAndPageId(Integer tenantId, Long pageId);
+    void deleteByTenantIdAndPageId(Integer tenantId, String pageId);
 }

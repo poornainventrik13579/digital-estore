@@ -26,10 +26,10 @@ public class PublicReviewController {
     @Operation(summary = "Get product reviews")
     public ResponseEntity<List<ReviewResponse>> getProductReviews(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
-            @Parameter(description = "Product ID") @PathVariable Long productId) {
-        
+            @Parameter(description = "Product ID") @PathVariable String productId) {
+
         log.info("Fetching reviews for product: {}", productId);
-        
+
         List<ReviewResponse> reviews = reviewService.getProductReviews(tenantId, productId);
         return ResponseEntity.ok(reviews);
     }
@@ -38,10 +38,10 @@ public class PublicReviewController {
     @Operation(summary = "Get product rating statistics")
     public ResponseEntity<ProductRatingResponse> getProductRating(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
-            @Parameter(description = "Product ID") @PathVariable Long productId) {
-        
+            @Parameter(description = "Product ID") @PathVariable String productId) {
+
         log.info("Fetching rating statistics for product: {}", productId);
-        
+
         ProductRatingResponse rating = reviewService.getProductRating(tenantId, productId);
         return ResponseEntity.ok(rating);
     }
@@ -61,10 +61,10 @@ public class PublicReviewController {
     @Operation(summary = "Get review by ID")
     public ResponseEntity<ReviewResponse> getReview(
             @Parameter(description = "Tenant ID") @PathVariable Integer tenantId,
-            @Parameter(description = "Review ID") @PathVariable Long reviewId) {
-        
+            @Parameter(description = "Review ID") @PathVariable String reviewId) {
+
         log.info("Fetching review: {}", reviewId);
-        
+
         ReviewResponse review = reviewService.getReview(tenantId, reviewId);
         return ResponseEntity.ok(review);
     }

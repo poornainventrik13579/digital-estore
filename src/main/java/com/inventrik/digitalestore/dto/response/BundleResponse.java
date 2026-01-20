@@ -13,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class BundleResponse {
     
-    private Long bundleId;
+    private String bundleId;
     private Integer tenantId;
     private String bundleName;
     private String description;
@@ -27,13 +27,13 @@ public class BundleResponse {
     private BigDecimal totalOriginalPrice;
     private BigDecimal totalSavings;
     private Integer totalProducts;
-    
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BundleItemResponse {
-        private Long bundleItemId;
-        private Long productId;
+        private String bundleItemId;
+        private String productId;
         private String productName;
         private String productDescription;
         private BigDecimal productPrice;

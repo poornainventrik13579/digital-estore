@@ -9,6 +9,7 @@ import com.inventrik.digitalestore.exception.ValidationException;
 import com.inventrik.digitalestore.repository.ProductRepository;
 import com.inventrik.digitalestore.repository.ReviewRepository;
 import com.inventrik.digitalestore.repository.TenantRepository;
+import com.inventrik.digitalestore.repository.UserRepository;
 import com.inventrik.digitalestore.service.order.OrderService;
 import com.inventrik.digitalestore.service.user.UserService;
 import com.inventrik.digitalestore.service.IdGeneratorService;
@@ -32,6 +33,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final ProductRepository productRepository;
     private final TenantRepository tenantRepository;
+    private final UserRepository userRepository;
     private final UserService userService;
     private final OrderService orderService;
     private final IdGeneratorService idGeneratorService;
@@ -59,8 +61,8 @@ public class ReviewServiceImpl implements ReviewService {
         // Verify user purchased this product
         boolean hasPurchased = orderService.hasUserPurchasedProduct(tenantId, user.getUserId(), reviewRequest.getProductId());
 
-        Long reviewId = idGeneratorService.generateId(tenantId, "REVIEW");
-        
+        String reviewId = idGeneratorService.generateId(tenantId, "REVIEW");
+
         Review review = new Review();
         review.setTenantId(tenantId);
         review.setReviewId(reviewId);
@@ -81,9 +83,9 @@ public class ReviewServiceImpl implements ReviewService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<ReviewResponse> getProductReviews(Integer tenantId, Long productId) {
+    public List<ReviewResponse> getProductReviews(Integer tenantId, String productId) {
         log.info("Fetching reviews for product: {}", productId);
-        
+
         List<Review> reviews = reviewRepository.findByTenantIdAndProductIdAndStatusOrderByReviewDateDesc(
             tenantId, productId, "0");
         
@@ -97,9 +99,9 @@ public class ReviewServiceImpl implements ReviewService {
     
     @Override
     @Transactional(readOnly = true)
-    public List<ReviewResponse> getUserReviews(Integer tenantId, Long userId) {
+    public List<ReviewResponse> getUserReviews(Integer tenantId, String userId) {
         log.info("Fetching reviews for user: {}", userId);
-        
+
         List<Review> reviews = reviewRepository.findByTenantIdAndUserIdAndStatusOrderByReviewDateDesc(
             tenantId, userId, "0");
         
@@ -112,9 +114,9 @@ public class ReviewServiceImpl implements ReviewService {
     
     @Override
     @Transactional(readOnly = true)
-    public ReviewResponse getReview(Integer tenantId, Long reviewId) {
+    public ReviewResponse getReview(Integer tenantId, String reviewId) {
         log.info("Fetching review: {}", reviewId);
-        
+
         Review review = reviewRepository.findById(new Review.ReviewPK(tenantId, reviewId))
             .orElseThrow(() -> new ResourceNotFoundException("Review not found with ID: " + reviewId));
         
@@ -123,9 +125,9 @@ public class ReviewServiceImpl implements ReviewService {
     }
     
     @Override
-    public ReviewResponse updateReview(Integer tenantId, Long reviewId, ReviewRequest reviewRequest, String username) {
+    public ReviewResponse updateReview(Integer tenantId, String reviewId, ReviewRequest reviewRequest, String username) {
         log.info("Updating review: {} by user: {}", reviewId, username);
-        
+
         Review review = reviewRepository.findById(new Review.ReviewPK(tenantId, reviewId))
             .orElseThrow(() -> new ResourceNotFoundException("Review not found with ID: " + reviewId));
         
@@ -147,9 +149,9 @@ public class ReviewServiceImpl implements ReviewService {
     }
     
     @Override
-    public void deleteReview(Integer tenantId, Long reviewId, String username) {
+    public void deleteReview(Integer tenantId, String reviewId, String username) {
         log.info("Deleting review: {} by user: {}", reviewId, username);
-        
+
         Review review = reviewRepository.findById(new Review.ReviewPK(tenantId, reviewId))
             .orElseThrow(() -> new ResourceNotFoundException("Review not found with ID: " + reviewId));
         
@@ -170,12 +172,12 @@ public class ReviewServiceImpl implements ReviewService {
     
     @Override
     @Transactional(readOnly = true)
-    public ProductRatingResponse getProductRating(Integer tenantId, Long productId) {
+    public ProductRatingResponse getProductRating(Integer tenantId, String productId) {
         log.info("Calculating rating statistics for product: {}", productId);
-        
+
         Double averageRating = reviewRepository.findAverageRatingByProduct(tenantId, productId);
         Long totalReviews = reviewRepository.countReviewsByProduct(tenantId, productId);
-        
+
         Map<Integer, Long> ratingDistribution = new HashMap<>();
         for (int rating = 1; rating <= 5; rating++) {
             Long count = reviewRepository.countReviewsByProductAndRating(tenantId, productId, rating);
@@ -204,9 +206,9 @@ public class ReviewServiceImpl implements ReviewService {
     }
     
     @Override
-    public ReviewResponse verifyReview(Integer tenantId, Long reviewId, String username) {
+    public ReviewResponse verifyReview(Integer tenantId, String reviewId, String username) {
         log.info("Verifying review: {} by admin: {}", reviewId, username);
-        
+
         Review review = reviewRepository.findById(new Review.ReviewPK(tenantId, reviewId))
             .orElseThrow(() -> new ResourceNotFoundException("Review not found with ID: " + reviewId));
         

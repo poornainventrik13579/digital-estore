@@ -9,25 +9,25 @@ import java.util.List;
 public interface DownloadService {
     
     // Record a download
-    void recordDownload(Integer tenantId, Long orderItemId, String ipAddress, String username);
-    
+    void recordDownload(Integer tenantId, String orderItemId, String ipAddress, String username);
+
     // Get download history for order item
-    List<DownloadHistoryResponse> getDownloadHistory(Integer tenantId, Long orderItemId);
-    
+    List<DownloadHistoryResponse> getDownloadHistory(Integer tenantId, String orderItemId);
+
     // Get download history for user (through order items)
-    List<DownloadHistoryResponse> getUserDownloadHistory(Integer tenantId, Long userId);
+    List<DownloadHistoryResponse> getUserDownloadHistory(Integer tenantId, String username, boolean canAccessAllDownloads, String userId);
     
     // Digital Product Details Management
     DigitalProductDetailsResponse createDigitalProductDetails(Integer tenantId, String username, DigitalProductDetailsRequest request);
     
-    DigitalProductDetailsResponse updateDigitalProductDetails(Integer tenantId, Long productId, String username, DigitalProductDetailsRequest request);
-    
-    DigitalProductDetailsResponse getDigitalProductDetails(Integer tenantId, Long productId);
-    
+    DigitalProductDetailsResponse updateDigitalProductDetails(Integer tenantId, String productId, String username, DigitalProductDetailsRequest request);
+
+    DigitalProductDetailsResponse getDigitalProductDetails(Integer tenantId, String productId);
+
     List<DigitalProductDetailsResponse> getAllDigitalProductDetails(Integer tenantId);
-    
-    void deleteDigitalProductDetails(Integer tenantId, Long productId);
-    
+
+    void deleteDigitalProductDetails(Integer tenantId, String productId);
+
     // Check if product has digital details
-    boolean hasDigitalDetails(Integer tenantId, Long productId);
+    boolean hasDigitalDetails(Integer tenantId, String productId);
 }

@@ -24,16 +24,16 @@ public class DiscountUsage {
     
     @Id
     @Column(name = "usage_id")
-    private Long usageId;
+    private String usageId;
     
     @Column(name = "discount_id", nullable = false)
-    private Long discountId;
-    
+    private String discountId;
+
     @Column(name = "order_id", nullable = false)
-    private Long orderId;
-    
+    private String orderId;
+
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private String userId;
     
     @Column(name = "discount_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal discountAmount;
@@ -76,19 +76,19 @@ public class DiscountUsage {
     
     public static class DiscountUsagePK implements Serializable {
         private Integer tenantId;
-        private Long usageId;
-        
+        private String usageId;
+
         public DiscountUsagePK() {}
-        
-        public DiscountUsagePK(Integer tenantId, Long usageId) {
+
+        public DiscountUsagePK(Integer tenantId, String usageId) {
             this.tenantId = tenantId;
             this.usageId = usageId;
         }
-        
+
         public Integer getTenantId() { return tenantId; }
         public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
-        public Long getUsageId() { return usageId; }
-        public void setUsageId(Long usageId) { this.usageId = usageId; }
+        public String getUsageId() { return usageId; }
+        public void setUsageId(String usageId) { this.usageId = usageId; }
         
         @Override
         public boolean equals(Object o) {

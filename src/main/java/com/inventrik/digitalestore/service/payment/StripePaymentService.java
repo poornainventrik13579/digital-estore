@@ -82,7 +82,36 @@ public class StripePaymentService implements PaymentService {
     }
     
     @Override
-    public List<PaymentResponse> getAllPayments(Integer tenantId, Long orderId, String status) {
+    public List<PaymentResponse> getAllPayments(Integer tenantId, String username, boolean canAccessAllPayments, String orderId, String status) {
+        String userId = null;
+
+        if (!canAccessAllPayments) {
+            userId = userRepository.findByTenantIdAndUsername(tenantId, username)
+                    .map(user -> user.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+        }
+
+        if (userId != null && orderId != null) {
+            Order order = orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+            if (!order.getUserId().equals(userId)) {
+                return List.of();
+            }
+
+            return paymentRepository.findByTenantIdAndOrderId(tenantId, orderId).stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+        }
+
+        if (userId != null) {
+            List<Order> userOrders = orderRepository.findByTenantIdAndUserId(tenantId, userId);
+            return userOrders.stream()
+                    .flatMap(order -> paymentRepository.findByTenantIdAndOrderId(tenantId, order.getOrderId()).stream())
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+        }
+
         if (orderId != null) {
             return paymentRepository.findByTenantIdAndOrderId(tenantId, orderId).stream()
                     .map(this::mapToDTO)
@@ -99,9 +128,9 @@ public class StripePaymentService implements PaymentService {
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
-    
+
     @Override
-    public PaymentResponse getPayment(Integer tenantId, Long paymentId) {
+    public PaymentResponse getPayment(Integer tenantId, String paymentId) {
         Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
                 .orElseThrow(() -> new PaymentNotFoundException("Payment not found with id: " + paymentId));
         return mapToDTO(payment);
@@ -134,8 +163,8 @@ public class StripePaymentService implements PaymentService {
                 
                 Order order = orderRepository.findByTenantIdAndOrderId(tenantId, paymentRequest.getOrderId())
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + paymentRequest.getOrderId()));
-                
-                Long newPaymentId = idGeneratorService.generateId(tenantId, "PAYMENT");
+
+                String newPaymentId = idGeneratorService.generateId(tenantId, "PAYMENT");
                 
                 PaymentIntent paymentIntent = retryService.executeWithRetry(() -> {
                     try {
@@ -153,9 +182,9 @@ public class StripePaymentService implements PaymentService {
                         params.put("automatic_payment_methods", automaticPaymentMethods);
                         
                         Map<String, String> metadata = new HashMap<>();
-                        metadata.put("orderId", paymentRequest.getOrderId().toString());
+                        metadata.put("orderId", paymentRequest.getOrderId());
                         metadata.put("tenantId", tenantId.toString());
-                        metadata.put("paymentId", newPaymentId.toString());
+                        metadata.put("paymentId", newPaymentId);
                         params.put("metadata", metadata);
                         
                         return PaymentIntent.create(params);
@@ -199,7 +228,7 @@ public class StripePaymentService implements PaymentService {
     }
         
     @Override
-    public PaymentResponse confirmPayment(Integer tenantId, Long paymentId, String transactionId, String username) {
+    public PaymentResponse confirmPayment(Integer tenantId, String paymentId, String transactionId, String username) {
     return transactionCoordinator.executeInStrictTransaction(() -> {
         try {
             Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
@@ -283,9 +312,8 @@ public class StripePaymentService implements PaymentService {
                 // Log payment status change
                 paymentEventLogger.logPaymentStatusChange(payment, oldStatus, payment.getStatus(), username);
             }
-            
-            // Ensure username is truncated to 2 characters as per DB schema
-            String truncatedUsername = username;
+
+            String truncatedUsername = userService.truncateUsernameForAudit(username);
             payment.setUpdatedBy(truncatedUsername);
             payment.setUpdated(LocalDateTime.now());
             
@@ -303,7 +331,7 @@ public class StripePaymentService implements PaymentService {
 }     
     
     @Override
-    public PaymentResponse cancelPayment(Integer tenantId, Long paymentId, String username) {
+    public PaymentResponse cancelPayment(Integer tenantId, String paymentId, String username) {
         return transactionCoordinator.executeInTransaction(() -> {
             try {
                 Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
@@ -337,8 +365,7 @@ public class StripePaymentService implements PaymentService {
                 }
                 
                 payment.setStatus(PaymentStatus.FAILED.getDisplayName());
-                
-                // Ensure username is truncated to 2 characters as per DB schema
+
                 String truncatedUsername = userService.truncateUsernameForAudit(username);
                 payment.setUpdatedBy(truncatedUsername);
                 payment.setUpdated(LocalDateTime.now());
@@ -377,7 +404,7 @@ public class StripePaymentService implements PaymentService {
     }
     
     @Override
-    public PaymentResponse partialRefundPayment(Integer tenantId, Long paymentId, PartialRefundRequest refundRequest, String username) {
+    public PaymentResponse partialRefundPayment(Integer tenantId, String paymentId, PartialRefundRequest refundRequest, String username) {
         return transactionCoordinator.executeInStrictTransaction(() -> {
             try {
                 Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
@@ -429,8 +456,8 @@ public class StripePaymentService implements PaymentService {
                 } else {
                     payment.setStatus(PaymentStatus.PARTIALLY_REFUNDED.getDisplayName());
                 }
-                
-                String truncatedUsername = username;
+
+                String truncatedUsername = userService.truncateUsernameForAudit(username);
                 payment.setUpdatedBy(truncatedUsername);
                 payment.setUpdated(LocalDateTime.now());
                 
@@ -471,7 +498,7 @@ public class StripePaymentService implements PaymentService {
     }
 
     @Override
-    public PaymentResponse refundPayment(Integer tenantId, Long paymentId, String username) {
+    public PaymentResponse refundPayment(Integer tenantId, String paymentId, String username) {
         return transactionCoordinator.executeInStrictTransaction(() -> {
             try {
                 Payment payment = paymentRepository.findByTenantIdAndPaymentId(tenantId, paymentId)
@@ -505,15 +532,16 @@ public class StripePaymentService implements PaymentService {
                 payment.setRefundedAmount(payment.getAmount());
                 payment.setStatus(PaymentStatus.REFUNDED.getDisplayName());
                 payment.setRefundReason("Full refund requested");
-                
+
                 Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + payment.getOrderId()));
                 order.setStatus("Refunded");
-                order.setUpdatedBy(username);
+
+                String truncatedUsername = userService.truncateUsernameForAudit(username);
+                order.setUpdatedBy(truncatedUsername);
                 order.setUpdated(LocalDateTime.now());
                 orderRepository.save(order);
-                
-                String truncatedUsername = username;
+
                 payment.setUpdatedBy(truncatedUsername);
                 payment.setUpdated(LocalDateTime.now());
                 

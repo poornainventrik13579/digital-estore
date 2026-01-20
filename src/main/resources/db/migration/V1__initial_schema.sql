@@ -1,7 +1,7 @@
 -- Create Users table
 CREATE TABLE users (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    user_id BIGINT NOT NULL,
+    user_id VARCHAR(32) NOT NULL,
     username VARCHAR(50) NOT NULL UNIQUE,
     first_name VARCHAR(50),
     last_name VARCHAR(50),
@@ -29,7 +29,7 @@ CREATE TABLE users (
 -- Create Categories table
 CREATE TABLE categories (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    category_id BIGINT NOT NULL,
+    category_id VARCHAR(32) NOT NULL,
     category_name VARCHAR(50) NOT NULL,
     description TEXT,
     status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
@@ -43,12 +43,12 @@ CREATE TABLE categories (
 -- Create Products table
 CREATE TABLE products (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    product_id BIGINT NOT NULL,
+    product_id VARCHAR(32) NOT NULL,
     product_name VARCHAR(100) NOT NULL,
     description TEXT,
     default_price DECIMAL(10, 2) NOT NULL,
     default_currency VARCHAR(3) NOT NULL,
-    category_id BIGINT,
+    category_id VARCHAR(32),
     status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
     created_by VARCHAR(2) NOT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -60,7 +60,7 @@ CREATE TABLE products (
 -- Create DigitalProductDetails table
 CREATE TABLE digital_product_details (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    product_id BIGINT NOT NULL,
+    product_id VARCHAR(32) NOT NULL,
     file_url VARCHAR(255) NOT NULL,
     file_size INT,
     file_format VARCHAR(20),
@@ -77,8 +77,8 @@ CREATE TABLE digital_product_details (
 -- Create Orders table
 CREATE TABLE orders (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    order_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
+    order_id VARCHAR(32) NOT NULL,
+    user_id VARCHAR(32) NOT NULL,
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     currency VARCHAR(3),
     total_amount DECIMAL(10, 2) NOT NULL,
@@ -94,9 +94,9 @@ CREATE TABLE orders (
 -- Create Order Items table
 CREATE TABLE order_items (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    order_id BIGINT NOT NULL,
-    order_item_id BIGINT NOT NULL,
-    product_id BIGINT NOT NULL,
+    order_id VARCHAR(32) NOT NULL,
+    order_item_id VARCHAR(32) NOT NULL,
+    product_id VARCHAR(32) NOT NULL,
     price_at_purchase DECIMAL(10, 2) NOT NULL,
     license_key VARCHAR(100),
     status VARCHAR(2) NOT NULL, -- -1 INACTIVE, 0 ACTIVE
@@ -110,8 +110,8 @@ CREATE TABLE order_items (
 -- Create Payments table
 CREATE TABLE payments (
     tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
-    payment_id BIGINT NOT NULL,
-    order_id BIGINT NOT NULL,
+    payment_id VARCHAR(32) NOT NULL,
+    order_id VARCHAR(32) NOT NULL,
     currency VARCHAR(3),
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     amount DECIMAL(10, 2) NOT NULL,
@@ -130,7 +130,7 @@ CREATE TABLE payments (
 -- Create Payment Audit Log table
 CREATE TABLE payment_audit_log (
     audit_id VARCHAR(36) NOT NULL,
-    payment_id BIGINT NOT NULL,
+    payment_id VARCHAR(32) NOT NULL,
     event_type VARCHAR(50) NOT NULL,
     event_details TEXT,
     performed_by VARCHAR(50) NOT NULL,

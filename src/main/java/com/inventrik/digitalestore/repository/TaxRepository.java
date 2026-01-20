@@ -10,7 +10,7 @@ import java.util.Optional;
 @Repository
 public interface TaxRepository extends JpaRepository<Tax, Tax.TaxPK> {
     List<Tax> findByTenantId(Integer tenantId);
-    Optional<Tax> findByTenantIdAndTaxId(Integer tenantId, Long taxId);
+    Optional<Tax> findByTenantIdAndTaxId(Integer tenantId, String taxId);
     List<Tax> findByTenantIdAndStatus(Integer tenantId, String status);
-    void deleteByTenantIdAndTaxId(Integer tenantId, Long taxId);
+    void deleteByTenantIdAndTaxId(Integer tenantId, String taxId);
 }
