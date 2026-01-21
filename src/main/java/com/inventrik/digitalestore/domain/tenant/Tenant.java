@@ -35,9 +35,6 @@ public class Tenant {
     @Column(name = "country_region", length = 100)
     private String countryRegion;
 
-    @Column(name = "store_password", length = 250)
-    private String storePassword;
-
     @Column(name = "base_currency", length = 20)
     private String baseCurrency;
 

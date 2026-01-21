@@ -26,7 +26,6 @@ public class TenantRequest {
     private String domainName;
     private String subdomain;
     private String countryRegion;
-    private String storePassword;
     private String baseCurrency;
     private Boolean multiCurrency;
     private String taxId;

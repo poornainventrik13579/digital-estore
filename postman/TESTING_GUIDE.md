@@ -49,33 +49,35 @@ currency_code = (will be auto-set)
     "shopName": "TechWorld Electronics",
     "shopEmail": "contact@techworld.com",
     "shopPhone": "+1-555-1000",
+    "shopLogo": "https://techworld.com/logo.png",
+    "domainName": "techworld.com",
     "adminUsername": "techworld_admin",
     "adminPassword": "Admin@2024",
     "adminEmail": "admin@techworld.com",
-    "adminPhone": "+1-555-1001",
-    "adminFirstName": "David",
-    "adminLastName": "Wilson",
     "subdomain": "techworld",
     "countryRegion": "United States",
-    "baseCurrency": "USD"
+    "baseCurrency": "USD",
+    "timezone": "America/New_York",
+    "taxId": "US123456789"
 }
 ```
 
 **Required Fields:**
-- `shopName` ✅
-- `shopEmail` ✅ (must be valid email)
-- `adminUsername` ✅
-- `adminPassword` ✅
-- `adminEmail` ✅ (must be valid email)
-- `adminPhone` ✅ (must be unique)
+- `shopName`
+- `shopEmail` (max 100 chars, valid email)
+- `shopPhone` (valid phone format)
+- `shopLogo` (valid URL starting with http:// or https://)
+- `domainName` (valid domain format)
+- `adminUsername`
+- `adminPassword`
+- `adminEmail` (valid email)
 
 **Optional Fields:**
-- `adminFirstName` (recommended)
-- `adminLastName` (recommended)
-- `shopPhone`
-- `subdomain`
+- `subdomain` (lowercase letters, numbers, hyphens only)
 - `countryRegion`
 - `baseCurrency` (defaults to "USD")
+- `timezone` (e.g., "America/New_York")
+- `taxId` (8-20 characters, uppercase letters and numbers)
 
 **Expected Result:**
 - Status: 201 Created
@@ -121,9 +123,8 @@ currency_code = (will be auto-set)
     "domainName": "techhub.com",
     "subdomain": "techhub",
     "countryRegion": "United States",
-    "storePassword": "TechHub@2024",
     "baseCurrency": "USD",
-    "multiCurrency": "1",
+    "multiCurrency": true,
     "taxId": "US-TAX-12345",
     "timezone": "America/New_York"
 }
@@ -172,9 +173,8 @@ currency_code = (will be auto-set)
     "domainName": "techhub.com",
     "subdomain": "techhub",
     "countryRegion": "United States",
-    "storePassword": "TechHub@2024",
     "baseCurrency": "USD",
-    "multiCurrency": "1",
+    "multiCurrency": true,
     "taxId": "US-TAX-12345",
     "timezone": "America/New_York"
 }

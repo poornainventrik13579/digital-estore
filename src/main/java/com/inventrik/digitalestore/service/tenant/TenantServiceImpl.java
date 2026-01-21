@@ -76,7 +76,6 @@ public class TenantServiceImpl implements TenantService {
         tenant.setDomainName(request.getDomainName());
         tenant.setSubdomain(request.getSubdomain());
         tenant.setCountryRegion(request.getCountryRegion());
-        tenant.setStorePassword(request.getStorePassword());
         tenant.setBaseCurrency(request.getBaseCurrency());
         tenant.setMultiCurrency(request.getMultiCurrency());
         tenant.setTaxId(request.getTaxId());
@@ -98,22 +97,28 @@ public class TenantServiceImpl implements TenantService {
         if (request.getSubdomain() != null && tenantRepository.existsBySubdomain(request.getSubdomain())) {
             throw new BusinessException("Subdomain already exists");
         }
+        if (tenantRepository.existsByDomainName(request.getDomainName())) {
+            throw new BusinessException("Domain name already exists");
+        }
 
         Tenant tenant = new Tenant();
         tenant.setShopName(request.getShopName());
         tenant.setShopEmail(request.getShopEmail());
         tenant.setShopPhone(request.getShopPhone());
+        tenant.setShopLogo(request.getShopLogo());
+        tenant.setDomainName(request.getDomainName());
         tenant.setSubdomain(request.getSubdomain());
         tenant.setCountryRegion(request.getCountryRegion());
         tenant.setBaseCurrency(request.getBaseCurrency());
         tenant.setMultiCurrency(true);
+        tenant.setTaxId(request.getTaxId());
+        tenant.setTimezone(request.getTimezone());
         tenant.setStatus("0");
         tenant.setCreatedBy("sy");
         tenant.setUpdatedBy("sy");
 
         Tenant savedTenant = tenantRepository.save(tenant);
 
-        // Create admin user - use shop phone for admin
         UserRequest adminUser = new UserRequest();
         adminUser.setUsername(request.getAdminUsername());
         adminUser.setPassword(request.getAdminPassword());

@@ -49,7 +49,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"shopName\": \"TechWorld Electronics\",\n    \"shopEmail\": \"contact@techworld.com\",\n    \"shopPhone\": \"+1-555-1000\",\n    \"adminUsername\": \"techworld_admin\",\n    \"adminPassword\": \"Admin@2024\",\n    \"adminEmail\": \"admin@techworld.com\",\n    \"subdomain\": \"techworld\",\n    \"countryRegion\": \"United States\",\n    \"baseCurrency\": \"USD\"\n}"
+              "raw": "{\n    \"shopName\": \"TechWorld Electronics\",\n    \"shopEmail\": \"contact@techworld.com\",\n    \"shopPhone\": \"+1-555-1000\",\n    \"shopLogo\": \"https://techworld.com/logo.png\",\n    \"domainName\": \"techworld.com\",\n    \"adminUsername\": \"techworld_admin\",\n    \"adminPassword\": \"Admin@2024\",\n    \"adminEmail\": \"admin@techworld.com\",\n    \"subdomain\": \"techworld\",\n    \"countryRegion\": \"United States\",\n    \"baseCurrency\": \"USD\",\n    \"timezone\": \"America/New_York\",\n    \"taxId\": \"US123456789\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/tenant/signup",
