@@ -1,10 +1,14 @@
 package com.inventrik.digitalestore.api;
 
+import com.inventrik.digitalestore.domain.user.User;
 import com.inventrik.digitalestore.dto.request.ForgotPasswordRequest;
 import com.inventrik.digitalestore.dto.request.LoginRequest;
 import com.inventrik.digitalestore.dto.request.SignupRequest;
 import com.inventrik.digitalestore.dto.request.UserRequest;
+import jakarta.validation.Valid;
 import com.inventrik.digitalestore.dto.response.UserResponse;
+import com.inventrik.digitalestore.repository.UserRepository;
+import com.inventrik.digitalestore.service.certificate.CertificateService;
 import com.inventrik.digitalestore.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -12,8 +16,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,37 +28,33 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.access.prepost.PreAuthorize;
 
-import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * Handles user/customer authentication operations
- * Simplified endpoints without tenantId in URL path
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @Tag(name = "User Authentication", description = "Authentication APIs for users/customers")
+@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:3000"})
 public class UserAuthController {
 
     private final UserService userService;
+    private final UserRepository userRepository;
+    private final CertificateService certificateService;
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
 
     @Value("${app.base-url}")
     private String appBaseUrl;
 
-    /**
-     * User self-registration
-     * Public endpoint - no authentication required
-     */
     @PostMapping(value = "/signup", consumes = {
             "application/json",
             "application/x-www-form-urlencoded"
@@ -61,7 +62,7 @@ public class UserAuthController {
     @Operation(summary = "Register a new user (public endpoint)")
     public ResponseEntity<?> signup(@Valid @ModelAttribute SignupRequest request) {
         try {
-            Integer tenantId = request.getTenantId() != null ? request.getTenantId() : 1; // Default tenant
+            Integer tenantId = request.getTenantId() != null ? request.getTenantId() : 1;
 
             UserRequest userRequest = new UserRequest();
             userRequest.setUsername(request.getUsername());
@@ -83,64 +84,85 @@ public class UserAuthController {
         }
     }
 
-    /**
-     * Authenticate user and generate JWT token
-     * Uses tenantId:username format if tenantId provided, otherwise plain username
-     */
     @PostMapping(value = "/login", consumes = {
             "application/json",
             "application/x-www-form-urlencoded"
     })
     @Operation(summary = "Login user")
-    public ResponseEntity<?> login(@Valid @ModelAttribute LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@Valid @ModelAttribute LoginRequest loginRequest, HttpServletResponse response) {
         try {
-            // Build username: if tenantId provided, use "tenantId:username" format, else just username
             String username = loginRequest.getTenantId() != null
                 ? loginRequest.getTenantId() + ":" + loginRequest.getUsername()
                 : loginRequest.getUsername();
 
-            Authentication authentication = authenticationManager.authenticate(
+            authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, loginRequest.getPassword())
             );
 
-            Instant now = Instant.now();
-            List<String> authorities = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
-
-            JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
-                .issuer(appBaseUrl)
-                .issuedAt(now)
-                .expiresAt(now.plus(1, ChronoUnit.HOURS))
-                .subject(authentication.getName())
-                .claim("authorities", authorities);
-
-            // Add tenantId as separate claim if provided
-            if (loginRequest.getTenantId() != null) {
-                claimsBuilder.claim("tenantId", loginRequest.getTenantId());
+            Optional<User> userOpt = userRepository.findByUsername(username);
+            if (userOpt.isEmpty()) {
+                userOpt = userRepository.findByUsername(loginRequest.getUsername());
             }
 
-            JwtClaimsSet claims = claimsBuilder.build();
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
+            }
 
-            String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+            User user = userOpt.get();
 
-            return ResponseEntity.ok(Map.of(
-                "access_token", token,
-                "token_type", "Bearer",
-                "expires_in", 3600,
-                "authorities", authorities,
-                "username", authentication.getName()
-            ));
+            if (loginRequest.isPrivateDevice()) {
+                String sessionId = UUID.randomUUID().toString();
+                certificateService.createSession(sessionId, new CertificateService.SessionData(user.getTenantId(), user.getUserId(), true));
+
+                ResponseCookie sessionCookie = ResponseCookie.from("certSessionId", sessionId)
+                        .httpOnly(true)
+                        .secure(false)
+                        .sameSite("Lax")
+                        .path("/")
+                        .maxAge(30 * 24 * 60 * 60)
+                        .build();
+
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
+                        .body(Map.of("message", "Login successful", "userId", user.getUserId()));
+            } else {
+                Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, loginRequest.getPassword())
+                );
+
+                Instant now = Instant.now();
+                List<String> authorities = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
+
+                JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
+                    .issuer(appBaseUrl)
+                    .issuedAt(now)
+                    .expiresAt(now.plus(1, ChronoUnit.HOURS))
+                    .subject(authentication.getName())
+                    .claim("authorities", authorities);
+
+                if (loginRequest.getTenantId() != null) {
+                    claimsBuilder.claim("tenantId", loginRequest.getTenantId());
+                }
+
+                JwtClaimsSet claims = claimsBuilder.build();
+                String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+                return ResponseEntity.ok(Map.of(
+                    "access_token", token,
+                    "token_type", "Bearer",
+                    "expires_in", 3600,
+                    "authorities", authorities,
+                    "username", authentication.getName()
+                ));
+            }
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
         }
     }
 
-    /**
-     * Password reset for users
-     * Public endpoint - doesn't reveal if email exists
-     */
     @PostMapping("/forgot-password")
     @Operation(summary = "Request password reset")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
@@ -151,7 +173,6 @@ public class UserAuthController {
                 "email", request.getEmail()
             ));
         } catch (Exception e) {
-            // Don't reveal if email exists for security
             return ResponseEntity.ok(Map.of(
                 "message", "If an account with that email exists, we've sent a password reset link.",
                 "email", request.getEmail()
@@ -159,33 +180,13 @@ public class UserAuthController {
         }
     }
 
-    /**
-     * Logout - Client should discard the JWT token
-     * This endpoint is for logging purposes and returning a success response
-     */
     @PostMapping("/logout")
     @SecurityRequirement(name = "oauth2")
-    @Operation(summary = "Logout user (JWT-based)")
+    @Operation(summary = "Logout user")
     public ResponseEntity<?> logout(Authentication authentication) {
-        try {
-            if (authentication != null && authentication.isAuthenticated()) {
-                String username = authentication.getName();
-                log.info("User logged out: {}", username);
-
-                return ResponseEntity.ok(Map.of(
-                    "message", "Logout successful. Please discard your access token on the client side.",
-                    "username", username
-                ));
-            }
-
-            return ResponseEntity.ok(Map.of(
-                "message", "Logout successful"
-            ));
-        } catch (Exception e) {
-            log.error("Logout error: {}", e.getMessage());
-            return ResponseEntity.ok(Map.of(
-                "message", "Logout successful"
-            ));
+        if (authentication != null && authentication.isAuthenticated()) {
+            log.info("User logged out: {}", authentication.getName());
         }
+        return ResponseEntity.ok(Map.of("message", "Logout successful"));
     }
 }

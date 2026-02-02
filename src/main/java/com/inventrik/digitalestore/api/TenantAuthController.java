@@ -1,47 +1,54 @@
 package com.inventrik.digitalestore.api;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.List;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
-import org.springframework.web.bind.annotation.*;
-
+import com.inventrik.digitalestore.domain.user.User;
 import com.inventrik.digitalestore.dto.request.ForgotPasswordRequest;
 import com.inventrik.digitalestore.dto.request.LoginRequest;
 import com.inventrik.digitalestore.dto.request.TenantSignupRequest;
 import com.inventrik.digitalestore.dto.response.TenantResponse;
 import com.inventrik.digitalestore.dto.response.UserResponse;
+import com.inventrik.digitalestore.repository.UserRepository;
+import com.inventrik.digitalestore.service.IdGeneratorService;
+import com.inventrik.digitalestore.service.certificate.CertificateService;
 import com.inventrik.digitalestore.service.user.UserService;
+import jakarta.validation.Valid;
 import com.inventrik.digitalestore.service.tenant.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.web.bind.annotation.*;
 
-/**
- * Handles tenant admin authentication: signup, login, and password reset
- * For tenant-level administrators who manage specific stores
- */
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/api/v1/auth/tenant")
 @RequiredArgsConstructor
 public class TenantAuthController {
 
     private final UserService userService;
+    private final UserRepository userRepository;
+    private final CertificateService certificateService;
     private final TenantService tenantService;
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
@@ -49,10 +56,6 @@ public class TenantAuthController {
     @Value("${app.base-url}")
     private String appBaseUrl;
 
-    /**
-     * Create new tenant with admin user
-     * Public endpoint - no authentication required
-     */
     @PostMapping(value = "/signup", consumes = {
             "application/json",
             "application/x-www-form-urlencoded"
@@ -71,60 +74,79 @@ public class TenantAuthController {
         }
     }
 
-    /**
-     * Authenticate tenant admin and generate JWT token
-     * Uses tenantId:username format for authentication
-     */
     @PostMapping(value = "/login", consumes = {
             "application/json",
             "application/x-www-form-urlencoded"
     })
-    public ResponseEntity<?> login(@Valid @ModelAttribute LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@Valid @ModelAttribute LoginRequest loginRequest, HttpServletResponse response) {
         try {
             if (loginRequest.getTenantId() == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Tenant ID is required for tenant admin login"));
             }
 
-            // Tenant admins use tenantId:username format
             String username = loginRequest.getTenantId() + ":" + loginRequest.getUsername();
 
-            Authentication authentication = authenticationManager.authenticate(
+            authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, loginRequest.getPassword())
             );
 
-            Instant now = Instant.now();
-            List<String> authorities = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
+            Optional<User> userOpt = userRepository.findByUsername(username);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
+            }
 
-            JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(appBaseUrl)
-                .issuedAt(now)
-                .expiresAt(now.plus(1, ChronoUnit.HOURS))
-                .subject(authentication.getName())
-                .claim("authorities", authorities)
-                .claim("tenantId", loginRequest.getTenantId()) // Add tenantId as separate claim
-                .build();
+            User user = userOpt.get();
 
-            String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+            if (loginRequest.isPrivateDevice()) {
+                String sessionId = UUID.randomUUID().toString();
+                certificateService.createSession(sessionId, new CertificateService.SessionData(user.getTenantId(), user.getUserId(), true));
 
-            return ResponseEntity.ok(Map.of(
-                "access_token", token,
-                "token_type", "Bearer",
-                "expires_in", 3600,
-                "authorities", authorities,
-                "username", authentication.getName()
-            ));
+                ResponseCookie sessionCookie = ResponseCookie.from("certSessionId", sessionId)
+                        .httpOnly(true)
+                        .secure(false)
+                        .sameSite("Lax")
+                        .path("/")
+                        .maxAge(30 * 24 * 60 * 60)
+                        .build();
+
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
+                        .body(Map.of("message", "Login successful", "userId", user.getUserId()));
+            } else {
+                Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, loginRequest.getPassword())
+                );
+
+                Instant now = Instant.now();
+                List<String> authorities = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
+
+                JwtClaimsSet claims = JwtClaimsSet.builder()
+                    .issuer(appBaseUrl)
+                    .issuedAt(now)
+                    .expiresAt(now.plus(1, ChronoUnit.HOURS))
+                    .subject(authentication.getName())
+                    .claim("authorities", authorities)
+                    .claim("tenantId", loginRequest.getTenantId())
+                    .build();
+
+                String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+                return ResponseEntity.ok(Map.of(
+                    "access_token", token,
+                    "token_type", "Bearer",
+                    "expires_in", 3600,
+                    "authorities", authorities,
+                    "username", authentication.getName()
+                ));
+            }
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
         }
     }
 
-    /**
-     * Password reset for tenant admins
-     * Public endpoint - doesn't reveal if email exists
-     */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         try {
@@ -134,7 +156,6 @@ public class TenantAuthController {
                 "email", request.getEmail()
             ));
         } catch (Exception e) {
-            // Don't reveal if email exists for security
             return ResponseEntity.ok(Map.of(
                 "message", "If a tenant admin account with that email exists, we've sent a password reset link.",
                 "email", request.getEmail()
@@ -142,9 +163,6 @@ public class TenantAuthController {
         }
     }
 
-    /**
-     * Get current tenant admin user details
-     */
     @GetMapping("/me")
     @SecurityRequirement(name = "oauth2")
     @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
