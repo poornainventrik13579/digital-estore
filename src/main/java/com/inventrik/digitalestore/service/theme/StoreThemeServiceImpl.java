@@ -72,8 +72,6 @@ public class StoreThemeServiceImpl implements StoreThemeService {
         theme.setHeroTitle(request.getHeroTitle());
         theme.setHeroDescription(request.getHeroDescription());
         theme.setStatus("0");
-        theme.setCreatedBy(username.substring(0, Math.min(2, username.length())));
-        theme.setUpdatedBy(username.substring(0, Math.min(2, username.length())));
 
         StoreTheme saved = storeThemeRepository.save(theme);
         return mapToDTO(saved);
@@ -91,11 +89,8 @@ public class StoreThemeServiceImpl implements StoreThemeService {
         theme.setBannerImage(request.getBannerImage());
         theme.setJoinCta(request.getJoinCta());
         theme.setCopyrightText(request.getCopyrightText());
-
         theme.setHeroTitle(request.getHeroTitle());
         theme.setHeroDescription(request.getHeroDescription());
-        
-        theme.setUpdatedBy(username.substring(0, Math.min(2, username.length())));
 
         StoreTheme updated = storeThemeRepository.save(theme);
         return mapToDTO(updated);

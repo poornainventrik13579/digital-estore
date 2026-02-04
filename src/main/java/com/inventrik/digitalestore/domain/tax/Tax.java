@@ -22,7 +22,7 @@ public class Tax {
     @Column(name = "tax_id")
     private String taxId;
 
-    @Column(name = "code", nullable = false, length = 255)
+    @Column(name = "code", nullable = false, length = 50)
     private String code;
 
     @Column(name = "description", length = 255)
@@ -43,16 +43,10 @@ public class Tax {
     @Column(name = "status", nullable = false, length = 2)
     private String status;
 
-    @Column(name = "created_by", nullable = false, length = 2)
-    private String createdBy;
-
-    @Column(name = "created")
+    @Column(name = "created", nullable = false)
     private LocalDateTime created;
 
-    @Column(name = "updated_by", nullable = false, length = 50)
-    private String updatedBy;
-
-    @Column(name = "updated")
+    @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
 
     @PrePersist

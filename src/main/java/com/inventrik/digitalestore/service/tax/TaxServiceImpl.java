@@ -81,8 +81,6 @@ public class TaxServiceImpl implements TaxService {
         tax.setStartDate(request.getStartDate());
         tax.setEndDate(request.getEndDate());
         tax.setStatus("0");
-        tax.setCreatedBy(username.substring(0, Math.min(2, username.length())));
-        tax.setUpdatedBy(username.substring(0, Math.min(2, username.length())));
 
         Tax saved = taxRepository.save(tax);
         return mapToDTO(saved);
@@ -100,7 +98,6 @@ public class TaxServiceImpl implements TaxService {
         tax.setDefaultFlag(request.getDefaultFlag());
         tax.setStartDate(request.getStartDate());
         tax.setEndDate(request.getEndDate());
-        tax.setUpdatedBy(username.substring(0, Math.min(2, username.length())));
 
         Tax updated = taxRepository.save(tax);
         return mapToDTO(updated);

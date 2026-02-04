@@ -2,7 +2,6 @@ package com.inventrik.digitalestore.service.certificate;
 
 import com.inventrik.digitalestore.domain.certificate.UserCertificate;
 import com.inventrik.digitalestore.repository.UserCertificateRepository;
-import com.inventrik.digitalestore.service.IdGeneratorService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 public class CertificateServiceImpl implements CertificateService {
 
     private final UserCertificateRepository repository;
-    private final IdGeneratorService idGeneratorService;
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String CHALLENGE_PREFIX = "challenge:";
@@ -28,33 +26,34 @@ public class CertificateServiceImpl implements CertificateService {
     private static final Duration CHALLENGE_TTL = Duration.ofSeconds(10);
     private static final Duration SESSION_TTL = Duration.ofDays(30);
 
-    public CertificateServiceImpl(UserCertificateRepository repository, IdGeneratorService idGeneratorService, RedisTemplate<String, Object> redisTemplate) {
+    public CertificateServiceImpl(UserCertificateRepository repository, RedisTemplate<String, Object> redisTemplate) {
         this.repository = repository;
-        this.idGeneratorService = idGeneratorService;
         this.redisTemplate = redisTemplate;
     }
 
     @Override
     @Transactional
     public UserCertificate createCertificate(Integer tenantId, String userId, String sessionId, String publicKey) {
+        if (findBySessionId(sessionId).isPresent()) {
+            throw new IllegalStateException("Certificate already exists for session: " + sessionId);
+        }
+
         UserCertificate certificate = new UserCertificate();
-        certificate.setId(idGeneratorService.generateStandardUUID());
+        certificate.setSessionId(sessionId);
         certificate.setTenantId(tenantId);
         certificate.setUserId(userId);
-        certificate.setSessionId(sessionId);
         certificate.setPublicKey(publicKey);
-        certificate.setStatus("active");
         return repository.save(certificate);
     }
 
     @Override
     public Optional<UserCertificate> findBySessionId(String sessionId) {
-        return repository.findBySessionIdAndStatus(sessionId, "active");
+        return repository.findBySessionId(sessionId);
     }
 
     @Override
     public Optional<UserCertificate> findByTenantIdAndUserId(Integer tenantId, String userId) {
-        return repository.findByTenantIdAndUserIdAndStatus(tenantId, userId, "active");
+        return repository.findByTenantIdAndUserId(tenantId, userId);
     }
 
     @Override

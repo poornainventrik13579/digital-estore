@@ -40,8 +40,8 @@ public class PageServiceImpl implements PageService {
             page.getVisibility(),
             page.getIsDefault(),
             page.getLanguage(),
-            page.getCreatedAt(),
-            page.getUpdatedAt(),
+            page.getCreated(),
+            page.getUpdated(),
             page.getPublishedAt()
         );
     }

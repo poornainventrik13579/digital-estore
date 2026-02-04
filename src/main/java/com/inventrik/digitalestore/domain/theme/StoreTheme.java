@@ -41,22 +41,16 @@ public class StoreTheme {
     @Column(name = "hero_title", length = 256)
     private String heroTitle;
 
-    @Column(name = "hero_description", columnDefinition =  "TEXT")
+    @Column(name = "hero_description", columnDefinition = "TEXT")
     private String heroDescription;
 
     @Column(name = "status", nullable = false, length = 2)
     private String status;
 
-    @Column(name = "created_by", nullable = false, length = 2)
-    private String createdBy;
-
-    @Column(name = "created")
+    @Column(name = "created", nullable = false)
     private LocalDateTime created;
 
-    @Column(name = "updated_by", nullable = false, length = 50)
-    private String updatedBy;
-
-    @Column(name = "updated")
+    @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
 
     @PrePersist

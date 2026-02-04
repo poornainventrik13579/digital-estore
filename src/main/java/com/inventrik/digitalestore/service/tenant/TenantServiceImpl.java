@@ -81,8 +81,6 @@ public class TenantServiceImpl implements TenantService {
         tenant.setTaxId(request.getTaxId());
         tenant.setTimezone(request.getTimezone());
         tenant.setStatus("0");
-        tenant.setCreatedBy(username.substring(0, Math.min(2, username.length())));
-        tenant.setUpdatedBy(username.substring(0, Math.min(2, username.length())));
 
         Tenant saved = tenantRepository.save(tenant);
         return mapToDTO(saved);
@@ -114,8 +112,6 @@ public class TenantServiceImpl implements TenantService {
         tenant.setTaxId(request.getTaxId());
         tenant.setTimezone(request.getTimezone());
         tenant.setStatus("0");
-        tenant.setCreatedBy("sy");
-        tenant.setUpdatedBy("sy");
 
         Tenant savedTenant = tenantRepository.save(tenant);
 
@@ -137,7 +133,6 @@ public class TenantServiceImpl implements TenantService {
         Tenant tenant = tenantRepository.findByTenantId(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
 
-        // Check if email is being changed and if new email already exists
         if (request.getShopEmail() != null && !request.getShopEmail().equals(tenant.getShopEmail())) {
             if (tenantRepository.existsByShopEmail(request.getShopEmail())) {
                 throw new BusinessException("Email already exists");
@@ -154,7 +149,6 @@ public class TenantServiceImpl implements TenantService {
         tenant.setMultiCurrency(request.getMultiCurrency());
         tenant.setTaxId(request.getTaxId());
         tenant.setTimezone(request.getTimezone());
-        tenant.setUpdatedBy(username.substring(0, Math.min(2, username.length())));
 
         Tenant updated = tenantRepository.save(tenant);
         return mapToDTO(updated);

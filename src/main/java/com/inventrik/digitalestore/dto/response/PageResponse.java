@@ -21,7 +21,7 @@ public class PageResponse {
     private PageVisibility visibility;
     private Boolean isDefault;
     private String language;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime created;
+    private LocalDateTime updated;
     private LocalDateTime publishedAt;
 }

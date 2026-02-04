@@ -44,9 +44,13 @@ public class CertificateAuthController {
         }
 
         User user = userOpt.get();
-        certificateService.createCertificate(user.getTenantId(), user.getUserId(), sessionId, request.getPublicKey());
 
-        return ResponseEntity.ok(Map.of("message", "Public key registered successfully", "userId", user.getUserId()));
+        try {
+            certificateService.createCertificate(user.getTenantId(), user.getUserId(), sessionId, request.getPublicKey());
+            return ResponseEntity.ok(Map.of("message", "Public key registered successfully", "userId", user.getUserId()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Master key already registered for this session"));
+        }
     }
 
     @PostMapping("/challenge")

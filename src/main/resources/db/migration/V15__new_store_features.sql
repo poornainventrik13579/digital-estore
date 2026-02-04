@@ -3,7 +3,7 @@
 
 -- Create Tenants table
 CREATE TABLE tenants (
-    tenant_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Tenant ID',
+    tenant_id INT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Tenant ID',
     shop_name VARCHAR(100) NOT NULL,
     shop_email VARCHAR(100) NOT NULL,
     shop_phone VARCHAR(20),
@@ -17,9 +17,7 @@ CREATE TABLE tenants (
     tax_id VARCHAR(50),
     timezone VARCHAR(50),
     status VARCHAR(2) NOT NULL DEFAULT '0',
-    created_by VARCHAR(2) NOT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(2) NOT NULL,
     updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (tenant_id),
     UNIQUE KEY uk_shop_email (shop_email),
@@ -28,7 +26,7 @@ CREATE TABLE tenants (
 
 -- Create StoreThemes table
 CREATE TABLE store_themes (
-    tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+    tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
     theme_id VARCHAR(32) NOT NULL,
     theme_name VARCHAR(100),
     tagline VARCHAR(256),
@@ -37,9 +35,7 @@ CREATE TABLE store_themes (
     join_cta VARCHAR(256),
     copyright_text VARCHAR(256),
     status VARCHAR(2) NOT NULL DEFAULT '0',
-    created_by VARCHAR(2) NOT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(2) NOT NULL,
     updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (tenant_id, theme_id),
     INDEX idx_theme_status (tenant_id, status)
@@ -47,7 +43,7 @@ CREATE TABLE store_themes (
 
 -- Create Pages table
 CREATE TABLE pages (
-    tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+    tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
     page_id VARCHAR(32) NOT NULL,
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(100) NOT NULL,
@@ -58,8 +54,9 @@ CREATE TABLE pages (
     visibility VARCHAR(20) NOT NULL,
     is_default TINYINT(1),
     language VARCHAR(10),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    template VARCHAR(50) NOT NULL DEFAULT 'default',
+    created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     published_at TIMESTAMP NULL,
     PRIMARY KEY (tenant_id, page_id),
     UNIQUE KEY uk_tenant_slug (tenant_id, slug),
@@ -69,18 +66,16 @@ CREATE TABLE pages (
 
 -- Create Taxes table
 CREATE TABLE taxes (
-    tenant_id INT(10) UNSIGNED NOT NULL COMMENT 'Tenant ID',
+    tenant_id INT UNSIGNED NOT NULL COMMENT 'Tenant ID',
     tax_id VARCHAR(32) NOT NULL,
-    code VARCHAR(255) NOT NULL,
+    code VARCHAR(50) NOT NULL,
     description VARCHAR(255),
     value DECIMAL(10, 2) NOT NULL,
     default_flag VARCHAR(2),
     start_date DATE,
     end_date DATE,
     status VARCHAR(2) NOT NULL DEFAULT '0',
-    created_by VARCHAR(2) NOT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(2) NOT NULL,
     updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (tenant_id, tax_id),
     UNIQUE KEY uk_tenant_code (tenant_id, code),

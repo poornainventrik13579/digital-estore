@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CertificateService {
-    UserCertificate createCertificate(Integer tenantId, String userId, String sessionId, String publicKey);
+    UserCertificate createCertificate(Integer tenantId, String userId, String sessionId, String publicKey) throws IllegalStateException;
     Optional<UserCertificate> findBySessionId(String sessionId);
     Optional<UserCertificate> findByTenantIdAndUserId(Integer tenantId, String userId);
     void deleteBySessionId(String sessionId);

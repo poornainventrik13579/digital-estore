@@ -35,15 +35,15 @@ public class Page {
     @Column(name = "meta_description", length = 256)
     private String metaDescription;
 
-    @Column(name = "template", nullable = false, columnDefinition = "VARCHAR(20)")
+    @Column(name = "template", nullable = false, length = 50)
     private String template = "default";
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(20)")
+    @Column(name = "status", nullable = false, length = 20)
     private PageStatus status = PageStatus.DRAFT;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "visibility", nullable = false, columnDefinition = "VARCHAR(20)")
+    @Column(name = "visibility", nullable = false, length = 20)
     private PageVisibility visibility = PageVisibility.PUBLIC;
 
     @Column(name = "is_default")
@@ -52,24 +52,24 @@ public class Page {
     @Column(name = "language", length = 10)
     private String language = "en";
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Column(name = "created", nullable = false)
+    private LocalDateTime created;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "updated", nullable = false)
+    private LocalDateTime updated;
 
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        created = LocalDateTime.now();
+        updated = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updated = LocalDateTime.now();
     }
 
     public static class PagePK implements Serializable {
