@@ -53,7 +53,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 
 @Configuration
-@EnableMethodSecurity
+// @EnableMethodSecurity
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class AuthServerConfig {
@@ -134,7 +134,7 @@ public class AuthServerConfig {
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
-            
+
         return http.build();
     }
 

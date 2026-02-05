@@ -1,7 +1,7 @@
 package com.inventrik.digitalestore.dto.request;
 
 import com.inventrik.digitalestore.domain.user.UserType;
-import com.inventrik.digitalestore.domain.user.UserRole;
+// import com.inventrik.digitalestore.domain.user.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,35 +15,37 @@ import jakarta.validation.constraints.Size;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserUpdateRequest {
-    
+
     @Schema(description = "First name", example = "John")
     @Size(max = 50, message = "First name must be less than 50 characters")
     private String firstName;
-    
+
     @Schema(description = "Last name", example = "Doe")
     @Size(max = 50, message = "Last name must be less than 50 characters")
     private String lastName;
-    
+
     @Schema(description = "Profile image URL", example = "https://example.com/profile.jpg")
     @Size(max = 256, message = "Image URL must be less than 256 characters")
     private String image;
-    
+
     @Schema(description = "Phone number", example = "+1-555-123-4567", requiredMode = Schema.RequiredMode.REQUIRED)
     @Pattern(regexp = "^\\+?[\\d\\s\\-()]+$", message = "Invalid phone format")
     @Size(max = 15, message = "Phone number must be less than 15 characters")
     private String phone;
-    
+
     @Schema(description = "Email address", example = "john.doe@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
     @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Invalid email format")
     @Email(message = "Email should be valid")
     @Size(max = 320, message = "Email must be less than 320 characters")
     private String email;
-    
+
     @Schema(description = "User type (INDIVIDUAL or COMPANY)", example = "INDIVIDUAL")
     private UserType userType;
-    
+
+    /*
     @Schema(description = "User role (USER, ADMIN, TENANT)", example = "USER")
     private UserRole userRole;
+    */
     
     // Company specific fields
     @Schema(description = "Company name", example = "Acme Corporation")

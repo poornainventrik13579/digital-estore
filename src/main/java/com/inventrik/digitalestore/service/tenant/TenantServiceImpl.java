@@ -1,7 +1,7 @@
 package com.inventrik.digitalestore.service.tenant;
 
 import com.inventrik.digitalestore.domain.tenant.Tenant;
-import com.inventrik.digitalestore.domain.user.UserRole;
+// import com.inventrik.digitalestore.domain.user.UserRole;
 import com.inventrik.digitalestore.dto.request.TenantRequest;
 import com.inventrik.digitalestore.dto.request.TenantSignupRequest;
 import com.inventrik.digitalestore.dto.request.UserRequest;
@@ -120,7 +120,7 @@ public class TenantServiceImpl implements TenantService {
         adminUser.setPassword(request.getAdminPassword());
         adminUser.setEmail(request.getAdminEmail());
         adminUser.setPhone(request.getShopPhone());
-        adminUser.setUserRole(UserRole.ADMIN);
+        // adminUser.setUserRole(UserRole.ADMIN);
 
         userService.createUser(savedTenant.getTenantId(), "system", adminUser);
 

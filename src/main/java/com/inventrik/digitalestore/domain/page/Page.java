@@ -38,13 +38,11 @@ public class Page {
     @Column(name = "template", nullable = false, length = 50)
     private String template = "default";
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private PageStatus status = PageStatus.DRAFT;
+    private String status = "DRAFT";
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "visibility", nullable = false, length = 20)
-    private PageVisibility visibility = PageVisibility.PUBLIC;
+    private String visibility = "PUBLIC";
 
     @Column(name = "is_default")
     private Boolean isDefault = false;

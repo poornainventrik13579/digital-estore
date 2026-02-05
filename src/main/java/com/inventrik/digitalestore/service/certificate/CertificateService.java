@@ -2,7 +2,6 @@ package com.inventrik.digitalestore.service.certificate;
 
 import com.inventrik.digitalestore.domain.certificate.UserCertificate;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface CertificateService {
@@ -17,8 +16,8 @@ public interface CertificateService {
     boolean markChallengeUsed(String challengeId);
 
     void storeSessionKey(String userId, String sessionPublicKey, long expiresAt);
-    List<String> getSessionKeys(String userId);
-    void removeSessionKeys(String userId);
+    Optional<SessionKeyData> getSessionKey(String userId);
+    void removeSessionKey(String userId);
 
     void createSession(String sessionId, SessionData data);
     SessionData getSession(String sessionId);
@@ -43,7 +42,7 @@ public interface CertificateService {
         public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
         public boolean isUsed() { return used; }
         public void setUsed(boolean used) { this.used = used; }
-        public boolean isExpired() { return System.currentTimeMillis() - createdAt > 10000; }
+        public boolean isExpired() { return System.currentTimeMillis() - createdAt > 30000; }
         public boolean isValid() { return !used && !isExpired(); }
     }
 
@@ -69,6 +68,7 @@ public interface CertificateService {
     }
 
     class SessionKeyData {
+        private String sessionKeyId;
         private String publicKey;
         private long expiresAt;
 
@@ -79,6 +79,14 @@ public interface CertificateService {
             this.expiresAt = expiresAt;
         }
 
+        public SessionKeyData(String sessionKeyId, String publicKey, long expiresAt) {
+            this.sessionKeyId = sessionKeyId;
+            this.publicKey = publicKey;
+            this.expiresAt = expiresAt;
+        }
+
+        public String getSessionKeyId() { return sessionKeyId; }
+        public void setSessionKeyId(String sessionKeyId) { this.sessionKeyId = sessionKeyId; }
         public String getPublicKey() { return publicKey; }
         public void setPublicKey(String publicKey) { this.publicKey = publicKey; }
         public long getExpiresAt() { return expiresAt; }

@@ -63,8 +63,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     
     private Collection<? extends GrantedAuthority> getAuthorities(User user) {
         List<GrantedAuthority> authorities = new ArrayList<>();
-        
-        // Add role based on user's role field (only give specific role, not all roles)
+
+        /*
         if ("0".equals(user.getStatus())) {
             switch (user.getUserRole()) {
                 case ADMIN:
@@ -79,7 +79,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                     break;
             }
         }
-        
+        */
+
         return authorities;
     }
 }

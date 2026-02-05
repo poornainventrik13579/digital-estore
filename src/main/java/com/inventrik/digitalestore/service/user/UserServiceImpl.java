@@ -45,7 +45,6 @@ public class UserServiceImpl implements UserService {
             user.getPhone(),
             user.getEmail(),
             user.getUserType(),
-            user.getUserRole(),
             user.getCompanyName(),
             user.getCompanyRegistrationNumber(),
             user.getCompanyAddress1(),
@@ -166,7 +165,7 @@ public class UserServiceImpl implements UserService {
         user.setPhone(userRequest.getPhone());
         user.setEmail(userRequest.getEmail());
         user.setUserType(userRequest.getUserType());
-        user.setUserRole(userRequest.getUserRole());
+        // user.setUserRole(userRequest.getUserRole());
 
         // Set company details if user type is COMPANY
         if (userRequest.getUserType() != null && userRequest.getUserType() == com.inventrik.digitalestore.domain.user.UserType.COMPANY) {
@@ -220,9 +219,11 @@ public class UserServiceImpl implements UserService {
         if (updateRequest.getUserType() != null) {
             user.setUserType(updateRequest.getUserType());
         }
+        /*
         if (updateRequest.getUserRole() != null) {
             user.setUserRole(updateRequest.getUserRole());
         }
+        */
         
         // Update company details
         if (updateRequest.getCompanyName() != null) {

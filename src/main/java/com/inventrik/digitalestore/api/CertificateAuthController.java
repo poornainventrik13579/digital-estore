@@ -137,7 +137,7 @@ public class CertificateAuthController {
             Optional<User> userOpt = getUserFromSession(sessionId);
             userOpt.ifPresent(user -> {
                 certificateService.deleteBySessionId(sessionId);
-                certificateService.removeSessionKeys(user.getUserId());
+                certificateService.removeSessionKey(user.getUserId());
             });
             certificateService.removeSession(sessionId);
         }
@@ -166,19 +166,16 @@ public class CertificateAuthController {
     }
 
     private Optional<User> getUserFromSession(String sessionId) {
-        // First check Redis
         CertificateService.SessionData sessionData = certificateService.getSession(sessionId);
 
         if (sessionData != null && sessionData.isAuthenticated()) {
             return userRepository.findByTenantIdAndUserId(sessionData.getTenantId(), sessionData.getUserId());
         }
 
-        // Fallback to MySQL if session not in Redis
         var certOpt = certificateService.findBySessionId(sessionId);
         if (certOpt.isPresent()) {
             UserCertificate cert = certOpt.get();
 
-            // Recreate Redis session from database data
             CertificateService.SessionData newSessionData = new CertificateService.SessionData(cert.getTenantId(), cert.getUserId(), true);
             certificateService.createSession(sessionId, newSessionData);
 

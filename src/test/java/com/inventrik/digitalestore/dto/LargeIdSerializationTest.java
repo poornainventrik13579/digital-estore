@@ -6,7 +6,7 @@ import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.dto.response.OrderResponse;
 import com.inventrik.digitalestore.dto.response.ProductResponse;
 import com.inventrik.digitalestore.domain.user.UserType;
-import com.inventrik.digitalestore.domain.user.UserRole;
+// import com.inventrik.digitalestore.domain.user.UserRole;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class LargeIdSerializationTest {
 
     private final ObjectMapper objectMapper;
-    
+
     public LargeIdSerializationTest() {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
@@ -26,14 +26,13 @@ public class LargeIdSerializationTest {
 
     @Test
     public void testUserIdSerializedAsString() throws Exception {
-        // Create a large user ID as String (UUID-based)
         String largeUserId = UUID.randomUUID().toString().replace("-", "");
 
         UserResponse userResponse = new UserResponse(
             largeUserId, 1, "testuser", "Test", "User", null,
             "+1-555-0001", "test@example.com", UserType.INDIVIDUAL,
-            UserRole.USER, null, null, null, null, null, null,
-            null, "0", LocalDateTime.now(), LocalDateTime.now()
+            null, null, null, null, null, null, null,
+            "0", LocalDateTime.now(), LocalDateTime.now()
         );
 
         // Serialize to JSON

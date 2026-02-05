@@ -23,6 +23,7 @@ public class TenantSecurity {
             return false;
         }
 
+        /*
         boolean isAdmin = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
@@ -50,6 +51,9 @@ public class TenantSecurity {
         }
 
         return false;
+        */
+
+        return tenantRepository.existsByTenantId(tenantId);
     }
 
     public void validateTenantAccess(Authentication authentication, Integer tenantId) {

@@ -1,7 +1,5 @@
 package com.inventrik.digitalestore.dto.request;
 
-import com.inventrik.digitalestore.domain.page.PageStatus;
-import com.inventrik.digitalestore.domain.page.PageVisibility;
 import lombok.Data;
 import jakarta.validation.constraints.NotBlank;
 
@@ -18,8 +16,8 @@ public class PageRequest {
     private String metaTitle;
     private String metaDescription;
     private String template;
-    private PageStatus status;
-    private PageVisibility visibility;
+    private String status;
+    private String visibility;
     private Boolean isDefault;
     private String language;
 }

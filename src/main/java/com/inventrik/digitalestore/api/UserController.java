@@ -37,21 +37,6 @@ public class UserController {
 
         tenantSecurity.validateTenantAccess(authentication, tenantId);
 
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-
-        boolean isTenant = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_TENANT"));
-
-        if (!isAdmin && !isTenant) {
-            String username = authentication.getName();
-            UserResponse currentUser = userService.findByUsername(username);
-            if (currentUser.getTenantId().equals(tenantId)) {
-                return ResponseEntity.ok(List.of(currentUser));
-            }
-            return ResponseEntity.ok(List.of());
-        }
-
         return ResponseEntity.ok(userService.getAllUsers(tenantId, status, null, null));
     }
 
@@ -65,19 +50,6 @@ public class UserController {
             Authentication authentication) {
 
         tenantSecurity.validateTenantAccess(authentication, tenantId);
-
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-
-        boolean isTenant = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_TENANT"));
-
-        if (!isAdmin && !isTenant) {
-            if (userService.isCurrentUser(tenantId, userId, authentication.getName())) {
-                return ResponseEntity.ok(userService.getUser(tenantId, userId));
-            }
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
 
         return ResponseEntity.ok(userService.getUser(tenantId, userId));
     }
@@ -122,18 +94,6 @@ public class UserController {
             Authentication authentication) {
 
         tenantSecurity.validateTenantAccess(authentication, tenantId);
-
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-
-        boolean isTenant = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_TENANT"));
-
-        if (!isAdmin && !isTenant) {
-            if (!userService.isCurrentUser(tenantId, userId, authentication.getName())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-        }
 
         String username = authentication.getName();
         UserResponse updatedUser = userService.updateUser(tenantId, userId, username, updateRequest);

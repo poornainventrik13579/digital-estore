@@ -51,10 +51,12 @@ public class User {
     @Column(name = "user_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private UserType userType = UserType.INDIVIDUAL;
-    
+
+    /*
     @Column(name = "user_role", nullable = false)
     @Enumerated(EnumType.STRING)
     private UserRole userRole = UserRole.USER;
+    */
     
     @Column(name = "company_name", length = 100)
     private String companyName;

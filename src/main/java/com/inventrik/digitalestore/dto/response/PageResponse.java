@@ -1,7 +1,5 @@
 package com.inventrik.digitalestore.dto.response;
 
-import com.inventrik.digitalestore.domain.page.PageStatus;
-import com.inventrik.digitalestore.domain.page.PageVisibility;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -17,8 +15,8 @@ public class PageResponse {
     private String metaTitle;
     private String metaDescription;
     private String template;
-    private PageStatus status;
-    private PageVisibility visibility;
+    private String status;
+    private String visibility;
     private Boolean isDefault;
     private String language;
     private LocalDateTime created;

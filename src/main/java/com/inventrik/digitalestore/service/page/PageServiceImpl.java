@@ -1,8 +1,6 @@
 package com.inventrik.digitalestore.service.page;
 
 import com.inventrik.digitalestore.domain.page.Page;
-import com.inventrik.digitalestore.domain.page.PageStatus;
-import com.inventrik.digitalestore.domain.page.PageVisibility;
 import com.inventrik.digitalestore.dto.request.PageRequest;
 import com.inventrik.digitalestore.dto.response.PageResponse;
 import com.inventrik.digitalestore.exception.BusinessException;
@@ -99,12 +97,12 @@ public class PageServiceImpl implements PageService {
         page.setMetaTitle(request.getMetaTitle());
         page.setMetaDescription(request.getMetaDescription());
         page.setTemplate(request.getTemplate() != null ? request.getTemplate(): "default");
-        page.setStatus(request.getStatus() != null ? request.getStatus() : PageStatus.DRAFT);
-        page.setVisibility(request.getVisibility() != null ? request.getVisibility() : PageVisibility.PUBLIC);
+        page.setStatus(request.getStatus() != null ? request.getStatus() : "DRAFT");
+        page.setVisibility(request.getVisibility() != null ? request.getVisibility() : "PUBLIC");
         page.setIsDefault(request.getIsDefault() != null ? request.getIsDefault() : false);
         page.setLanguage(request.getLanguage() != null ? request.getLanguage() : "en");
 
-        if (page.getStatus() == PageStatus.PUBLISHED && page.getPublishedAt() == null) {
+        if ("PUBLISHED".equals(page.getStatus()) && page.getPublishedAt() == null) {
             page.setPublishedAt(LocalDateTime.now());
         }
 
@@ -127,9 +125,9 @@ public class PageServiceImpl implements PageService {
             page.setTemplate(request.getTemplate());
         }
         if (request.getStatus() != null) {
-            PageStatus oldStatus = page.getStatus();
+            String oldStatus = page.getStatus();
             page.setStatus(request.getStatus());
-            if (request.getStatus() == PageStatus.PUBLISHED && oldStatus != PageStatus.PUBLISHED) {
+            if ("PUBLISHED".equals(request.getStatus()) && !"PUBLISHED".equals(oldStatus)) {
                 page.setPublishedAt(LocalDateTime.now());
             }
         }

@@ -7,9 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -23,7 +21,7 @@ public class CertificateServiceImpl implements CertificateService {
     private static final String SESSION_KEY_PREFIX = "session_key:";
     private static final String SESSION_PREFIX = "cert_session:";
 
-    private static final Duration CHALLENGE_TTL = Duration.ofSeconds(10);
+    private static final Duration CHALLENGE_TTL = Duration.ofSeconds(30);
     private static final Duration SESSION_TTL = Duration.ofDays(30);
 
     public CertificateServiceImpl(UserCertificateRepository repository, RedisTemplate<String, Object> redisTemplate) {
@@ -108,10 +106,10 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public void storeSessionKey(String userId, String sessionPublicKey, long expiresAt) {
-        String keyId = System.currentTimeMillis() + "_" + userId;
-        String key = SESSION_KEY_PREFIX + userId + ":" + keyId;
+        String sessionKeyId = UUID.randomUUID().toString();
+        String key = SESSION_KEY_PREFIX + userId;
 
-        SessionKeyData data = new SessionKeyData(sessionPublicKey, expiresAt);
+        SessionKeyData data = new SessionKeyData(sessionKeyId, sessionPublicKey, expiresAt);
 
         long ttl = (expiresAt - System.currentTimeMillis()) / 1000;
         if (ttl > 0) {
@@ -120,36 +118,26 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public List<String> getSessionKeys(String userId) {
-        String pattern = SESSION_KEY_PREFIX + userId + ":*";
-        Set<String> keys = redisTemplate.keys(pattern);
+    public Optional<SessionKeyData> getSessionKey(String userId) {
+        String key = SESSION_KEY_PREFIX + userId;
+        Object data = redisTemplate.opsForValue().get(key);
 
-        List<String> publicKeys = new java.util.ArrayList<>();
-        if (keys != null) {
-            for (String key : keys) {
-                Object data = redisTemplate.opsForValue().get(key);
-                if (data instanceof SessionKeyData) {
-                    SessionKeyData sessionKey = (SessionKeyData) data;
-                    if (!sessionKey.isExpired()) {
-                        publicKeys.add(sessionKey.getPublicKey());
-                    } else {
-                        redisTemplate.delete(key);
-                    }
-                }
+        if (data instanceof SessionKeyData) {
+            SessionKeyData sessionKey = (SessionKeyData) data;
+            if (!sessionKey.isExpired()) {
+                return Optional.of(sessionKey);
+            } else {
+                redisTemplate.delete(key);
             }
         }
 
-        return publicKeys;
+        return Optional.empty();
     }
 
     @Override
-    public void removeSessionKeys(String userId) {
-        String pattern = SESSION_KEY_PREFIX + userId + ":*";
-        Set<String> keys = redisTemplate.keys(pattern);
-
-        if (keys != null && !keys.isEmpty()) {
-            redisTemplate.delete(keys);
-        }
+    public void removeSessionKey(String userId) {
+        String key = SESSION_KEY_PREFIX + userId;
+        redisTemplate.delete(key);
     }
 
     @Override

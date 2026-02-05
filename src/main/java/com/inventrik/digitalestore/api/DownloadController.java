@@ -75,16 +75,10 @@ public class DownloadController {
 
         tenantSecurity.validateTenantAccess(authentication, tenantId);
 
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-
-        boolean isTenant = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_TENANT"));
-
         String username = authentication.getName();
 
         List<DownloadHistoryResponse> history = downloadService.getUserDownloadHistory(
-                tenantId, username, isAdmin || isTenant, userId);
+                tenantId, username, true, userId);
 
         return ResponseEntity.ok(history);
     }

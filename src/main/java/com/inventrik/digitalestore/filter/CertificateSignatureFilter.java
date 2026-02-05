@@ -81,22 +81,22 @@ public class CertificateSignatureFilter implements Filter {
                 return false;
             }
 
-            var sessionKeys = certificateService.getSessionKeys(challengeData.getUserId());
-            if (sessionKeys.isEmpty()) {
+            var sessionKeyOpt = certificateService.getSessionKey(challengeData.getUserId());
+            if (sessionKeyOpt.isEmpty()) {
                 return false;
             }
 
-            for (String publicKeyBase64 : sessionKeys) {
-                try {
-                    PublicKey publicKey = cryptoUtil.importPublicKey(publicKeyBase64);
+            CertificateService.SessionKeyData sessionKey = sessionKeyOpt.get();
 
-                    if (cryptoUtil.verifySignature(challengeId, signature, publicKey)) {
-                        certificateService.markChallengeUsed(challengeId);
-                        return true;
-                    }
-                } catch (Exception e) {
-                    continue;
+            try {
+                PublicKey publicKey = cryptoUtil.importPublicKey(sessionKey.getPublicKey());
+
+                if (cryptoUtil.verifySignature(challengeId, signature, publicKey)) {
+                    certificateService.markChallengeUsed(challengeId);
+                    return true;
                 }
+            } catch (Exception e) {
+                return false;
             }
 
             return false;
