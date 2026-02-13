@@ -43,7 +43,7 @@ public class BundleServiceImpl implements BundleService {
         if (productId != null) {
             List<BundleItem> bundleItems = bundleItemRepository.findBundlesContainingProduct(tenantId, productId);
             return bundleItems.stream()
-                    .map(BundleItem::getBundle)
+                    .map(BundleItem::getProductBundle)
                     .distinct()
                     .map(this::mapToResponse)
                     .collect(Collectors.toList());

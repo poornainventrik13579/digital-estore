@@ -52,8 +52,11 @@ public class OrderController {
         tenantSecurity.validateTenantAccess(authentication, tenantId);
 
         String username = authentication.getName();
+        boolean canAccessAllOrders = authentication.getAuthorities().stream()
+                .map(authority -> authority.getAuthority())
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN") || authority.equals("ROLE_TENANT"));
 
-        return ResponseEntity.ok(orderService.getAllOrders(tenantId, username, true, status));
+        return ResponseEntity.ok(orderService.getAllOrders(tenantId, username, canAccessAllOrders, status));
     }
     
     @GetMapping("/{orderId}")

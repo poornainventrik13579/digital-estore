@@ -58,7 +58,7 @@ public class ProductBundle {
     @Column(name = "updated", nullable = false)
     private LocalDateTime updated;
     
-    @OneToMany(mappedBy = "bundle", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "productBundle", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<BundleItem> bundleItems = new ArrayList<>();
     
     @PrePersist
@@ -74,12 +74,12 @@ public class ProductBundle {
     
     public void addBundleItem(BundleItem bundleItem) {
         bundleItems.add(bundleItem);
-        bundleItem.setBundle(this);
+        bundleItem.setProductBundle(this);
     }
     
     public void removeBundleItem(BundleItem bundleItem) {
         bundleItems.remove(bundleItem);
-        bundleItem.setBundle(null);
+        bundleItem.setProductBundle(null);
     }
     
     public static class ProductBundlePK implements Serializable {

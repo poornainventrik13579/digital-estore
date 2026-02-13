@@ -55,7 +55,7 @@ public class BundleItem {
         @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false),
         @JoinColumn(name = "bundle_id", referencedColumnName = "bundle_id", insertable = false, updatable = false)
     })
-    private ProductBundle bundle;
+    private ProductBundle productBundle;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({

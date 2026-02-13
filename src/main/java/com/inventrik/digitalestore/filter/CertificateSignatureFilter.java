@@ -5,6 +5,7 @@ import com.inventrik.digitalestore.util.CryptoUtil;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -31,6 +32,10 @@ public class CertificateSignatureFilter implements Filter {
     public CertificateSignatureFilter(CertificateService certificateService, CryptoUtil cryptoUtil) {
         this.certificateService = certificateService;
         this.cryptoUtil = cryptoUtil;
+    }
+
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
     }
 
     @Override

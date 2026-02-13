@@ -23,7 +23,7 @@ public class TenantSecurity {
             return false;
         }
 
-        /*
+        // Check if user has ROLE_ADMIN - allow access if tenant exists
         boolean isAdmin = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
@@ -32,6 +32,7 @@ public class TenantSecurity {
             return tenantRepository.existsByTenantId(tenantId);
         }
 
+        // Check if user has ROLE_TENANT - verify user belongs to tenant
         boolean isTenant = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(authority -> authority.equals("ROLE_TENANT"));
@@ -41,6 +42,7 @@ public class TenantSecurity {
             return userRepository.findByTenantIdAndUsername(tenantId, username).isPresent();
         }
 
+        // Check if user has ROLE_USER - verify user belongs to tenant
         boolean isUser = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(authority -> authority.equals("ROLE_USER"));
@@ -51,9 +53,6 @@ public class TenantSecurity {
         }
 
         return false;
-        */
-
-        return tenantRepository.existsByTenantId(tenantId);
     }
 
     public void validateTenantAccess(Authentication authentication, Integer tenantId) {

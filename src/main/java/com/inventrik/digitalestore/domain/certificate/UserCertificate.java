@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class UserCertificate {
 
     @Id
-    @Column(name = "session_id", nullable = false, length = 32)
+    @Column(name = "session_id", nullable = false, length = 255)
     private String sessionId;
 
     @Column(name = "tenant_id", nullable = false)
@@ -24,7 +24,7 @@ public class UserCertificate {
     @Column(name = "user_id", nullable = false, length = 32)
     private String userId;
 
-    @Column(name = "public_key", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "public_key", nullable = false, length = 124)
     private String publicKey;
 
     @Column(name = "created", nullable = false)

@@ -38,6 +38,10 @@ public class CertificateAuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No session"));
         }
 
+        if (request.getPublicKey() == null || request.getPublicKey().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Public key is required"));
+        }
+
         Optional<User> userOpt = getUserFromSession(sessionId);
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid session"));
@@ -174,12 +178,13 @@ public class CertificateAuthController {
 
         var certOpt = certificateService.findBySessionId(sessionId);
         if (certOpt.isPresent()) {
-            UserCertificate cert = certOpt.get();
-
-            CertificateService.SessionData newSessionData = new CertificateService.SessionData(cert.getTenantId(), cert.getUserId(), true);
-            certificateService.createSession(sessionId, newSessionData);
-
-            return userRepository.findByTenantIdAndUserId(cert.getTenantId(), cert.getUserId());
+            var existingSession = certificateService.getSession(sessionId);
+            if (existingSession == null || !existingSession.isAuthenticated()) {
+                UserCertificate cert = certOpt.get();
+                CertificateService.SessionData newSessionData = new CertificateService.SessionData(cert.getTenantId(), cert.getUserId(), true);
+                certificateService.createSession(sessionId, newSessionData);
+            }
+            return userRepository.findByTenantIdAndUserId(certOpt.get().getTenantId(), certOpt.get().getUserId());
         }
 
         return Optional.empty();
