@@ -1,6 +1,5 @@
 package com.inventrik.digitalestore.domain.user;
 
-/*
 public enum UserRole {
     USER("Regular User"),
     ADMIN("Administrator"),
@@ -16,4 +15,3 @@ public enum UserRole {
         return displayName;
     }
 }
-*/

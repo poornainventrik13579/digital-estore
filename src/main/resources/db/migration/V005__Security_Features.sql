@@ -1,5 +1,5 @@
 ALTER TABLE users
-ADD COLUMN user_role ENUM('USER', 'ADMIN', 'MANAGER') NOT NULL DEFAULT 'USER'
+ADD COLUMN user_role ENUM('USER', 'ADMIN', 'TENANT') NOT NULL DEFAULT 'USER'
 COMMENT 'User role for access control';
 UPDATE users
 SET user_role = 'ADMIN'
