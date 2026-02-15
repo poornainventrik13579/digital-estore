@@ -188,7 +188,7 @@ public class AuthServerConfig {
                 .redirectUri("http://localhost:8080/swagger-ui/oauth2-redirect.html")
                 .scope(OidcScopes.OPENID)
                 .scope("read")
-                .scope("write")
+                .scope("write") 
                 .tokenSettings(TokenSettings.builder()
                         .accessTokenTimeToLive(Duration.ofHours(1))
                         .refreshTokenTimeToLive(Duration.ofDays(7))
