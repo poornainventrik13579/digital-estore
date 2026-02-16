@@ -46,6 +46,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.inventrik.digitalestore.filter.CertificateSignatureFilter;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -122,7 +123,7 @@ public class AuthServerConfig {
 
     @Bean
     @Order(4)
-    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, CertificateSignatureFilter certificateSignatureFilter) throws Exception {
         http
             .securityMatcher("/api/v1/**")
             .csrf(csrf -> csrf.disable())
@@ -134,6 +135,7 @@ public class AuthServerConfig {
                 .requestMatchers("/api/v1/cert-auth/**").permitAll()
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(certificateSignatureFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
         return http.build();

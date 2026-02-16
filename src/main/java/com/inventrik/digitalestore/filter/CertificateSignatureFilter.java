@@ -6,10 +6,14 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.security.PublicKey;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -53,11 +57,6 @@ public class CertificateSignatureFilter implements Filter {
             return;
         }
 
-        if (!requestPath.startsWith("/api/v1/cert-auth/")) {
-            chain.doFilter(request, response);
-            return;
-        }
-
         if (isPublicEndpoint(requestPath)) {
             chain.doFilter(request, response);
             return;
@@ -66,29 +65,29 @@ public class CertificateSignatureFilter implements Filter {
         String challengeId = httpRequest.getHeader(HEADER_CHALLENGE);
         String signature = httpRequest.getHeader(HEADER_SIGNATURE);
 
-        if (challengeId == null || signature == null) {
-            rejectRequest(httpResponse, "Missing authentication headers");
-            return;
-        }
-
-        if (performSignatureVerification(challengeId, signature)) {
-            chain.doFilter(request, response);
+        if (challengeId != null && signature != null) {
+            String userId = performSignatureVerification(challengeId, signature);
+            if (userId != null) {
+                chain.doFilter(request, response);
+            } else {
+                rejectRequest(httpResponse, "Invalid signature");
+            }
         } else {
-            rejectRequest(httpResponse, "Invalid signature");
+            chain.doFilter(request, response);
         }
     }
 
-    private boolean performSignatureVerification(String challengeId, String signature) {
+    private String performSignatureVerification(String challengeId, String signature) {
         try {
             CertificateService.ChallengeData challengeData = certificateService.getChallenge(challengeId).orElse(null);
 
             if (challengeData == null || !challengeData.isValid()) {
-                return false;
+                return null;
             }
 
             var sessionKeyOpt = certificateService.getSessionKey(challengeData.getUserId());
             if (sessionKeyOpt.isEmpty()) {
-                return false;
+                return null;
             }
 
             CertificateService.SessionKeyData sessionKey = sessionKeyOpt.get();
@@ -98,15 +97,24 @@ public class CertificateSignatureFilter implements Filter {
 
                 if (cryptoUtil.verifySignature(challengeId, signature, publicKey)) {
                     certificateService.markChallengeUsed(challengeId);
-                    return true;
+                    String userId = challengeData.getUserId();
+
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userId,
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                    );
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    return userId;
                 }
             } catch (Exception e) {
-                return false;
+                return null;
             }
 
-            return false;
+            return null;
         } catch (Exception e) {
-            return false;
+            return null;
         }
     }
 
