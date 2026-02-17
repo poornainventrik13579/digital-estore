@@ -188,7 +188,7 @@ public class ProductServiceImpl implements ProductService {
             product.setStatus(updateRequest.getStatus());
         }
         
-        product.setUpdatedBy(username);
+        product.setUpdatedBy(userService.getAuditCode(username));
         product.setUpdated(LocalDateTime.now());
         
         Product updatedProduct = productRepository.save(product);

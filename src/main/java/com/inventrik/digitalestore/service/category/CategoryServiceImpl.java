@@ -106,7 +106,7 @@ public class CategoryServiceImpl implements CategoryService {
         }
         
         // Ensure username is truncated to 2 characters as per DB schema
-        category.setUpdatedBy(username);
+        category.setUpdatedBy(userService.getAuditCode(username));
         category.setUpdated(LocalDateTime.now());
         
         Category updatedCategory = categoryRepository.save(category);

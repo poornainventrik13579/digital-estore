@@ -72,8 +72,8 @@ public class ReviewServiceImpl implements ReviewService {
         review.setComment(reviewRequest.getComment());
         review.setVerified(hasPurchased);
         review.setStatus("0");
-        review.setCreatedBy(username);
-        review.setUpdatedBy(username);
+        review.setCreatedBy(userService.getAuditCode(username));
+        review.setUpdatedBy(userService.getAuditCode(username));
         
         Review savedReview = reviewRepository.save(review);
         
@@ -140,7 +140,7 @@ public class ReviewServiceImpl implements ReviewService {
         
         review.setRating(reviewRequest.getRating());
         review.setComment(reviewRequest.getComment());
-        review.setUpdatedBy(username);
+        review.setUpdatedBy(userService.getAuditCode(username));
         
         Review updatedReview = reviewRepository.save(review);
         
@@ -163,7 +163,7 @@ public class ReviewServiceImpl implements ReviewService {
         }
         
         review.setStatus("-1");
-        review.setUpdatedBy(username);
+        review.setUpdatedBy(userService.getAuditCode(username));
         
         reviewRepository.save(review);
         
@@ -213,7 +213,7 @@ public class ReviewServiceImpl implements ReviewService {
             .orElseThrow(() -> new ResourceNotFoundException("Review not found with ID: " + reviewId));
         
         review.setVerified(true);
-        review.setUpdatedBy(username);
+        review.setUpdatedBy(userService.getAuditCode(username));
         
         Review verifiedReview = reviewRepository.save(review);
         

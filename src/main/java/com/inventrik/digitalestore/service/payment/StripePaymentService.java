@@ -204,8 +204,9 @@ public class StripePaymentService implements PaymentService {
                 payment.setTransactionId(paymentIntent.getId());
                 payment.setStatus(PaymentStatus.PENDING.getDisplayName());
                 
-                payment.setCreatedBy(username);
-                payment.setUpdatedBy(username);
+                String truncatedUsername = userService.truncateUsernameForAudit(username);
+                payment.setCreatedBy(truncatedUsername);
+                payment.setUpdatedBy(truncatedUsername);
                 payment.setCreated(LocalDateTime.now());
                 payment.setUpdated(LocalDateTime.now());
                 
@@ -271,16 +272,18 @@ public class StripePaymentService implements PaymentService {
                     throw new PaymentProcessingException("Failed to retrieve payment intent: " + e.getMessage(), e, true);
                 }
             });
-            
+
+            String truncatedUsername = userService.truncateUsernameForAudit(username);
+
             if ("succeeded".equals(paymentIntent.getStatus())) {
                 payment.setStatus(PaymentStatus.SUCCESSFUL.getDisplayName());
-                
+
                 // Update the order status if necessary
                 Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + payment.getOrderId()));
-                
+
                 order.setStatus("Processing");
-                order.setUpdatedBy(username);
+                order.setUpdatedBy(truncatedUsername);
                 order.setUpdated(LocalDateTime.now());
                 Order savedOrder = orderRepository.save(order);
                 
@@ -313,7 +316,6 @@ public class StripePaymentService implements PaymentService {
                 paymentEventLogger.logPaymentStatusChange(payment, oldStatus, payment.getStatus(), username);
             }
 
-            String truncatedUsername = userService.truncateUsernameForAudit(username);
             payment.setUpdatedBy(truncatedUsername);
             payment.setUpdated(LocalDateTime.now());
             
