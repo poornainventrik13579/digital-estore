@@ -15,6 +15,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/auth/platform")
+@Slf4j
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -51,22 +53,34 @@ public class AuthController {
     @Value("${app.base-url}")
     private String appBaseUrl;
 
-    @PostMapping(value = "/login", consumes = {
-            "application/json",
-            "application/x-www-form-urlencoded"
-    })
-    public ResponseEntity<?> login(@Valid @ModelAttribute LoginRequest loginRequest, HttpServletResponse response) {
+    @PostMapping(value = "/login", consumes = "multipart/form-data")
+    public ResponseEntity<?> login(
+            @RequestParam String username,
+            @RequestParam String password,
+            @RequestParam(required = false, defaultValue = "false") boolean privateDevice,
+            HttpServletResponse response) {
         try {
-            authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+            // Create LoginRequest object for consistency
+            LoginRequest loginRequest = new LoginRequest();
+            loginRequest.setUsername(username);
+            loginRequest.setPassword(password);
+            loginRequest.setPrivateDevice(privateDevice);
+
+            log.info("Platform login attempt - username: {}", username);
+
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, password)
             );
 
-            Optional<User> userOpt = userRepository.findByUsername(loginRequest.getUsername());
+            log.info("Authentication successful for user: {}", authentication.getName());
+
+            Optional<User> userOpt = userRepository.findByUsername(authentication.getName());
             if (userOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
             }
 
             User user = userOpt.get();
+            log.info("Found user - tenantId: {}, userId: {}, status: {}", user.getTenantId(), user.getUserId(), user.getStatus());
 
             if (loginRequest.isPrivateDevice()) {
                 String sessionId = UUID.randomUUID().toString();
@@ -84,10 +98,6 @@ public class AuthController {
                         .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
                         .body(Map.of("message", "Login successful", "userId", user.getUserId()));
             } else {
-                Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
-                );
-
                 Instant now = Instant.now();
                 List<String> authorities = authentication.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)

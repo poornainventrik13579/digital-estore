@@ -75,7 +75,7 @@ public class CertificateAuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Public key not registered"));
         }
 
-        String challengeId = certificateService.createChallenge(user.getUserId());
+        String challengeId = certificateService.createChallenge(user.getUserId(), user.getTenantId());
 
         return ResponseEntity.ok(Map.of("challenge", challengeId));
     }

@@ -1,5 +1,8 @@
 package com.inventrik.digitalestore.filter;
 
+import com.inventrik.digitalestore.domain.user.User;
+import com.inventrik.digitalestore.domain.user.UserRole;
+import com.inventrik.digitalestore.repository.UserRepository;
 import com.inventrik.digitalestore.service.certificate.CertificateService;
 import com.inventrik.digitalestore.util.CryptoUtil;
 import jakarta.servlet.*;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -32,10 +36,12 @@ public class CertificateSignatureFilter implements Filter {
 
     private final CertificateService certificateService;
     private final CryptoUtil cryptoUtil;
+    private final UserRepository userRepository;
 
-    public CertificateSignatureFilter(CertificateService certificateService, CryptoUtil cryptoUtil) {
+    public CertificateSignatureFilter(CertificateService certificateService, CryptoUtil cryptoUtil, UserRepository userRepository) {
         this.certificateService = certificateService;
         this.cryptoUtil = cryptoUtil;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -79,12 +85,14 @@ public class CertificateSignatureFilter implements Filter {
 
     private String performSignatureVerification(String challengeId, String signature) {
         try {
+            // Get challenge from Redis
             CertificateService.ChallengeData challengeData = certificateService.getChallenge(challengeId).orElse(null);
 
             if (challengeData == null || !challengeData.isValid()) {
                 return null;
             }
 
+            // Get user's session key from Redis
             var sessionKeyOpt = certificateService.getSessionKey(challengeData.getUserId());
             if (sessionKeyOpt.isEmpty()) {
                 return null;
@@ -95,24 +103,57 @@ public class CertificateSignatureFilter implements Filter {
             try {
                 PublicKey publicKey = cryptoUtil.importPublicKey(sessionKey.getPublicKey());
 
-                if (cryptoUtil.verifySignature(challengeId, signature, publicKey)) {
+                boolean signatureValid = cryptoUtil.verifySignature(challengeId, signature, publicKey);
+
+                if (signatureValid) {
                     certificateService.markChallengeUsed(challengeId);
                     String userId = challengeData.getUserId();
+                    Integer tenantId = challengeData.getTenantId();
+
+                    // Fetch user from DB to get proper role/authorities
+                    var userOpt = userRepository.findByTenantIdAndUserId(tenantId, userId);
+
+                    List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+
+                    if (userOpt.isPresent()) {
+                        User user = userOpt.get();
+                        String status = user.getStatus();
+
+                        if ("0".equals(status)) { // Active user
+                            switch (user.getUserRole()) {
+                                case ADMIN:
+                                    authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                                    break;
+                                case TENANT:
+                                    authorities.add(new SimpleGrantedAuthority("ROLE_TENANT"));
+                                    break;
+                                case USER:
+                                default:
+                                    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                                    break;
+                            }
+                        }
+                    }
+
+                    // If no authorities found, deny access
+                    if (authorities.isEmpty()) {
+                        return null;
+                    }
 
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userId,
                         null,
-                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                        authorities
                     );
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
                     return userId;
+                } else {
+                    return null;
                 }
             } catch (Exception e) {
                 return null;
             }
-
-            return null;
         } catch (Exception e) {
             return null;
         }

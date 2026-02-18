@@ -11,7 +11,7 @@ public interface CertificateService {
     void deleteBySessionId(String sessionId);
     void deleteByTenantIdAndUserId(Integer tenantId, String userId);
 
-    String createChallenge(String userId);
+    String createChallenge(String userId, Integer tenantId);
     Optional<ChallengeData> getChallenge(String challengeId);
     boolean markChallengeUsed(String challengeId);
 
@@ -25,6 +25,7 @@ public interface CertificateService {
 
     class ChallengeData {
         private String userId;
+        private Integer tenantId;
         private long createdAt;
         private boolean used;
 
@@ -36,8 +37,17 @@ public interface CertificateService {
             this.used = false;
         }
 
+        public ChallengeData(String userId, Integer tenantId, long createdAt) {
+            this.userId = userId;
+            this.tenantId = tenantId;
+            this.createdAt = createdAt;
+            this.used = false;
+        }
+
         public String getUserId() { return userId; }
         public void setUserId(String userId) { this.userId = userId; }
+        public Integer getTenantId() { return tenantId; }
+        public void setTenantId(Integer tenantId) { this.tenantId = tenantId; }
         public long getCreatedAt() { return createdAt; }
         public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
         public boolean isUsed() { return used; }

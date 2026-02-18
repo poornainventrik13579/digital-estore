@@ -18,9 +18,11 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -43,6 +45,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/auth/tenant")
+@Slf4j
 @RequiredArgsConstructor
 public class TenantAuthController {
 
@@ -56,10 +59,7 @@ public class TenantAuthController {
     @Value("${app.base-url}")
     private String appBaseUrl;
 
-    @PostMapping(value = "/signup", consumes = {
-            "application/json",
-            "application/x-www-form-urlencoded"
-    })
+    @PostMapping(value = "/signup", consumes = "multipart/form-data")
     public ResponseEntity<?> tenantSignup(@Valid @ModelAttribute TenantSignupRequest request) {
         try {
             TenantResponse tenant = tenantService.createTenantWithAdmin(request);
@@ -74,28 +74,44 @@ public class TenantAuthController {
         }
     }
 
-    @PostMapping(value = "/login", consumes = {
-            "application/json",
-            "application/x-www-form-urlencoded"
-    })
-    public ResponseEntity<?> login(@Valid @ModelAttribute LoginRequest loginRequest, HttpServletResponse response) {
+    @PostMapping(value = "/login", consumes = "multipart/form-data")
+    public ResponseEntity<?> login(
+            @RequestParam Integer tenantId,
+            @RequestParam String username,
+            @RequestParam String password,
+            @RequestParam(required = false, defaultValue = "false") boolean privateDevice,
+            HttpServletResponse response) {
         try {
-            if (loginRequest.getTenantId() == null) {
+            // Create LoginRequest object for consistency
+            LoginRequest loginRequest = new LoginRequest();
+            loginRequest.setTenantId(tenantId);
+            loginRequest.setUsername(username);
+            loginRequest.setPassword(password);
+            loginRequest.setPrivateDevice(privateDevice);
+
+            log.info("Tenant login attempt - tenantId: {}, username: {}", tenantId, username);
+
+            if (tenantId == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Tenant ID is required for tenant admin login"));
             }
 
-            String username = loginRequest.getTenantId() + ":" + loginRequest.getUsername();
+            String formattedUsername = tenantId + ":" + username;
 
-            authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, loginRequest.getPassword())
+            log.info("Attempting authentication with username: {}", formattedUsername);
+
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(formattedUsername, password)
             );
 
-            Optional<User> userOpt = userRepository.findByUsername(username);
+            log.info("Authentication successful for user: {}", authentication.getName());
+
+            Optional<User> userOpt = userRepository.findByUsername(authentication.getName());
             if (userOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
             }
 
             User user = userOpt.get();
+            log.info("Found user - tenantId: {}, userId: {}, status: {}", user.getTenantId(), user.getUserId(), user.getStatus());
 
             if (loginRequest.isPrivateDevice()) {
                 String sessionId = UUID.randomUUID().toString();
@@ -113,9 +129,6 @@ public class TenantAuthController {
                         .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
                         .body(Map.of("message", "Login successful", "userId", user.getUserId()));
             } else {
-                Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(username, loginRequest.getPassword())
-                );
 
                 Instant now = Instant.now();
                 List<String> authorities = authentication.getAuthorities().stream()

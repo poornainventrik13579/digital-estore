@@ -54,7 +54,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 
 @Configuration
-// @EnableMethodSecurity
+@EnableMethodSecurity
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class AuthServerConfig {
@@ -123,7 +123,8 @@ public class AuthServerConfig {
 
     @Bean
     @Order(4)
-    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, CertificateSignatureFilter certificateSignatureFilter) throws Exception {
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http,
+                                                   CertificateSignatureFilter certificateSignatureFilter) throws Exception {
         http
             .securityMatcher("/api/v1/**")
             .csrf(csrf -> csrf.disable())

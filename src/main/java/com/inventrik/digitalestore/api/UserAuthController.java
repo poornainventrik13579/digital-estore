@@ -55,10 +55,7 @@ public class UserAuthController {
     @Value("${app.base-url}")
     private String appBaseUrl;
 
-    @PostMapping(value = "/signup", consumes = {
-            "application/json",
-            "application/x-www-form-urlencoded"
-    })
+    @PostMapping(value = "/signup", consumes = "multipart/form-data")
     @Operation(summary = "Register a new user (public endpoint)")
     public ResponseEntity<?> signup(@Valid @ModelAttribute SignupRequest request) {
         try {
@@ -84,31 +81,48 @@ public class UserAuthController {
         }
     }
 
-    @PostMapping(value = "/login", consumes = {
-            "application/json",
-            "application/x-www-form-urlencoded"
-    })
+    @PostMapping(value = "/login", consumes = "multipart/form-data")
     @Operation(summary = "Login user")
-    public ResponseEntity<?> login(@Valid @ModelAttribute LoginRequest loginRequest, HttpServletResponse response) {
+    public ResponseEntity<?> login(
+            @RequestParam(required = false) Integer tenantId,
+            @RequestParam String username,
+            @RequestParam String password,
+            @RequestParam(required = false, defaultValue = "false") boolean privateDevice,
+            HttpServletResponse response) {
+
+        // Create LoginRequest object for validation
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setTenantId(tenantId);
+        loginRequest.setUsername(username);
+        loginRequest.setPassword(password);
+        loginRequest.setPrivateDevice(privateDevice);
         try {
+            log.info("Login attempt - tenantId: {}, username: {}", loginRequest.getTenantId(), loginRequest.getUsername());
+            
             String username = loginRequest.getTenantId() != null
                 ? loginRequest.getTenantId() + ":" + loginRequest.getUsername()
-                : loginRequest.getUsername();
+                : "1" + ":" + loginRequest.getUsername();
 
-            authenticationManager.authenticate(
+            log.info("Attempting authentication with username: {}", username);
+
+            Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, loginRequest.getPassword())
             );
 
-            Optional<User> userOpt = userRepository.findByUsername(username);
+            log.info("Authentication successful for user: {}", authentication.getName());
+
+            Optional<User> userOpt = userRepository.findByUsername(authentication.getName());
             if (userOpt.isEmpty()) {
                 userOpt = userRepository.findByUsername(loginRequest.getUsername());
             }
 
             if (userOpt.isEmpty()) {
+                log.error("User not found after authentication: {}", username);
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
             }
 
             User user = userOpt.get();
+            log.info("Found user - tenantId: {}, userId: {}, status: {}", user.getTenantId(), user.getUserId(), user.getStatus());
 
             if (loginRequest.isPrivateDevice()) {
                 String sessionId = UUID.randomUUID().toString();
@@ -126,10 +140,6 @@ public class UserAuthController {
                         .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
                         .body(Map.of("message", "Login successful", "userId", user.getUserId()));
             } else {
-                Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(username, loginRequest.getPassword())
-                );
-
                 Instant now = Instant.now();
                 List<String> authorities = authentication.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
