@@ -1,6 +1,7 @@
 package com.inventrik.digitalestore.service.user;
 
 import com.inventrik.digitalestore.domain.user.User;
+import com.inventrik.digitalestore.domain.user.UserRole;
 import com.inventrik.digitalestore.dto.request.UserRequest;
 import com.inventrik.digitalestore.dto.request.UserUpdateRequest;
 import com.inventrik.digitalestore.dto.response.UserResponse;
@@ -45,6 +46,7 @@ public class UserServiceImpl implements UserService {
             user.getPhone(),
             user.getEmail(),
             user.getUserType(),
+            user.getUserRole(),
             user.getCompanyName(),
             user.getCompanyRegistrationNumber(),
             user.getCompanyAddress1(),
@@ -165,7 +167,7 @@ public class UserServiceImpl implements UserService {
         user.setPhone(userRequest.getPhone());
         user.setEmail(userRequest.getEmail());
         user.setUserType(userRequest.getUserType());
-        // user.setUserRole(userRequest.getUserRole());
+        user.setUserRole(userRequest.getUserRole() != null ? userRequest.getUserRole() : UserRole.USER);
 
         // Set company details if user type is COMPANY
         if (userRequest.getUserType() != null && userRequest.getUserType() == com.inventrik.digitalestore.domain.user.UserType.COMPANY) {
@@ -219,11 +221,10 @@ public class UserServiceImpl implements UserService {
         if (updateRequest.getUserType() != null) {
             user.setUserType(updateRequest.getUserType());
         }
-        /*
+
         if (updateRequest.getUserRole() != null) {
-            user.setUserRole(updateRequest.getUserRole());
+             user.setUserRole(updateRequest.getUserRole());
         }
-        */
         
         // Update company details
         if (updateRequest.getCompanyName() != null) {
@@ -351,21 +352,31 @@ public class UserServiceImpl implements UserService {
     */
     
     public String getAuditCode(String username) {
-        if (username == null || username.equals("system")) {
-            return "00";
+                if (username == null || username.isEmpty()) {
+            return "SY";  // System
         }
-        if (username.equals("webhook")) {
-            return "99";
-        }
-
         try {
             UserResponse user = findByUsername(username);
-            // Generate a 2-digit code from the userId string hash
-            int hash = Math.abs(user.getUserId().hashCode()) % 98 + 1;
-            return String.format("%02d", hash);
+            
+            // Return code based on user role
+            if (user.getUserRole() != null) {
+                switch (user.getUserRole()) {
+                    case ADMIN:
+                        return "AD";  // Admin
+                    case TENANT:
+                        return "TN";  // Tenant
+                    case USER:
+                        return "US";  // User
+                    default:
+                        return "US";  // Default to User
+                }
+            }
+            return "US";  // Default if role is null
+            
         } catch (Exception e) {
-            int hash = Math.abs(username.hashCode()) % 89 + 10;
-            return String.format("%02d", hash);
+            // Fallback if user not found
+            log.warn("User not found for audit code generation: {}", username);
+            return "UN";  // Unknown
         }
     }
     
@@ -373,9 +384,6 @@ public class UserServiceImpl implements UserService {
      * Safely truncates username to 2 characters for database audit fields
      */
     public String truncateUsernameForAudit(String username) {
-        if (username == null || username.isEmpty()) {
-            return "00";
-        }
-        return username;
+        return getAuditCode(username);
     }
 }

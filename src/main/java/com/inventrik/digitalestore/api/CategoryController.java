@@ -53,7 +53,7 @@ public class CategoryController {
     }
     
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Create a new category (JSON)")
     public ResponseEntity<CategoryResponse> createCategoryJson(
             @PathVariable Integer tenantId,
@@ -66,7 +66,7 @@ public class CategoryController {
     }
     
     @PutMapping(path = "/{categoryId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Update a category (JSON)")
     public ResponseEntity<CategoryResponse> updateCategoryJson(
             @PathVariable Integer tenantId,
@@ -84,7 +84,9 @@ public class CategoryController {
     @Operation(summary = "Delete a category")
     public ResponseEntity<Void> deleteCategory(
             @PathVariable Integer tenantId,
-            @PathVariable String categoryId) {
+            @PathVariable String categoryId,
+            Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : "system";
         categoryService.deleteCategory(tenantId, categoryId);
         return ResponseEntity.noContent().build();
     }

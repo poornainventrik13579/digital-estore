@@ -1,6 +1,7 @@
 package com.inventrik.digitalestore.config;
 
 import com.inventrik.digitalestore.domain.user.User;
+import com.inventrik.digitalestore.domain.user.UserRole;
 import com.inventrik.digitalestore.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -23,15 +24,15 @@ public class DataInitializer {
                     .orElseGet(() -> {
                         User newAdmin = new User();
                         newAdmin.setTenantId(1);
-                        newAdmin.setUserId("10000000000000000000000000000001"); // Fixed UUID for admin
+                        newAdmin.setUserId("100000000000000000000000000001");
                         newAdmin.setUsername("admin");
                         newAdmin.setFirstName("Admin");
                         newAdmin.setLastName("User");
                         newAdmin.setEmail("admin@example.com");
                         newAdmin.setPhone("1234567890");
                         newAdmin.setOtp("000000");
-                        // newAdmin.setUserRole(com.inventrik.digitalestore.domain.user.UserRole.ADMIN);
-                        newAdmin.setStatus("0"); // Active
+                        newAdmin.setUserRole(UserRole.ADMIN);
+                        newAdmin.setStatus("0");
                         newAdmin.setCreatedBy("sy");
                         newAdmin.setUpdatedBy("sy");
                         newAdmin.setCreated(LocalDateTime.now());

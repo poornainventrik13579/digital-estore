@@ -1,7 +1,7 @@
 package com.inventrik.digitalestore.dto.response;
 
 import com.inventrik.digitalestore.domain.user.UserType;
-// import com.inventrik.digitalestore.domain.user.UserRole;
+import com.inventrik.digitalestore.domain.user.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,7 +21,7 @@ public class UserResponse {
     private String phone;
     private String email;
     private UserType userType;
-    // private UserRole userRole;
+    private UserRole userRole;
     private String companyName;
     private String companyRegistrationNumber;
     private String companyAddress1;

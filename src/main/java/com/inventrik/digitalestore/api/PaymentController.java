@@ -46,10 +46,16 @@ public class PaymentController {
 
         // TODO: Uncomment when roles are properly configured in JWT
         // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        String username = authentication != null ? authentication.getName() : "system";
 
-        String username = authentication.getName();
+        boolean canAccessAllPayments = authentication.getAuthorities().stream()
+        .map(authority -> authority.getAuthority())
+        .anyMatch(authority -> 
+            authority.equals("ROLE_ADMIN") || authority.equals("ROLE_TENANT"));
 
-        return ResponseEntity.ok(paymentService.getAllPayments(tenantId, username, true, orderId, status));
+        return ResponseEntity.ok(
+            paymentService.getAllPayments(tenantId, username, canAccessAllPayments, orderId, status)
+        );
     }
 
     @GetMapping("/{paymentId}")

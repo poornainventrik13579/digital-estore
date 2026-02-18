@@ -1,7 +1,7 @@
 package com.inventrik.digitalestore.dto.request;
 
 import com.inventrik.digitalestore.domain.user.UserType;
-// import com.inventrik.digitalestore.domain.user.UserRole;
+import com.inventrik.digitalestore.domain.user.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -55,12 +55,9 @@ public class UserRequest {
     @Schema(description = "User type (INDIVIDUAL or COMPANY)", example = "INDIVIDUAL", defaultValue = "INDIVIDUAL")
     private UserType userType = UserType.INDIVIDUAL;
 
-    /*
     @Schema(description = "User role (USER, ADMIN, TENANT)", example = "USER", defaultValue = "USER")
     private UserRole userRole = UserRole.USER;
-    */
     
-    // Company specific fields (only required when userType is COMPANY)
     @Schema(description = "Company name (required for COMPANY users)", example = "Acme Corporation")
     private String companyName;
     

@@ -83,19 +83,7 @@ public class UserAuthController {
 
     @PostMapping(value = "/login", consumes = "multipart/form-data")
     @Operation(summary = "Login user")
-    public ResponseEntity<?> login(
-            @RequestParam(required = false) Integer tenantId,
-            @RequestParam String username,
-            @RequestParam String password,
-            @RequestParam(required = false, defaultValue = "false") boolean privateDevice,
-            HttpServletResponse response) {
-
-        // Create LoginRequest object for validation
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setTenantId(tenantId);
-        loginRequest.setUsername(username);
-        loginRequest.setPassword(password);
-        loginRequest.setPrivateDevice(privateDevice);
+    public ResponseEntity<?> login(@Valid @ModelAttribute LoginRequest loginRequest, HttpServletResponse response) {
         try {
             log.info("Login attempt - tenantId: {}, username: {}", loginRequest.getTenantId(), loginRequest.getUsername());
             

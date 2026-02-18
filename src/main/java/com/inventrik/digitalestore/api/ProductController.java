@@ -98,11 +98,12 @@ public class ProductController {
     }
     
     @DeleteMapping("/{productId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Delete a product")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable Integer tenantId,
-            @PathVariable String productId) {
+            @PathVariable String productId,
+            Authentication authentication) {
         productService.deleteProduct(tenantId, productId);
         return ResponseEntity.noContent().build();
     }
