@@ -55,7 +55,7 @@ public class UserAuthController {
     @Value("${app.base-url}")
     private String appBaseUrl;
 
-    @PostMapping(value = "/signup", consumes = "multipart/form-data")
+    @PostMapping(value = "/signup", consumes = "application/x-www-form-urlencoded")
     @Operation(summary = "Register a new user (public endpoint)")
     public ResponseEntity<?> signup(@Valid @ModelAttribute SignupRequest request) {
         try {
@@ -81,7 +81,7 @@ public class UserAuthController {
         }
     }
 
-    @PostMapping(value = "/login", consumes = "multipart/form-data")
+    @PostMapping(value = "/login", consumes = "application/x-www-form-urlencoded")
     @Operation(summary = "Login user")
     public ResponseEntity<?> login(@Valid @ModelAttribute LoginRequest loginRequest, HttpServletResponse response) {
         try {
@@ -161,9 +161,9 @@ public class UserAuthController {
         }
     }
 
-    @PostMapping("/forgot-password")
+    @PostMapping(value = "/forgot-password", consumes = "application/x-www-form-urlencoded")
     @Operation(summary = "Request password reset")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<?> forgotPassword(@Valid @ModelAttribute ForgotPasswordRequest request) {
         try {
             userService.sendPasswordResetEmail(request.getEmail());
             return ResponseEntity.ok(Map.of(

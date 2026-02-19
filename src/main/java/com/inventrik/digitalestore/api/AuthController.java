@@ -53,7 +53,7 @@ public class AuthController {
     @Value("${app.base-url}")
     private String appBaseUrl;
 
-    @PostMapping(value = "/login", consumes = "multipart/form-data")
+    @PostMapping(value = "/login", consumes = "application/x-www-form-urlencoded")
     public ResponseEntity<?> login(
             @RequestParam String username,
             @RequestParam String password,
@@ -127,8 +127,8 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+    @PostMapping(value = "/forgot-password", consumes = "application/x-www-form-urlencoded")
+    public ResponseEntity<?> forgotPassword(@Valid @ModelAttribute ForgotPasswordRequest request) {
         try {
             userService.sendPasswordResetEmail(request.getEmail());
             return ResponseEntity.ok(Map.of(

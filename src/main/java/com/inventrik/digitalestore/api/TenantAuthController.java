@@ -59,7 +59,7 @@ public class TenantAuthController {
     @Value("${app.base-url}")
     private String appBaseUrl;
 
-    @PostMapping(value = "/signup", consumes = "multipart/form-data")
+    @PostMapping(value = "/signup", consumes = "application/x-www-form-urlencoded")
     public ResponseEntity<?> tenantSignup(@Valid @ModelAttribute TenantSignupRequest request) {
         try {
             TenantResponse tenant = tenantService.createTenantWithAdmin(request);
@@ -74,7 +74,7 @@ public class TenantAuthController {
         }
     }
 
-    @PostMapping(value = "/login", consumes = "multipart/form-data")
+    @PostMapping(value = "/login", consumes = "application/x-www-form-urlencoded")
     public ResponseEntity<?> login(
             @RequestParam Integer tenantId,
             @RequestParam String username,
@@ -160,8 +160,8 @@ public class TenantAuthController {
         }
     }
 
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+    @PostMapping(value = "/forgot-password", consumes = "application/x-www-form-urlencoded")
+    public ResponseEntity<?> forgotPassword(@Valid @ModelAttribute ForgotPasswordRequest request) {
         try {
             userService.sendPasswordResetEmail(request.getEmail());
             return ResponseEntity.ok(Map.of(
