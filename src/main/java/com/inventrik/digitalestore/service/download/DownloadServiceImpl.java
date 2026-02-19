@@ -100,7 +100,7 @@ public class DownloadServiceImpl implements DownloadService {
         digitalDetails.setVersion(request.getVersion());
         digitalDetails.setStatus(request.getStatus() != null ? request.getStatus() : "0");
         
-        String truncatedUsername = username;
+        String truncatedUsername = userService.truncateUsernameForAudit(username);;
         digitalDetails.setCreatedBy(truncatedUsername);
         digitalDetails.setUpdatedBy(truncatedUsername);
         digitalDetails.setCreated(LocalDateTime.now());
@@ -124,7 +124,7 @@ public class DownloadServiceImpl implements DownloadService {
         if (request.getVersion() != null) digitalDetails.setVersion(request.getVersion());
         if (request.getStatus() != null) digitalDetails.setStatus(request.getStatus());
         
-        String truncatedUsername = username;
+        String truncatedUsername = userService.truncateUsernameForAudit(username);;
         digitalDetails.setUpdatedBy(truncatedUsername);
         digitalDetails.setUpdated(LocalDateTime.now());
         

@@ -79,7 +79,7 @@ public class DiscountServiceImpl implements DiscountService {
             }
         }
         
-        String truncatedUsername = username;
+        String truncatedUsername = userService.truncateUsernameForAudit(username);;
         
         discountCode.setCode(request.getCode().toUpperCase());
         discountCode.setDiscountType(request.getDiscountType());
@@ -136,7 +136,7 @@ public class DiscountServiceImpl implements DiscountService {
         DiscountCode discountCode = discountCodeRepository.findById(new DiscountCode.DiscountCodePK(tenantId, discountId))
                 .orElseThrow(() -> new ResourceNotFoundException("Discount code not found with id: " + discountId));
         
-        String truncatedUsername = username;
+        String truncatedUsername = userService.truncateUsernameForAudit(username);;
         discountCode.setStatus("-1");
         discountCode.setUpdatedBy(truncatedUsername);
         

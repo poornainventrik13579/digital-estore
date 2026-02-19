@@ -228,7 +228,7 @@ public class OrderServiceImpl implements OrderService {
             order.setStatus(updateRequest.getStatus());
         }
 
-        String truncatedUsername = username;
+        String truncatedUsername = userService.truncateUsernameForAudit(username);;
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());
 
@@ -281,7 +281,7 @@ public class OrderServiceImpl implements OrderService {
         String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.COMPLETED.getDisplayName());
         
-        String truncatedUsername = username;
+        String truncatedUsername = userService.truncateUsernameForAudit(username);
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());
         
@@ -308,7 +308,7 @@ public class OrderServiceImpl implements OrderService {
         String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.CANCELLED.getDisplayName());
         
-        String truncatedUsername = username;
+        String truncatedUsername = userService.truncateUsernameForAudit(username);;
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());
         
@@ -333,7 +333,7 @@ public class OrderServiceImpl implements OrderService {
         String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.REFUNDED.getDisplayName());
         
-        String truncatedUsername = username;
+        String truncatedUsername = userService.truncateUsernameForAudit(username);;
         order.setUpdatedBy(truncatedUsername);
         order.setUpdated(LocalDateTime.now());
         
