@@ -42,12 +42,30 @@ public class CertificateAuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "Public key is required"));
         }
 
-        Optional<User> userOpt = getUserFromSession(sessionId);
+        // Get userId from request body (sent by frontend) or fallback to session
+        String userId = request.getUserId();
+        Optional<User> userOpt;
+
+        if (userId != null && !userId.trim().isEmpty()) {
+            // Use userId from request body - need tenantId from session for lookup
+            CertificateService.SessionData sessionData = certificateService.getSession(sessionId);
+            if (sessionData == null || !sessionData.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid session"));
+            }
+            userOpt = userRepository.findByTenantIdAndUserId(sessionData.getTenantId(), userId);
+        } else {
+            // Fallback to session-based user lookup
+            userOpt = getUserFromSession(sessionId);
+        }
+
         if (userOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid session"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid session or userId"));
         }
 
         User user = userOpt.get();
+
+        // Delete any old certificates for this user to avoid duplicates
+        certificateService.deleteByTenantIdAndUserId(user.getTenantId(), user.getUserId());
 
         try {
             certificateService.createCertificate(user.getTenantId(), user.getUserId(), sessionId, request.getPublicKey());

@@ -82,6 +82,22 @@ public class AuthController {
             User user = userOpt.get();
             log.info("Found user - tenantId: {}, userId: {}, status: {}", user.getTenantId(), user.getUserId(), user.getStatus());
 
+            // Generate JWT token (used for subsequent API calls)
+            Instant now = Instant.now();
+            List<String> authorities = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+            JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(appBaseUrl)
+                .issuedAt(now)
+                .expiresAt(now.plus(1, ChronoUnit.HOURS))
+                .subject(authentication.getName())
+                .claim("authorities", authorities)
+                .build();
+
+            String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
             if (loginRequest.isPrivateDevice()) {
                 String sessionId = UUID.randomUUID().toString();
                 certificateService.createSession(sessionId, new CertificateService.SessionData(user.getTenantId(), user.getUserId(), true));
@@ -96,23 +112,14 @@ public class AuthController {
 
                 return ResponseEntity.ok()
                         .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
-                        .body(Map.of("message", "Login successful", "userId", user.getUserId()));
+                        .body(Map.of(
+                            "message", "Login successful",
+                            "userId", user.getUserId(),
+                            "access_token", token,
+                            "token_type", "Bearer",
+                            "expires_in", 3600
+                        ));
             } else {
-                Instant now = Instant.now();
-                List<String> authorities = authentication.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .collect(Collectors.toList());
-
-                JwtClaimsSet claims = JwtClaimsSet.builder()
-                    .issuer(appBaseUrl)
-                    .issuedAt(now)
-                    .expiresAt(now.plus(1, ChronoUnit.HOURS))
-                    .subject(authentication.getName())
-                    .claim("authorities", authorities)
-                    .build();
-
-                String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
-
                 return ResponseEntity.ok(Map.of(
                     "access_token", token,
                     "token_type", "Bearer",

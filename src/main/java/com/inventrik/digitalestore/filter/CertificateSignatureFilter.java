@@ -8,6 +8,7 @@ import com.inventrik.digitalestore.util.CryptoUtil;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Component
 public class CertificateSignatureFilter implements Filter {
 
@@ -85,25 +87,39 @@ public class CertificateSignatureFilter implements Filter {
 
     private String performSignatureVerification(String challengeId, String signature) {
         try {
+            log.info("Certificate signature verification started - challengeId: {}", challengeId);
+
             // Get challenge from Redis
             CertificateService.ChallengeData challengeData = certificateService.getChallenge(challengeId).orElse(null);
 
-            if (challengeData == null || !challengeData.isValid()) {
+            if (challengeData == null) {
+                log.warn(" Challenge not found in Redis: {}", challengeId);
                 return null;
             }
+
+            if (!challengeData.isValid()) {
+                log.warn("Challenge invalid - used: {}, expired: {}", challengeData.isUsed(), challengeData.isExpired());
+                return null;
+            }
+
+            log.info("Challenge valid - userId: {}, tenantId: {}", challengeData.getUserId(), challengeData.getTenantId());
 
             // Get user's session key from Redis
             var sessionKeyOpt = certificateService.getSessionKey(challengeData.getUserId());
             if (sessionKeyOpt.isEmpty()) {
+                log.warn("Session key not found for userId: {}", challengeData.getUserId());
                 return null;
             }
 
             CertificateService.SessionKeyData sessionKey = sessionKeyOpt.get();
+            log.info("Session key found for userId: {}", challengeData.getUserId());
 
             try {
                 PublicKey publicKey = cryptoUtil.importPublicKey(sessionKey.getPublicKey());
+                log.info("Public key imported");
 
                 boolean signatureValid = cryptoUtil.verifySignature(challengeId, signature, publicKey);
+                log.info("Signature valid: {}", signatureValid);
 
                 if (signatureValid) {
                     certificateService.markChallengeUsed(challengeId);
@@ -118,6 +134,8 @@ public class CertificateSignatureFilter implements Filter {
                     if (userOpt.isPresent()) {
                         User user = userOpt.get();
                         String status = user.getStatus();
+                        String username = user.getUsername();
+                        log.info("User found - username: {}, status: {}, role: {}", username, status, user.getUserRole());
 
                         if ("0".equals(status)) { // Active user
                             switch (user.getUserRole()) {
@@ -132,29 +150,40 @@ public class CertificateSignatureFilter implements Filter {
                                     authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
                                     break;
                             }
+                        } else {
+                            log.warn("User not active - status: {}", status);
                         }
+                    } else {
+                        log.warn("User not found in DB - tenantId: {}, userId: {}", tenantId, userId);
                     }
 
                     // If no authorities found, deny access
                     if (authorities.isEmpty()) {
+                        log.warn("No authorities found, denying access");
                         return null;
                     }
 
+                    // Use username as principal (not userId) so controllers can findByUsername()
+                    String username = userOpt.get().getUsername();
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userId,
+                        username,
                         null,
                         authorities
                     );
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                    log.info("Certificate auth successful for username: {}", username);
 
                     return userId;
                 } else {
+                    log.warn("Signature verification failed for challengeId: {}", challengeId);
                     return null;
                 }
             } catch (Exception e) {
+                log.error("Exception during signature verification: {}", e.getMessage(), e);
                 return null;
             }
         } catch (Exception e) {
+            log.error("Exception in performSignatureVerification: {}", e.getMessage(), e);
             return null;
         }
     }

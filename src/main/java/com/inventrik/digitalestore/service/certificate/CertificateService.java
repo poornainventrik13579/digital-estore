@@ -52,7 +52,9 @@ public interface CertificateService {
         public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
         public boolean isUsed() { return used; }
         public void setUsed(boolean used) { this.used = used; }
+        @com.fasterxml.jackson.annotation.JsonIgnore
         public boolean isExpired() { return System.currentTimeMillis() - createdAt > 30000; }
+        @com.fasterxml.jackson.annotation.JsonIgnore
         public boolean isValid() { return !used && !isExpired(); }
     }
 
@@ -101,6 +103,7 @@ public interface CertificateService {
         public void setPublicKey(String publicKey) { this.publicKey = publicKey; }
         public long getExpiresAt() { return expiresAt; }
         public void setExpiresAt(long expiresAt) { this.expiresAt = expiresAt; }
+        @com.fasterxml.jackson.annotation.JsonIgnore
         public boolean isExpired() { return System.currentTimeMillis() > expiresAt; }
     }
 }

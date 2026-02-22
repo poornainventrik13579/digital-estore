@@ -124,9 +124,13 @@ public class UserAuthController {
                         .maxAge(30 * 24 * 60 * 60)
                         .build();
 
+                // Certificate auth uses challenge-response, no JWT token
                 return ResponseEntity.ok()
                         .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
-                        .body(Map.of("message", "Login successful", "userId", user.getUserId()));
+                        .body(Map.of(
+                            "message", "Login successful",
+                            "userId", user.getUserId()
+                        ));
             } else {
                 Instant now = Instant.now();
                 List<String> authorities = authentication.getAuthorities().stream()

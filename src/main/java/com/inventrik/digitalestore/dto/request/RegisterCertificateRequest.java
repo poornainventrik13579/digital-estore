@@ -7,4 +7,6 @@ import lombok.Data;
 public class RegisterCertificateRequest {
     @NotBlank
     private String publicKey;
+
+    private String userId;
 }
