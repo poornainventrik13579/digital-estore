@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -182,13 +185,52 @@ public class UserAuthController {
         }
     }
 
+
     @PostMapping("/logout")
-    @SecurityRequirement(name = "oauth2")
     @Operation(summary = "Logout user")
-    public ResponseEntity<?> logout(Authentication authentication) {
-        if (authentication != null && authentication.isAuthenticated()) {
-            log.info("User logged out: {}", authentication.getName());
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        String sessionId = getSessionIdFromCookie(request);
+  
+        if (sessionId != null) {
+            Optional<User> userOpt = getUserFromSession(sessionId);
+            userOpt.ifPresent(user -> {
+                certificateService.deleteBySessionId(sessionId);
+                certificateService.removeSessionKey(user.getUserId());
+            });
+            certificateService.removeSession(sessionId);
         }
-        return ResponseEntity.ok(Map.of("message", "Logout successful"));
+  
+        ResponseCookie sessionCookie = ResponseCookie.from("certSessionId", "")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(0)
+                .build();
+  
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
+                .body(Map.of("message", "Logout successful"));
     }
+  
+    private String getSessionIdFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("certSessionId".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
+  
+    private Optional<User> getUserFromSession(String sessionId) {
+        CertificateService.SessionData sessionData = certificateService.getSession(sessionId);
+        if (sessionData != null && sessionData.isAuthenticated()) {
+            return userRepository.findByTenantIdAndUserId(sessionData.getTenantId(), sessionData.getUserId());
+        }
+        return Optional.empty();
+    }
+
 }

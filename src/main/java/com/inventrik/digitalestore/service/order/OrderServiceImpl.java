@@ -95,25 +95,32 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderResponse> getAllOrders(Integer tenantId, String username, boolean canAccessAllOrders, String status) {
         String userId = null;
-
+  
         if (!canAccessAllOrders) {
             userId = userRepository.findByTenantIdAndUsername(tenantId, username)
                     .map(user -> user.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
         }
-
+  
+        // User-specific filtering with optional status
         if (userId != null) {
+            if (status != null && !status.trim().isEmpty()) {
+                return orderRepository.findByTenantIdAndUserIdAndStatus(tenantId, userId, status).stream()
+                        .map(this::mapToDTO)
+                        .collect(Collectors.toList());
+            }
             return orderRepository.findByTenantIdAndUserId(tenantId, userId).stream()
                     .map(this::mapToDTO)
                     .collect(Collectors.toList());
         }
-
+  
+        // Admin filtering with optional status
         if (status != null && !status.trim().isEmpty()) {
             return orderRepository.findByTenantIdAndStatus(tenantId, status).stream()
                     .map(this::mapToDTO)
                     .collect(Collectors.toList());
         }
-
+  
         return orderRepository.findByTenantId(tenantId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());

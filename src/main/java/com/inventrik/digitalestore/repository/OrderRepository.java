@@ -35,4 +35,7 @@ public interface OrderRepository extends JpaRepository<Order, Order.OrderPK> {
 
     @Query("SELECT COUNT(oi) > 0 FROM Order o JOIN o.orderItems oi WHERE o.tenantId = :tenantId AND o.userId = :userId AND oi.productId = :productId AND o.status IN ('Completed', 'Processing')")
     boolean hasUserPurchasedProduct(@Param("tenantId") Integer tenantId, @Param("userId") String userId, @Param("productId") String productId);
+
+    @Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.product WHERE o.tenantId = :tenantId AND o.userId = :userId AND o.status = :status ORDER BY o.orderDate DESC")
+    List<Order> findByTenantIdAndUserIdAndStatus(@Param("tenantId") Integer tenantId, @Param("userId") String userId, @Param("status") String status);
 }

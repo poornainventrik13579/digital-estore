@@ -146,12 +146,18 @@
             "header": [
               {
                 "key": "Content-Type",
-                "value": "application/json"
+                "value": "application/x-www-form-urlencoded"
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"john@example.com\"\n}"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "john@example.com",
+                  "type": "text"
+                }
+              ]
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/forgot-password",
@@ -494,7 +500,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"userId\": 1,\n    \"items\": [\n        {\n            \"productId\": 1,\n            \"quantity\": 2,\n            \"price\": 99.99\n        }\n    ],\n    \"shippingAddress\": \"123 Main St, City, State 12345\",\n    \"paymentMethod\": \"CREDIT_CARD\"\n}"
+              "raw": "{\n    \"userId\": 1,\n    \"currency\": \"USD\",\n    \"totalAmount\": 199.98,\n    \"exchangeRate\": 1.0,\n    \"orderItems\": [\n        {\n            \"productId\": 1,\n            \"price\": 99.99,\n            \"licenseKey\": \"LICENSE-123\"\n        }\n    ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/orders",
@@ -521,7 +527,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"productId\": 1,\n    \"userId\": 1,\n    \"rating\": 5,\n    \"title\": \"Great product!\",\n    \"comment\": \"Really love this product\"\n}"
+              "raw": "{\n    \"productId\": \"PROD-001\",\n    \"rating\": 5,\n    \"comment\": \"Excellent product quality and fast delivery. Would definitely recommend to others! The user interface is intuitive and the product works exactly as advertised.\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/tenants/{{tenant_id}}/reviews",

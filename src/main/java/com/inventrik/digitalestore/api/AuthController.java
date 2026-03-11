@@ -114,10 +114,7 @@ public class AuthController {
                         .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
                         .body(Map.of(
                             "message", "Login successful",
-                            "userId", user.getUserId(),
-                            "access_token", token,
-                            "token_type", "Bearer",
-                            "expires_in", 3600
+                            "userId", user.getUserId()
                         ));
             } else {
                 return ResponseEntity.ok(Map.of(
@@ -148,6 +145,53 @@ public class AuthController {
                 "email", request.getEmail()
             ));
         }
+    }
+
+    @PostMapping(value = "/logout", consumes = "application/x-www-form-urlencoded")
+    @Operation(summary = "Logout platform admin")
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        String sessionId = getSessionIdFromCookie(request);
+  
+        if (sessionId != null) {
+            Optional<User> userOpt = getUserFromSession(sessionId);
+            userOpt.ifPresent(user -> {
+                certificateService.deleteBySessionId(sessionId);
+                certificateService.removeSessionKey(user.getUserId());
+            });
+            certificateService.removeSession(sessionId);
+        }
+  
+        ResponseCookie sessionCookie = ResponseCookie.from("certSessionId", "")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(0)
+                .build();
+  
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
+                .body(Map.of("message", "Logout successful"));
+    }
+  
+    private String getSessionIdFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("certSessionId".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
+  
+    private Optional<User> getUserFromSession(String sessionId) {
+        CertificateService.SessionData sessionData = certificateService.getSession(sessionId);
+        if (sessionData != null && sessionData.isAuthenticated()) {
+            return userRepository.findByTenantIdAndUserId(sessionData.getTenantId(), sessionData.getUserId());
+        }
+        return Optional.empty();
     }
 
     @GetMapping("/me")
