@@ -145,14 +145,64 @@ public class StripePaymentService implements PaymentService {
         return transactionCoordinator.executeInStrictTransaction(() -> {
             try {
                 // Check for existing payments with idempotency
-                if (idempotencyKeyService.isKeyRegistered(idempotencyKey)) {
+                log.info("createPayment called for order {} by user {}. Idempotency key: {}",
+                        paymentRequest.getOrderId(), username, idempotencyKey);
+                boolean keyRegistered = idempotencyKeyService.isKeyRegistered(idempotencyKey);
+                log.info("Idempotency key registered: {}", keyRegistered);
+
+                if (keyRegistered) {
                     // Find existing payment for this order
                     List<Payment> existingPayments = paymentRepository.findByTenantIdAndOrderId(tenantId, paymentRequest.getOrderId());
+                    log.info("Found {} existing payments for order {}", existingPayments.size(), paymentRequest.getOrderId());
                     if (!existingPayments.isEmpty()) {
                         Payment existingPayment = existingPayments.get(0);
-                        log.warn("Duplicate payment attempt detected for order {}, returning existing payment {}", 
-                                paymentRequest.getOrderId(), existingPayment.getPaymentId());
-                        return mapToDTO(existingPayment);
+                        log.info("Existing payment status: {}, transactionId: {}",
+                                existingPayment.getStatus(), existingPayment.getTransactionId());
+
+                        // Allow retry if the previous payment failed - user may want to try with different card details
+                        // Also check Stripe PaymentIntent status directly (webhook is async, so database may not be updated yet)
+                        boolean allowRetry = PaymentStatus.FAILED.getDisplayName().equals(existingPayment.getStatus());
+
+                        // If payment is still PENDING in DB, check Stripe directly
+                        if (!allowRetry && PaymentStatus.PENDING.getDisplayName().equals(existingPayment.getStatus())) {
+                            try {
+                                PaymentIntent stripeIntent = PaymentIntent.retrieve(existingPayment.getTransactionId());
+                                log.info("Checking Stripe PaymentIntent {} status: {}, has lastPaymentError: {}",
+                                        existingPayment.getTransactionId(), stripeIntent.getStatus(),
+                                        stripeIntent.getLastPaymentError() != null);
+
+                                // Allow retry if Stripe PaymentIntent is in a terminal failed state
+                                // or if it requires payment method and has an error (indicates failed attempt)
+                                if ("canceled".equals(stripeIntent.getStatus()) ||
+                                    "requires_payment_method".equals(stripeIntent.getStatus())) {
+                                    // If it requires_payment_method and has an error, it definitely failed
+                                    // Even without an error, allow retry since user is calling createPayment again
+                                    log.info("Stripe PaymentIntent is in retryable state for order {}. Status: {}, HasError: {}. Allowing retry.",
+                                            paymentRequest.getOrderId(), stripeIntent.getStatus(),
+                                            stripeIntent.getLastPaymentError() != null);
+                                    allowRetry = true;
+                                }
+                            } catch (StripeException e) {
+                                log.warn("Failed to check Stripe PaymentIntent status for {}: {}",
+                                        existingPayment.getTransactionId(), e.getMessage());
+                                // On Stripe API error, allow retry as a fallback to not block users
+                                allowRetry = true;
+                            }
+                        }
+
+                        if (allowRetry) {
+                            log.info("Previous payment failed for order {}. Allowing retry with new payment details.",
+                                    paymentRequest.getOrderId());
+                            // Remove the idempotency key to allow creating a new payment
+                            idempotencyKeyService.removeKey(idempotencyKey);
+                        } else {
+                            // For successful or pending payments, return the existing payment to prevent duplicates
+                            log.warn("Duplicate payment attempt detected for order {}, returning existing payment {} (allowRetry: {})",
+                                    paymentRequest.getOrderId(), existingPayment.getPaymentId(), allowRetry);
+                            PaymentResponse response = mapToDTO(existingPayment);
+                            log.info("Returning existing payment, clientSecret: null (by design)");
+                            return response;
+                        }
                     }
                 }
                 
@@ -215,9 +265,13 @@ public class StripePaymentService implements PaymentService {
                 paymentEventLogger.logPaymentCreation(savedPayment, username);
                 
                 PaymentResponse response = mapToDTO(savedPayment);
-                
+
                 response.setClientSecret(paymentIntent.getClientSecret());
-                
+
+                log.info("Created new payment {} with clientSecret: {} (first 20 chars)",
+                        newPaymentId, paymentIntent.getClientSecret() != null ?
+                                paymentIntent.getClientSecret().substring(0, Math.min(20, paymentIntent.getClientSecret().length())) : "null");
+
                 return response;
             } catch (Exception e) {
                 if (e instanceof PaymentProcessingException || e instanceof ResourceNotFoundException) {
