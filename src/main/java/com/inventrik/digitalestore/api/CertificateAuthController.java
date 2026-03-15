@@ -11,6 +11,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+
+import com.inventrik.digitalestore.service.RefreshTokenService;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -30,6 +33,7 @@ public class CertificateAuthController {
     private final UserRepository userRepository;
     private final CertificateService certificateService;
     private final CryptoUtil cryptoUtil;
+    private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/register-key")
     public ResponseEntity<?> registerKey(@RequestBody RegisterCertificateRequest request, HttpServletRequest httpRequest) {
@@ -153,7 +157,7 @@ public class CertificateAuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response, @RequestParam(required = false) String refreshToken) {
         String sessionId = getSessionIdFromCookie(request);
         if (sessionId != null) {
             Optional<User> userOpt = getUserFromSession(sessionId);
@@ -162,6 +166,10 @@ public class CertificateAuthController {
                 certificateService.removeSessionKey(user.getUserId());
             });
             certificateService.removeSession(sessionId);
+        }
+
+        if (refreshToken != null) {
+            refreshTokenService.revokeRefreshToken(refreshToken);
         }
 
         ResponseCookie sessionCookie = ResponseCookie.from("certSessionId", "")

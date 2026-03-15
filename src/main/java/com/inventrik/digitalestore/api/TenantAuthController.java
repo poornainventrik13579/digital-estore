@@ -11,6 +11,7 @@ import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.certificate.CertificateService;
 import com.inventrik.digitalestore.service.user.UserService;
 import jakarta.validation.Valid;
+import com.inventrik.digitalestore.service.RefreshTokenService;
 import com.inventrik.digitalestore.service.tenant.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -55,6 +56,7 @@ public class TenantAuthController {
     private final TenantService tenantService;
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${app.base-url}")
     private String appBaseUrl;
@@ -81,6 +83,7 @@ public class TenantAuthController {
             @RequestParam String password,
             @RequestParam(required = false, defaultValue = "false") boolean privateDevice,
             HttpServletResponse response) {
+        String formattedUsername = null;
         try {
             // Create LoginRequest object for consistency
             LoginRequest loginRequest = new LoginRequest();
@@ -95,7 +98,7 @@ public class TenantAuthController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Tenant ID is required for tenant admin login"));
             }
 
-            String formattedUsername = tenantId + ":" + username;
+            formattedUsername = tenantId + ":" + username.toLowerCase();
 
             log.info("Attempting authentication with username: {}", formattedUsername);
 
@@ -112,6 +115,8 @@ public class TenantAuthController {
 
             User user = userOpt.get();
             log.info("Found user - tenantId: {}, userId: {}, status: {}", user.getTenantId(), user.getUserId(), user.getStatus());
+
+            String refreshToken = refreshTokenService.createRefreshToken(authentication.getName(), UUID.randomUUID().toString()).getRefreshToken();
 
             if (loginRequest.isPrivateDevice()) {
                 String sessionId = UUID.randomUUID().toString();
@@ -138,7 +143,7 @@ public class TenantAuthController {
                 JwtClaimsSet claims = JwtClaimsSet.builder()
                     .issuer(appBaseUrl)
                     .issuedAt(now)
-                    .expiresAt(now.plus(1, ChronoUnit.HOURS))
+                    .expiresAt(now.plus(15, ChronoUnit.MINUTES))
                     .subject(authentication.getName())
                     .claim("authorities", authorities)
                     .claim("tenantId", loginRequest.getTenantId())
@@ -148,16 +153,58 @@ public class TenantAuthController {
 
                 return ResponseEntity.ok(Map.of(
                     "access_token", token,
+                    "refresh_token", refreshToken,
                     "token_type", "Bearer",
-                    "expires_in", 3600,
+                    "expires_in", 900,
                     "authorities", authorities,
                     "username", authentication.getName()
                 ));
             }
 
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
+            log.error("Authentication failed for username: {}", formattedUsername, e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid username or password"));
         }
+    }
+
+    @PostMapping("/refresh-token")
+    @Operation(summary = "Refresh access token")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
+        String oldRefreshToken = request.get("refresh_token");
+        if (oldRefreshToken == null || oldRefreshToken.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "refresh_token is required"));
+        }
+
+        com.inventrik.digitalestore.domain.auth.RefreshToken token = refreshTokenService.findByRefreshToken(oldRefreshToken);
+        if (!refreshTokenService.isValid(token)) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid or expired refresh token"));
+        }
+
+        String username = token.getUsername();
+        Instant now = Instant.now();
+        List<String> authorities = userRepository.findByUsername(username)
+                .map(user -> List.of("ROLE_" + user.getUserRole().name()))
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(appBaseUrl)
+                .issuedAt(now)
+                .expiresAt(now.plus(1, ChronoUnit.HOURS))
+                .subject(username)
+                .claim("authorities", authorities)
+                .build();
+
+        String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+        com.inventrik.digitalestore.domain.auth.RefreshToken newToken =
+                        refreshTokenService.rotateToken(oldRefreshToken, username);
+
+        return ResponseEntity.ok(Map.of(
+                "access_token", accessToken,
+                "refresh_token", newToken.getRefreshToken(),
+                "token_type", "Bearer",
+                "expires_in", 3600
+        ));
     }
 
     @PostMapping(value = "/forgot-password", consumes = "application/x-www-form-urlencoded")

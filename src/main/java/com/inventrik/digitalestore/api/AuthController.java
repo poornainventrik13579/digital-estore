@@ -6,6 +6,7 @@ import com.inventrik.digitalestore.dto.request.LoginRequest;
 import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.repository.UserRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
+import com.inventrik.digitalestore.service.RefreshTokenService;
 import com.inventrik.digitalestore.service.certificate.CertificateService;
 import jakarta.validation.Valid;
 import com.inventrik.digitalestore.service.user.UserService;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -49,6 +51,7 @@ public class AuthController {
     private final CertificateService certificateService;
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${app.base-url}")
     private String appBaseUrl;
@@ -60,16 +63,13 @@ public class AuthController {
             @RequestParam(required = false, defaultValue = "false") boolean privateDevice,
             HttpServletResponse response) {
         try {
-            // Create LoginRequest object for consistency
-            LoginRequest loginRequest = new LoginRequest();
-            loginRequest.setUsername(username);
-            loginRequest.setPassword(password);
-            loginRequest.setPrivateDevice(privateDevice);
+            // Normalize username to lowercase for authentication
+            String normalizedUsername = username.toLowerCase();
 
-            log.info("Platform login attempt - username: {}", username);
+            log.info("Platform login attempt - username: {}", normalizedUsername);
 
             Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
+                new UsernamePasswordAuthenticationToken(normalizedUsername, password)
             );
 
             log.info("Authentication successful for user: {}", authentication.getName());
@@ -82,6 +82,8 @@ public class AuthController {
             User user = userOpt.get();
             log.info("Found user - tenantId: {}, userId: {}, status: {}", user.getTenantId(), user.getUserId(), user.getStatus());
 
+            String refreshToken = refreshTokenService.createRefreshToken(authentication.getName(), UUID.randomUUID().toString()).getRefreshToken();
+
             // Generate JWT token (used for subsequent API calls)
             Instant now = Instant.now();
             List<String> authorities = authentication.getAuthorities().stream()
@@ -91,14 +93,14 @@ public class AuthController {
             JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(appBaseUrl)
                 .issuedAt(now)
-                .expiresAt(now.plus(1, ChronoUnit.HOURS))
+                .expiresAt(now.plus(15, ChronoUnit.MINUTES))
                 .subject(authentication.getName())
                 .claim("authorities", authorities)
                 .build();
 
             String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
 
-            if (loginRequest.isPrivateDevice()) {
+            if (privateDevice) {
                 String sessionId = UUID.randomUUID().toString();
                 certificateService.createSession(sessionId, new CertificateService.SessionData(user.getTenantId(), user.getUserId(), true));
 
@@ -119,15 +121,17 @@ public class AuthController {
             } else {
                 return ResponseEntity.ok(Map.of(
                     "access_token", token,
+                    "refresh_token", refreshToken,
                     "token_type", "Bearer",
-                    "expires_in", 3600,
+                    "expires_in", 900,
                     "authorities", authorities,
                     "username", authentication.getName()
                 ));
             }
 
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
+            log.error("Authentication failed for username: {}", username, e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid username or password"));
         }
     }
 
@@ -149,7 +153,7 @@ public class AuthController {
 
     @PostMapping(value = "/logout", consumes = "application/x-www-form-urlencoded")
     @Operation(summary = "Logout platform admin")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response, @RequestParam(required = false) String refreshToken) {
         String sessionId = getSessionIdFromCookie(request);
   
         if (sessionId != null) {
@@ -157,8 +161,13 @@ public class AuthController {
             userOpt.ifPresent(user -> {
                 certificateService.deleteBySessionId(sessionId);
                 certificateService.removeSessionKey(user.getUserId());
+                refreshTokenService.revokeAllByUsername(user.getUsername());
             });
             certificateService.removeSession(sessionId);
+        }
+
+        if (refreshToken != null) {
+            refreshTokenService.revokeRefreshToken(refreshToken);
         }
   
         ResponseCookie sessionCookie = ResponseCookie.from("certSessionId", "")
@@ -192,6 +201,46 @@ public class AuthController {
             return userRepository.findByTenantIdAndUserId(sessionData.getTenantId(), sessionData.getUserId());
         }
         return Optional.empty();
+    }
+
+    @PostMapping("/refresh-token")
+    @Operation(summary = "Refresh access token")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
+        String oldRefreshToken = request.get("refresh_token");
+        if (oldRefreshToken == null || oldRefreshToken.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "refresh_token is required"));
+        }
+
+        com.inventrik.digitalestore.domain.auth.RefreshToken token = refreshTokenService.findByRefreshToken(oldRefreshToken);
+        if (!refreshTokenService.isValid(token)) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid or expired refresh token"));
+        }
+
+        String username = token.getUsername();
+        Instant now = Instant.now();
+        List<String> authorities = userRepository.findByUsername(username)
+                .map(user -> List.of("ROLE_" + user.getUserRole().name()))
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(appBaseUrl)
+                .issuedAt(now)
+                .expiresAt(now.plus(15, ChronoUnit.MINUTES))
+                .subject(username)
+                .claim("authorities", authorities)
+                .build();
+
+        String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+        com.inventrik.digitalestore.domain.auth.RefreshToken newToken =
+                        refreshTokenService.rotateToken(oldRefreshToken, username);
+
+        return ResponseEntity.ok(Map.of(
+                "access_token", accessToken,
+                "refresh_token", newToken.getRefreshToken(),
+                "token_type", "Bearer",
+                "expires_in", 900
+        ));
     }
 
     @GetMapping("/me")
