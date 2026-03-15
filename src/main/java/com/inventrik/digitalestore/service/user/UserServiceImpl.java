@@ -160,7 +160,7 @@ public class UserServiceImpl implements UserService {
         User user = new User();
         user.setTenantId(tenantId);
         user.setUserId(newUserId);
-        user.setUsername(userRequest.getUsername());
+        user.setUsername(userRequest.getUsername().toLowerCase()); // Normalize to lowercase
         user.setFirstName(userRequest.getFirstName());
         user.setLastName(userRequest.getLastName());
         user.setImage(userRequest.getImage());
