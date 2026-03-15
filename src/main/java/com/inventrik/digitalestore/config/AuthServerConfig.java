@@ -134,6 +134,7 @@ public class AuthServerConfig {
             )
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/v1/cert-auth/**").permitAll()
+                .requestMatchers("/api/v1/auth/logout").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(certificateSignatureFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
