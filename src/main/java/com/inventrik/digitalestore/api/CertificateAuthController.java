@@ -194,17 +194,6 @@ public class CertificateAuthController {
             return userRepository.findByTenantIdAndUserId(sessionData.getTenantId(), sessionData.getUserId());
         }
 
-        var certOpt = certificateService.findBySessionId(sessionId);
-        if (certOpt.isPresent()) {
-            var existingSession = certificateService.getSession(sessionId);
-            if (existingSession == null || !existingSession.isAuthenticated()) {
-                UserCertificate cert = certOpt.get();
-                CertificateService.SessionData newSessionData = new CertificateService.SessionData(cert.getTenantId(), cert.getUserId(), true);
-                certificateService.createSession(sessionId, newSessionData);
-            }
-            return userRepository.findByTenantIdAndUserId(certOpt.get().getTenantId(), certOpt.get().getUserId());
-        }
-
         return Optional.empty();
     }
 }
