@@ -1,5 +1,6 @@
 package com.inventrik.digitalestore.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.inventrik.digitalestore.domain.user.User;
 import com.inventrik.digitalestore.domain.user.UserRole;
 import com.inventrik.digitalestore.repository.UserRepository;
@@ -9,20 +10,18 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
-@Component
 public class CertificateSignatureFilter implements Filter {
 
     private static final String HEADER_CHALLENGE = "X-Challenge";
@@ -39,11 +38,14 @@ public class CertificateSignatureFilter implements Filter {
     private final CertificateService certificateService;
     private final CryptoUtil cryptoUtil;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
-    public CertificateSignatureFilter(CertificateService certificateService, CryptoUtil cryptoUtil, UserRepository userRepository) {
+    public CertificateSignatureFilter(CertificateService certificateService, CryptoUtil cryptoUtil,
+                                       UserRepository userRepository, ObjectMapper objectMapper) {
         this.certificateService = certificateService;
         this.cryptoUtil = cryptoUtil;
         this.userRepository = userRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -195,6 +197,7 @@ public class CertificateSignatureFilter implements Filter {
     private void rejectRequest(HttpServletResponse response, String reason) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
-        response.getWriter().write("{\"error\":\"" + reason + "\"}");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(objectMapper.writeValueAsString(Map.of("error", reason)));
     }
 }

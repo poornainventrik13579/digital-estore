@@ -9,21 +9,18 @@ import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.repository.UserRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.certificate.CertificateService;
+import com.inventrik.digitalestore.service.certificate.SessionHelper;
 import com.inventrik.digitalestore.service.user.UserService;
 import jakarta.validation.Valid;
 import com.inventrik.digitalestore.service.tenant.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -52,6 +49,7 @@ public class TenantAuthController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final CertificateService certificateService;
+    private final SessionHelper sessionHelper;
     private final TenantService tenantService;
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
@@ -117,16 +115,8 @@ public class TenantAuthController {
                 String sessionId = UUID.randomUUID().toString();
                 certificateService.createSession(sessionId, new CertificateService.SessionData(user.getTenantId(), user.getUserId(), true));
 
-                ResponseCookie sessionCookie = ResponseCookie.from("certSessionId", sessionId)
-                        .httpOnly(true)
-                        .secure(false)
-                        .sameSite("Lax")
-                        .path("/")
-                        .maxAge(30 * 24 * 60 * 60)
-                        .build();
-
                 return ResponseEntity.ok()
-                        .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
+                        .header(HttpHeaders.SET_COOKIE, sessionHelper.createSessionCookie(sessionId, 30L * 24 * 60 * 60).toString())
                         .body(Map.of("message", "Login successful", "userId", user.getUserId()));
             } else {
 

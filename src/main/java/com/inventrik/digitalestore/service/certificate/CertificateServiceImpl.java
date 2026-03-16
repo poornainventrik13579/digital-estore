@@ -1,7 +1,9 @@
 package com.inventrik.digitalestore.service.certificate;
 
+import com.inventrik.digitalestore.domain.certificate.CertificateStatus;
 import com.inventrik.digitalestore.domain.certificate.UserCertificate;
 import com.inventrik.digitalestore.repository.UserCertificateRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 public class CertificateServiceImpl implements CertificateService {
 
@@ -42,29 +45,48 @@ public class CertificateServiceImpl implements CertificateService {
         certificate.setTenantId(tenantId);
         certificate.setUserId(userId);
         certificate.setPublicKey(publicKey);
+        certificate.setStatus(CertificateStatus.ACTIVE);
         return repository.save(certificate);
     }
 
     @Override
     public Optional<UserCertificate> findBySessionId(String sessionId) {
-        return repository.findBySessionId(sessionId);
+        return repository.findBySessionIdAndStatus(sessionId, CertificateStatus.ACTIVE);
     }
 
     @Override
     public Optional<UserCertificate> findByTenantIdAndUserId(Integer tenantId, String userId) {
-        return repository.findByTenantIdAndUserId(tenantId, userId);
+        return repository.findByTenantIdAndUserIdAndStatus(tenantId, userId, CertificateStatus.ACTIVE);
     }
 
     @Override
+    @Transactional
+    public void revokeBySessionId(String sessionId) {
+        int updated = repository.revokeBySessionId(sessionId, CertificateStatus.REVOKED, CertificateStatus.ACTIVE);
+        log.info("Revoked {} certificate(s) for sessionId: {}", updated, sessionId);
+    }
+
+    @Override
+    @Transactional
+    public void revokeByTenantIdAndUserId(Integer tenantId, String userId) {
+        int updated = repository.revokeByTenantIdAndUserId(tenantId, userId, CertificateStatus.REVOKED, CertificateStatus.ACTIVE);
+        log.info("Revoked {} certificate(s) for tenantId: {}, userId: {}", updated, tenantId, userId);
+    }
+
+    @Override
+    @Deprecated
     @Transactional
     public void deleteBySessionId(String sessionId) {
-        repository.deleteBySessionId(sessionId);
+        // Delegate to soft-delete for backward compatibility
+        revokeBySessionId(sessionId);
     }
 
     @Override
+    @Deprecated
     @Transactional
     public void deleteByTenantIdAndUserId(Integer tenantId, String userId) {
-        repository.deleteByTenantIdAndUserId(tenantId, userId);
+        // Delegate to soft-delete for backward compatibility
+        revokeByTenantIdAndUserId(tenantId, userId);
     }
 
     @Override

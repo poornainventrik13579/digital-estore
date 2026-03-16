@@ -9,18 +9,16 @@ import jakarta.validation.Valid;
 import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.repository.UserRepository;
 import com.inventrik.digitalestore.service.certificate.CertificateService;
+import com.inventrik.digitalestore.service.certificate.SessionHelper;
 import com.inventrik.digitalestore.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -52,6 +50,7 @@ public class UserAuthController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final CertificateService certificateService;
+    private final SessionHelper sessionHelper;
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
 
@@ -119,17 +118,9 @@ public class UserAuthController {
                 String sessionId = UUID.randomUUID().toString();
                 certificateService.createSession(sessionId, new CertificateService.SessionData(user.getTenantId(), user.getUserId(), true));
 
-                ResponseCookie sessionCookie = ResponseCookie.from("certSessionId", sessionId)
-                        .httpOnly(true)
-                        .secure(false)
-                        .sameSite("Lax")
-                        .path("/")
-                        .maxAge(30 * 24 * 60 * 60)
-                        .build();
-
                 // Certificate auth uses challenge-response, no JWT token
                 return ResponseEntity.ok()
-                        .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
+                        .header(HttpHeaders.SET_COOKIE, sessionHelper.createSessionCookie(sessionId, 30L * 24 * 60 * 60).toString())
                         .body(Map.of(
                             "message", "Login successful",
                             "userId", user.getUserId()
@@ -189,48 +180,12 @@ public class UserAuthController {
     @PostMapping("/logout")
     @Operation(summary = "Logout user")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        String sessionId = getSessionIdFromCookie(request);
-  
-        if (sessionId != null) {
-            Optional<User> userOpt = getUserFromSession(sessionId);
-            userOpt.ifPresent(user -> {
-                certificateService.deleteBySessionId(sessionId);
-                certificateService.removeSessionKey(user.getUserId());
-            });
-            certificateService.removeSession(sessionId);
-        }
-  
-        ResponseCookie sessionCookie = ResponseCookie.from("certSessionId", "")
-                .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(0)
-                .build();
-  
+        String sessionId = sessionHelper.getSessionIdFromCookie(request);
+        sessionHelper.performLogout(sessionId);
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, sessionCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, sessionHelper.clearSessionCookie().toString())
                 .body(Map.of("message", "Logout successful"));
-    }
-  
-    private String getSessionIdFromCookie(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("certSessionId".equals(cookie.getName())) {
-                    return cookie.getValue();
-                }
-            }
-        }
-        return null;
-    }
-  
-    private Optional<User> getUserFromSession(String sessionId) {
-        CertificateService.SessionData sessionData = certificateService.getSession(sessionId);
-        if (sessionData != null && sessionData.isAuthenticated()) {
-            return userRepository.findByTenantIdAndUserId(sessionData.getTenantId(), sessionData.getUserId());
-        }
-        return Optional.empty();
     }
 
 }

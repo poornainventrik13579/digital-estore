@@ -8,8 +8,17 @@ public interface CertificateService {
     UserCertificate createCertificate(Integer tenantId, String userId, String sessionId, String publicKey) throws IllegalStateException;
     Optional<UserCertificate> findBySessionId(String sessionId);
     Optional<UserCertificate> findByTenantIdAndUserId(Integer tenantId, String userId);
+
+    /** @deprecated Use {@link #revokeBySessionId(String)} for audit-safe soft delete */
+    @Deprecated
     void deleteBySessionId(String sessionId);
+
+    /** @deprecated Use {@link #revokeByTenantIdAndUserId(Integer, String)} for audit-safe soft delete */
+    @Deprecated
     void deleteByTenantIdAndUserId(Integer tenantId, String userId);
+
+    void revokeBySessionId(String sessionId);
+    void revokeByTenantIdAndUserId(Integer tenantId, String userId);
 
     String createChallenge(String userId, Integer tenantId);
     Optional<ChallengeData> getChallenge(String challengeId);

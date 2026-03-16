@@ -27,6 +27,10 @@ public class UserCertificate {
     @Column(name = "public_key", nullable = false, length = 124)
     private String publicKey;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 10)
+    private CertificateStatus status;
+
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
 
@@ -37,6 +41,9 @@ public class UserCertificate {
     protected void onCreate() {
         created = LocalDateTime.now();
         updated = LocalDateTime.now();
+        if (status == null) {
+            status = CertificateStatus.ACTIVE;
+        }
     }
 
     @PreUpdate
