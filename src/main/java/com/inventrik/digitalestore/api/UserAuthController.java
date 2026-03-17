@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @Tag(name = "User Authentication", description = "Authentication APIs for users/customers")
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:3000"})
+@CrossOrigin(originPatterns = {"http://localhost:4200", "http://localhost:4201", "http://localhost:3000", "https://*.ngrok-free.app", "https://*.ngrok.io"})
 public class UserAuthController {
 
     private final UserService userService;
@@ -118,12 +118,15 @@ public class UserAuthController {
                 String sessionId = UUID.randomUUID().toString();
                 certificateService.createSession(sessionId, new CertificateService.SessionData(user.getTenantId(), user.getUserId(), true));
 
-                // Certificate auth uses challenge-response, no JWT token
+                // Certificate auth uses challenge-response, no JWT token.
+                // sessionId is also returned in the body so browsers that block
+                // cross-origin cookies (Safari ITP) can send it as X-Session-ID header.
                 return ResponseEntity.ok()
                         .header(HttpHeaders.SET_COOKIE, sessionHelper.createSessionCookie(sessionId, 30L * 24 * 60 * 60).toString())
                         .body(Map.of(
                             "message", "Login successful",
-                            "userId", user.getUserId()
+                            "userId", user.getUserId(),
+                            "sessionId", sessionId
                         ));
             } else {
                 Instant now = Instant.now();

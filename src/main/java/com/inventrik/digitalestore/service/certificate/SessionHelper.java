@@ -23,16 +23,24 @@ public class SessionHelper {
     @Value("${app.cookie.secure:false}")
     private boolean cookieSecure;
 
+    @Value("${app.cookie.same-site:Lax}")
+    private String cookieSameSite;
+
     private static final String CERT_SESSION_COOKIE = "certSessionId";
 
     public String getSessionIdFromCookie(HttpServletRequest request) {
-        if (request.getCookies() == null) return null;
-        for (Cookie cookie : request.getCookies()) {
-            if (CERT_SESSION_COOKIE.equals(cookie.getName())) {
-                return cookie.getValue();
+        // Try cookie first (works on Chrome/Firefox)
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (CERT_SESSION_COOKIE.equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
             }
         }
-        return null;
+        // Fallback to X-Session-ID header — Safari ITP blocks cross-origin cookies
+        // (e.g. localhost frontend → ngrok backend), so the frontend sends the
+        // session ID as a header instead.
+        return request.getHeader("X-Session-ID");
     }
 
     public Optional<User> getUserFromSession(String sessionId) {
@@ -47,7 +55,7 @@ public class SessionHelper {
         return ResponseCookie.from(CERT_SESSION_COOKIE, sessionId)
                 .httpOnly(true)
                 .secure(cookieSecure)
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .path("/")
                 .maxAge(maxAgeSeconds)
                 .build();

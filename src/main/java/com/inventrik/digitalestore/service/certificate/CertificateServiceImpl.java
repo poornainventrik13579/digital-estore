@@ -118,9 +118,9 @@ public class CertificateServiceImpl implements CertificateService {
         Optional<ChallengeData> dataOpt = getChallenge(challengeId);
 
         if (dataOpt.isPresent()) {
-            ChallengeData data = dataOpt.get();
-            data.setUsed(true);
-            redisTemplate.opsForValue().set(key, data, CHALLENGE_TTL);
+            // Delete immediately — the challenge is single-use and no longer needed.
+            // Previously this re-saved with a new 30s TTL, which was wasteful.
+            redisTemplate.delete(key);
             return true;
         }
 

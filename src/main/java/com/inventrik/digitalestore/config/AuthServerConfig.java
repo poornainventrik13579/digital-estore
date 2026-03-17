@@ -246,9 +246,9 @@ public class AuthServerConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
+        config.setAllowedOriginPatterns(Arrays.asList("http://localhost:4200", "http://localhost:4201", "https://*.ngrok-free.app", "https://*.ngrok.io"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Challenge", "X-Signature", "Cache-Control"));
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Challenge", "X-Signature", "Cache-Control", "ngrok-skip-browser-warning", "X-Session-ID"));
         config.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
