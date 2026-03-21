@@ -52,8 +52,15 @@ public class LargeIdSerializationTest {
 
         OrderResponse orderResponse = new OrderResponse(
             largeOrderId, 1, largeUserId, LocalDateTime.now(),
-            "USD", new BigDecimal("99.99"), new BigDecimal("1.0"),
-            "PENDING", LocalDateTime.now(), LocalDateTime.now(), null
+            "USD",
+            new BigDecimal("99.99"),  // subTotal
+            BigDecimal.ZERO,          // discountAmount
+            BigDecimal.ZERO,          // taxAmount
+            new BigDecimal("99.99"),  // totalAmount
+            new BigDecimal("1.0"),    // exchangeRate
+            "PENDING",
+            0,                        // totalItems
+            LocalDateTime.now(), LocalDateTime.now(), null
         );
 
         String json = objectMapper.writeValueAsString(orderResponse);

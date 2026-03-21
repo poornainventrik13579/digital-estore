@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -19,11 +20,12 @@ public class RefreshTokenService {
     private static final int REFRESH_TOKEN_LENGTH = 64;
     private static final int REFRESH_TOKEN_DAYS = 1;
     private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final RefreshTokenRepository refreshTokenRepository;
 
     public String generateRefreshToken() {
-        SecureRandom random = new SecureRandom();
+        SecureRandom random = RANDOM;
         StringBuilder sb = new StringBuilder(REFRESH_TOKEN_LENGTH);
         for (int i = 0; i < REFRESH_TOKEN_LENGTH; i++) {
             sb.append(CHARS.charAt(random.nextInt(CHARS.length())));
@@ -61,22 +63,18 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public RefreshToken rotateToken(String oldRefreshToken, String username) {
+    public RefreshToken rotateToken(String oldRefreshToken, String loginIdentifier) {
         refreshTokenRepository.revokeByRefreshToken(oldRefreshToken);
-        String newTokenId = java.util.UUID.randomUUID().toString();
-        return createRefreshToken(username, newTokenId);
+        return createRefreshToken(loginIdentifier, UUID.randomUUID().toString());
     }
 
     public boolean isValid(RefreshToken token) {
-        return token != null && !token.getRevoked() && !token.isExpired();
+        return token != null && !token.isRevoked() && !token.isExpired();
     }
 
     @Transactional
     public void cleanupExpiredTokens() {
-        List<RefreshToken> expiredTokens = refreshTokenRepository.findAll().stream()
-                .filter(RefreshToken::isExpired)
-                .toList();
-        refreshTokenRepository.deleteAll(expiredTokens);
-        log.info("Cleaned up {} expired refresh tokens", expiredTokens.size());
+        refreshTokenRepository.deleteExpiredTokens(LocalDateTime.now());
+        log.info("Cleaned up expired refresh tokens");
     }
 }

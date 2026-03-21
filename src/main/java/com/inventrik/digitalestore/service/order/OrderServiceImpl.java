@@ -6,10 +6,9 @@ import com.inventrik.digitalestore.domain.order.OrderStatus;
 import com.inventrik.digitalestore.dto.request.OrderItemRequest;
 import com.inventrik.digitalestore.dto.request.OrderRequest;
 import com.inventrik.digitalestore.dto.request.OrderUpdateRequest;
-import com.inventrik.digitalestore.dto.request.ValidateDiscountRequest;
-import com.inventrik.digitalestore.dto.response.DiscountValidationResponse;
 import com.inventrik.digitalestore.dto.response.OrderItemResponse;
 import com.inventrik.digitalestore.dto.response.OrderResponse;
+import com.inventrik.digitalestore.dto.response.PagedResponse;
 import com.inventrik.digitalestore.event.OrderStatusChangeEvent;
 import com.inventrik.digitalestore.exception.BusinessException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
@@ -22,6 +21,9 @@ import com.inventrik.digitalestore.service.discount.DiscountService;
 import com.inventrik.digitalestore.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,28 +47,36 @@ public class OrderServiceImpl implements OrderService {
     private final IdGeneratorService idGeneratorService;
     private final UserService userService;
     
-    // Utility method to convert Order entity to OrderResponse DTO
     private OrderResponse mapToDTO(Order order) {
         List<OrderItemResponse> orderItemResponses = order.getOrderItems().stream()
                 .map(this::mapToOrderItemDTO)
                 .collect(Collectors.toList());
-        
+
+        BigDecimal subTotal = order.getOrderItems().stream()
+                .map(OrderItem::getPriceAtPurchase)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal discountAmount = subTotal.subtract(order.getTotalAmount()).max(BigDecimal.ZERO);
+
         return new OrderResponse(
-            order.getOrderId(),
-            order.getTenantId(),
-            order.getUserId(),
-            order.getOrderDate(),
-            order.getCurrency(),
-            order.getTotalAmount(),
-            order.getExchangeRate(),
-            order.getStatus(),
-            order.getCreated(),
-            order.getUpdated(),
-            orderItemResponses
+                order.getOrderId(),
+                order.getTenantId(),
+                order.getUserId(),
+                order.getOrderDate(),
+                order.getCurrency(),
+                subTotal,
+                discountAmount,
+                BigDecimal.ZERO,
+                order.getTotalAmount(),
+                order.getExchangeRate(),
+                order.getStatus(),
+                orderItemResponses.size(),
+                order.getCreated(),
+                order.getUpdated(),
+                orderItemResponses
         );
     }
     
-    // Utility method to convert OrderItem entity to OrderItemResponse DTO
     private OrderItemResponse mapToOrderItemDTO(OrderItem orderItem) {
         String productName = null;
         String productImageUrl = null;
@@ -93,37 +103,31 @@ public class OrderServiceImpl implements OrderService {
     }
     
     @Override
-    public List<OrderResponse> getAllOrders(Integer tenantId, String username, boolean canAccessAllOrders, String status) {
-        String userId = null;
-  
+    public PagedResponse<OrderResponse> getAllOrders(
+            Integer tenantId, String username, boolean canAccessAllOrders, String status, int page, int size) {
+
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderDate"));
+        boolean hasStatus = status != null && !status.trim().isEmpty();
+        Page<Order> orderPage;
+
         if (!canAccessAllOrders) {
-            userId = userRepository.findByTenantIdAndUsername(tenantId, username)
-                    .map(user -> user.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+            String userId = userRepository.findByTenantIdAndUsername(tenantId, username)
+                    .map(u -> u.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+            orderPage = hasStatus
+                    ? orderRepository.findPageByTenantIdAndUserIdAndStatus(tenantId, userId, status, pageable)
+                    : orderRepository.findPageByTenantIdAndUserId(tenantId, userId, pageable);
+        } else {
+            orderPage = hasStatus
+                    ? orderRepository.findPageByTenantIdAndStatus(tenantId, status, pageable)
+                    : orderRepository.findPageByTenantId(tenantId, pageable);
         }
-  
-        // User-specific filtering with optional status
-        if (userId != null) {
-            if (status != null && !status.trim().isEmpty()) {
-                return orderRepository.findByTenantIdAndUserIdAndStatus(tenantId, userId, status).stream()
-                        .map(this::mapToDTO)
-                        .collect(Collectors.toList());
-            }
-            return orderRepository.findByTenantIdAndUserId(tenantId, userId).stream()
-                    .map(this::mapToDTO)
-                    .collect(Collectors.toList());
-        }
-  
-        // Admin filtering with optional status
-        if (status != null && !status.trim().isEmpty()) {
-            return orderRepository.findByTenantIdAndStatus(tenantId, status).stream()
-                    .map(this::mapToDTO)
-                    .collect(Collectors.toList());
-        }
-  
-        return orderRepository.findByTenantId(tenantId).stream()
+
+        List<OrderResponse> content = orderPage.getContent().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+
+        return PagedResponse.of(content, page, size, orderPage.getTotalElements());
     }
 
     @Override
@@ -162,14 +166,12 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
-        BigDecimal itemsTotal = BigDecimal.ZERO;
         List<OrderItem> orderItems = new ArrayList<>();
         for (OrderItemRequest itemRequest : orderRequest.getOrderItems()) {
             productRepository.findByTenantIdAndProductId(tenantId, itemRequest.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
 
             BigDecimal itemPrice = itemRequest.getPriceAtPurchase();
-            itemsTotal = itemsTotal.add(itemPrice);
 
             OrderItem orderItem = new OrderItem();
             orderItem.setTenantId(tenantId);
@@ -198,14 +200,11 @@ public class OrderServiceImpl implements OrderService {
         order.setCreatedBy(userService.getAuditCode(username));
         order.setUpdatedBy(userService.getAuditCode(username));
 
-        Order savedOrder = orderRepository.save(order);
-
         for (OrderItem item : orderItems) {
-            savedOrder.getOrderItems().add(item);
-            item.setOrder(savedOrder);
+            order.addOrderItem(item);
         }
 
-        savedOrder = orderRepository.save(savedOrder);
+        Order savedOrder = orderRepository.save(order);
 
         eventPublisher.publishEvent(new OrderStatusChangeEvent(savedOrder, null, savedOrder.getStatus()));
 
@@ -235,8 +234,7 @@ public class OrderServiceImpl implements OrderService {
             order.setStatus(updateRequest.getStatus());
         }
 
-        String truncatedUsername = userService.truncateUsernameForAudit(username);;
-        order.setUpdatedBy(truncatedUsername);
+        order.setUpdatedBy(userService.truncateUsernameForAudit(username));
         order.setUpdated(LocalDateTime.now());
 
         Order updatedOrder = orderRepository.save(order);
@@ -249,27 +247,27 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private boolean isValidStatusTransition(String currentStatus, String newStatus) {
-        if (currentStatus.equals(newStatus)) {
-            return true;
-        }
+        if (currentStatus.equals(newStatus)) return true;
 
-        return switch (currentStatus) {
-            case "Pending" -> List.of("Processing", "Cancelled", "Payment Failed").contains(newStatus);
-            case "Processing" -> List.of("Completed", "Cancelled", "Refunded").contains(newStatus);
-            case "Completed" -> List.of("Refunded", "Partially Refunded").contains(newStatus);
-            case "Cancelled", "Refunded", "Payment Failed" -> false;
-            case "Partially Refunded" -> "Refunded".equals(newStatus);
-            default -> false;
-        };
+        String pending         = OrderStatus.PENDING.getDisplayName();
+        String processing      = OrderStatus.PROCESSING.getDisplayName();
+        String completed       = OrderStatus.COMPLETED.getDisplayName();
+        String cancelled       = OrderStatus.CANCELLED.getDisplayName();
+        String refunded        = OrderStatus.REFUNDED.getDisplayName();
+        String partialRefunded = OrderStatus.PARTIALLY_REFUNDED.getDisplayName();
+
+        if (currentStatus.equals(pending))          return List.of(processing, cancelled).contains(newStatus);
+        if (currentStatus.equals(processing))       return List.of(completed, cancelled, refunded).contains(newStatus);
+        if (currentStatus.equals(completed))        return List.of(refunded, partialRefunded).contains(newStatus);
+        if (currentStatus.equals(partialRefunded))  return refunded.equals(newStatus);
+        return false;
     }
     
     @Override
     @Transactional
     public void deleteOrder(Integer tenantId, String orderId) {
-        if (!orderRepository.findByTenantIdAndOrderId(tenantId, orderId).isPresent()) {
-            throw new ResourceNotFoundException("Order not found with id: " + orderId);
-        }
-
+        orderRepository.findByTenantIdAndOrderId(tenantId, orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         orderRepository.deleteByTenantIdAndOrderId(tenantId, orderId);
     }
 
@@ -288,18 +286,16 @@ public class OrderServiceImpl implements OrderService {
         String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.COMPLETED.getDisplayName());
         
-        String truncatedUsername = userService.truncateUsernameForAudit(username);
-        order.setUpdatedBy(truncatedUsername);
+        order.setUpdatedBy(userService.truncateUsernameForAudit(username));
         order.setUpdated(LocalDateTime.now());
-        
+
         Order updatedOrder = orderRepository.save(order);
-        
-        // Publish status change event
+
         eventPublisher.publishEvent(new OrderStatusChangeEvent(updatedOrder, oldStatus, updatedOrder.getStatus()));
-        
+
         return mapToDTO(updatedOrder);
     }
-    
+
     @Override
     @Transactional
     public OrderResponse cancelOrder(Integer tenantId, String orderId, String username) {
@@ -315,13 +311,11 @@ public class OrderServiceImpl implements OrderService {
         String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.CANCELLED.getDisplayName());
         
-        String truncatedUsername = userService.truncateUsernameForAudit(username);;
-        order.setUpdatedBy(truncatedUsername);
+        order.setUpdatedBy(userService.truncateUsernameForAudit(username));
         order.setUpdated(LocalDateTime.now());
         
         Order updatedOrder = orderRepository.save(order);
         
-        // Publish status change event
         eventPublisher.publishEvent(new OrderStatusChangeEvent(updatedOrder, oldStatus, updatedOrder.getStatus()));
         
         return mapToDTO(updatedOrder);
@@ -340,13 +334,11 @@ public class OrderServiceImpl implements OrderService {
         String oldStatus = order.getStatus();
         order.setStatus(OrderStatus.REFUNDED.getDisplayName());
         
-        String truncatedUsername = userService.truncateUsernameForAudit(username);;
-        order.setUpdatedBy(truncatedUsername);
+        order.setUpdatedBy(userService.truncateUsernameForAudit(username));
         order.setUpdated(LocalDateTime.now());
         
         Order updatedOrder = orderRepository.save(order);
         
-        // Publish status change event
         eventPublisher.publishEvent(new OrderStatusChangeEvent(updatedOrder, oldStatus, updatedOrder.getStatus()));
         
         return mapToDTO(updatedOrder);

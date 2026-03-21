@@ -1,12 +1,18 @@
 package com.inventrik.digitalestore.config;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.UUID;
 
 import org.springframework.context.annotation.Bean;
@@ -49,6 +55,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.inventrik.digitalestore.filter.CertificateSignatureFilter;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
@@ -57,12 +64,22 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 @EnableMethodSecurity
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServerConfig {
 
     private final UserDetailsService userDetailsService;
 
     @Value("${app.base-url}")
     private String appBaseUrl;
+
+    @Value("${app.oauth2.client-secret:web-secret}")
+    private String oauth2ClientSecret;
+
+    @Value("${app.jwt.private-key-path:}")
+    private String jwtPrivateKeyPath;
+
+    @Value("${app.jwt.public-key-path:}")
+    private String jwtPublicKeyPath;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -89,9 +106,14 @@ public class AuthServerConfig {
     @Order(2)
     public SecurityFilterChain authApiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Public auth endpoints (signup, login, forgot-password) - exclude /me
-            .securityMatcher("/api/v1/auth/*/login", "/api/v1/auth/*/signup", "/api/v1/auth/login",
-                            "/api/v1/auth/signup", "/api/v1/auth/forgot-password", "/api/v1/auth/*/forgot-password")
+            // Public auth endpoints (signup, login, forgot-password, refresh-token, logout)
+            .securityMatcher(
+                "/api/v1/auth/*/login", "/api/v1/auth/*/signup",
+                "/api/v1/auth/login", "/api/v1/auth/signup",
+                "/api/v1/auth/forgot-password", "/api/v1/auth/*/forgot-password",
+                "/api/v1/auth/refresh-token", "/api/v1/auth/*/refresh-token",
+                "/api/v1/auth/logout", "/api/v1/auth/*/logout"
+            )
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session
@@ -184,7 +206,7 @@ public class AuthServerConfig {
     public RegisteredClientRepository registeredClientRepository() {
         RegisteredClient webClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("web-client")
-                .clientSecret(passwordEncoder().encode("web-secret"))
+                .clientSecret(passwordEncoder().encode(oauth2ClientSecret))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -206,16 +228,24 @@ public class AuthServerConfig {
     }
 
     @Bean
-    public JWKSource<SecurityContext> jwkSource() throws NoSuchAlgorithmException {
-        KeyPair keyPair = generateRsaKey();
+    public JWKSource<SecurityContext> jwkSource() throws Exception {
+        KeyPair keyPair;
+        if (!jwtPrivateKeyPath.isBlank() && !jwtPublicKeyPath.isBlank()) {
+            keyPair = loadRsaKeyPair(jwtPrivateKeyPath, jwtPublicKeyPath);
+        } else {
+            log.warn("app.jwt.private-key-path / app.jwt.public-key-path not set — using ephemeral RSA key. " +
+                     "All JWTs will be invalidated on restart. Configure key paths for production.");
+            keyPair = generateRsaKey();
+        }
+
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
         RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-        
+
         RSAKey rsaKey = new RSAKey.Builder(publicKey)
                 .privateKey(privateKey)
                 .keyID(UUID.randomUUID().toString())
                 .build();
-        
+
         JWKSet jwkSet = new JWKSet(rsaKey);
         return new ImmutableJWKSet<>(jwkSet);
     }
@@ -224,6 +254,24 @@ public class AuthServerConfig {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         keyPairGenerator.initialize(2048);
         return keyPairGenerator.generateKeyPair();
+    }
+
+    private static KeyPair loadRsaKeyPair(String privatePath, String publicPath) throws Exception {
+        String privatePem = new String(Files.readAllBytes(Paths.get(privatePath)))
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
+        RSAPrivateKey privateKey = (RSAPrivateKey) KeyFactory.getInstance("RSA")
+                .generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privatePem)));
+
+        String publicPem = new String(Files.readAllBytes(Paths.get(publicPath)))
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replaceAll("\\s", "");
+        RSAPublicKey publicKey = (RSAPublicKey) KeyFactory.getInstance("RSA")
+                .generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(publicPem)));
+
+        return new KeyPair(publicKey, privateKey);
     }
 
     @Bean

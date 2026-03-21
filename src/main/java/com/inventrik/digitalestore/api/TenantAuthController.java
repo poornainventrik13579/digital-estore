@@ -1,40 +1,34 @@
 package com.inventrik.digitalestore.api;
 
+import com.inventrik.digitalestore.domain.auth.RefreshToken;
 import com.inventrik.digitalestore.domain.user.User;
 import com.inventrik.digitalestore.dto.request.ForgotPasswordRequest;
-import com.inventrik.digitalestore.dto.request.LoginRequest;
 import com.inventrik.digitalestore.dto.request.TenantSignupRequest;
 import com.inventrik.digitalestore.dto.response.TenantResponse;
 import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.repository.UserRepository;
-import com.inventrik.digitalestore.service.IdGeneratorService;
+import com.inventrik.digitalestore.service.JwtTokenService;
+import com.inventrik.digitalestore.service.RefreshTokenService;
 import com.inventrik.digitalestore.service.certificate.CertificateService;
 import com.inventrik.digitalestore.service.certificate.SessionHelper;
-import com.inventrik.digitalestore.service.user.UserService;
-import jakarta.validation.Valid;
-import com.inventrik.digitalestore.service.RefreshTokenService;
 import com.inventrik.digitalestore.service.tenant.TenantService;
+import com.inventrik.digitalestore.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,164 +47,147 @@ public class TenantAuthController {
     private final SessionHelper sessionHelper;
     private final TenantService tenantService;
     private final AuthenticationManager authenticationManager;
-    private final JwtEncoder jwtEncoder;
+    private final JwtTokenService jwtTokenService;
     private final RefreshTokenService refreshTokenService;
 
-    @Value("${app.base-url}")
-    private String appBaseUrl;
-
     @PostMapping(value = "/signup", consumes = "application/x-www-form-urlencoded")
+    @Operation(summary = "Create a new tenant with admin account")
     public ResponseEntity<?> tenantSignup(@Valid @ModelAttribute TenantSignupRequest request) {
         try {
             TenantResponse tenant = tenantService.createTenantWithAdmin(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "message", "Tenant created successfully",
-                "tenantId", tenant.getTenantId(),
-                "shopName", tenant.getShopName(),
-                "adminUsername", request.getAdminUsername()
-            ));
+                    "message", "Tenant created successfully",
+                    "tenantId", tenant.getTenantId(),
+                    "shopName", tenant.getShopName(),
+                    "adminUsername", request.getAdminUsername()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     @PostMapping(value = "/login", consumes = "application/x-www-form-urlencoded")
+    @Operation(summary = "Tenant admin login")
     public ResponseEntity<?> login(
             @RequestParam Integer tenantId,
             @RequestParam String username,
             @RequestParam String password,
-            @RequestParam(required = false, defaultValue = "false") boolean privateDevice,
-            HttpServletResponse response) {
-        String formattedUsername = null;
-        try {
-            // Create LoginRequest object for consistency
-            LoginRequest loginRequest = new LoginRequest();
-            loginRequest.setTenantId(tenantId);
-            loginRequest.setUsername(username);
-            loginRequest.setPassword(password);
-            loginRequest.setPrivateDevice(privateDevice);
+            @RequestParam(required = false, defaultValue = "false") boolean privateDevice) {
 
+        // loginIdentifier is "tenantId:username" — used for Spring Security lookup
+        // and stored in the refresh token so we can do tenant-aware lookups on refresh
+        String loginIdentifier = tenantId + ":" + username.toLowerCase();
+        try {
             log.info("Tenant login attempt - tenantId: {}, username: {}", tenantId, username);
 
-            if (tenantId == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Tenant ID is required for tenant admin login"));
-            }
-
-            formattedUsername = tenantId + ":" + username.toLowerCase();
-
-            log.info("Attempting authentication with username: {}", formattedUsername);
-
             Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(formattedUsername, password)
-            );
+                    new UsernamePasswordAuthenticationToken(loginIdentifier, password));
 
-            log.info("Authentication successful for user: {}", authentication.getName());
+            User user = userRepository.findByTenantIdAndUsername(tenantId, authentication.getName())
+                    .orElseThrow(() -> new IllegalStateException("User not found after authentication"));
 
-            Optional<User> userOpt = userRepository.findByUsername(authentication.getName());
-            if (userOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
-            }
-
-            User user = userOpt.get();
-            log.info("Found user - tenantId: {}, userId: {}, status: {}", user.getTenantId(), user.getUserId(), user.getStatus());
-
-            String refreshToken = refreshTokenService.createRefreshToken(authentication.getName(), UUID.randomUUID().toString()).getRefreshToken();
-
-            if (loginRequest.isPrivateDevice()) {
+            if (privateDevice) {
                 String sessionId = UUID.randomUUID().toString();
-                certificateService.createSession(sessionId, new CertificateService.SessionData(user.getTenantId(), user.getUserId(), true));
+                certificateService.createSession(sessionId,
+                        new CertificateService.SessionData(user.getTenantId(), user.getUserId(), true));
 
                 return ResponseEntity.ok()
-                        .header(HttpHeaders.SET_COOKIE, sessionHelper.createSessionCookie(sessionId, 30L * 24 * 60 * 60).toString())
+                        .header(HttpHeaders.SET_COOKIE,
+                                sessionHelper.createSessionCookie(sessionId, 30L * 24 * 60 * 60).toString())
                         .body(Map.of("message", "Login successful", "userId", user.getUserId()));
-            } else {
+            }
 
-                Instant now = Instant.now();
-                List<String> authorities = authentication.getAuthorities().stream()
+            List<String> authorities = authentication.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toList());
 
-                JwtClaimsSet claims = JwtClaimsSet.builder()
-                    .issuer(appBaseUrl)
-                    .issuedAt(now)
-                    .expiresAt(now.plus(15, ChronoUnit.MINUTES))
-                    .subject(authentication.getName())
-                    .claim("authorities", authorities)
-                    .claim("tenantId", loginRequest.getTenantId())
-                    .build();
+            String accessToken = jwtTokenService.buildAccessToken(authentication.getName(), authorities, tenantId);
+            String refreshTokenValue = refreshTokenService
+                    .createRefreshToken(loginIdentifier, UUID.randomUUID().toString())
+                    .getRefreshToken();
 
-                String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
-
-                return ResponseEntity.ok(Map.of(
-                    "access_token", token,
-                    "refresh_token", refreshToken,
+            return ResponseEntity.ok(Map.of(
+                    "access_token", accessToken,
+                    "refresh_token", refreshTokenValue,
                     "token_type", "Bearer",
-                    "expires_in", 900,
+                    "expires_in", JwtTokenService.ACCESS_TOKEN_SECONDS,
                     "authorities", authorities,
-                    "username", authentication.getName()
-                ));
-            }
+                    "username", authentication.getName()));
 
         } catch (Exception e) {
-            log.error("Authentication failed for username: {}", formattedUsername, e);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid username or password"));
+            log.error("Tenant login failed for loginIdentifier: {}", loginIdentifier, e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid username or password"));
         }
     }
 
     @PostMapping("/refresh-token")
     @Operation(summary = "Refresh access token")
-    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
-        String oldRefreshToken = request.get("refresh_token");
-        if (oldRefreshToken == null || oldRefreshToken.isBlank()) {
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> body) {
+        String oldTokenValue = body.get("refresh_token");
+        if (oldTokenValue == null || oldTokenValue.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "refresh_token is required"));
         }
 
-        com.inventrik.digitalestore.domain.auth.RefreshToken token = refreshTokenService.findByRefreshToken(oldRefreshToken);
-        if (!refreshTokenService.isValid(token)) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid or expired refresh token"));
+        RefreshToken stored = refreshTokenService.findByRefreshToken(oldTokenValue);
+        if (!refreshTokenService.isValid(stored)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid or expired refresh token"));
         }
 
-        String username = token.getUsername();
-        Instant now = Instant.now();
-        List<String> authorities = userRepository.findByUsername(username)
-                .map(user -> List.of("ROLE_" + user.getUserRole().name()))
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        // loginIdentifier is "tenantId:username" — parse both parts for tenant-aware lookup
+        String loginIdentifier = stored.getUsername();
+        Integer tenantId = JwtTokenService.parseTenantId(loginIdentifier);
+        String plainUsername = JwtTokenService.parseUsername(loginIdentifier);
 
-        JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(appBaseUrl)
-                .issuedAt(now)
-                .expiresAt(now.plus(1, ChronoUnit.HOURS))
-                .subject(username)
-                .claim("authorities", authorities)
-                .build();
+        Optional<User> userOpt = tenantId != null
+                ? userRepository.findByTenantIdAndUsername(tenantId, plainUsername)
+                : userRepository.findByUsername(plainUsername);
 
-        String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        if (userOpt.isEmpty()) {
+            // User deleted after token was issued — treat token as invalid
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid or expired refresh token"));
+        }
+        User user = userOpt.get();
 
-        com.inventrik.digitalestore.domain.auth.RefreshToken newToken =
-                        refreshTokenService.rotateToken(oldRefreshToken, username);
+        List<String> authorities = List.of("ROLE_" + user.getUserRole().name());
+        String accessToken = jwtTokenService.buildAccessToken(plainUsername, authorities, tenantId);
+        RefreshToken rotated = refreshTokenService.rotateToken(oldTokenValue, loginIdentifier);
 
         return ResponseEntity.ok(Map.of(
                 "access_token", accessToken,
-                "refresh_token", newToken.getRefreshToken(),
+                "refresh_token", rotated.getRefreshToken(),
                 "token_type", "Bearer",
-                "expires_in", 3600
-        ));
+                "expires_in", JwtTokenService.ACCESS_TOKEN_SECONDS));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Logout tenant admin")
+    public ResponseEntity<?> logout(HttpServletRequest request,
+            @RequestParam(required = false) String refreshTokenValue) {
+        sessionHelper.performLogout(sessionHelper.getSessionIdFromCookie(request));
+
+        if (refreshTokenValue != null) {
+            refreshTokenService.revokeRefreshToken(refreshTokenValue);
+        }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, sessionHelper.clearSessionCookie().toString())
+                .body(Map.of("message", "Logout successful"));
     }
 
     @PostMapping(value = "/forgot-password", consumes = "application/x-www-form-urlencoded")
+    @Operation(summary = "Request password reset")
     public ResponseEntity<?> forgotPassword(@Valid @ModelAttribute ForgotPasswordRequest request) {
+        // Always return same message — prevents user enumeration
         try {
             userService.sendPasswordResetEmail(request.getEmail());
-            return ResponseEntity.ok(Map.of(
-                "message", "If a tenant admin account with that email exists, we've sent a password reset link.",
-                "email", request.getEmail()
-            ));
         } catch (Exception e) {
-            return ResponseEntity.ok(Map.of(
-                "message", "If a tenant admin account with that email exists, we've sent a password reset link.",
-                "email", request.getEmail()
-            ));
+            log.warn("Password reset failed for email: {}", request.getEmail(), e);
         }
+        return ResponseEntity.ok(Map.of(
+                "message", "If a tenant admin account with that email exists, we've sent a password reset link.",
+                "email", request.getEmail()));
     }
 
     @GetMapping("/me")
@@ -218,7 +195,15 @@ public class TenantAuthController {
     @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Get current tenant admin user")
     public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
-        String username = authentication.getName();
-        return ResponseEntity.ok(userService.findByUsername(username));
+        // Use tenantId JWT claim for tenant-scoped lookup to avoid cross-tenant username collision
+        if (authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken jwtAuth) {
+            Integer tenantId = jwtAuth.getToken().getClaim("tenantId");
+            if (tenantId != null) {
+                return userRepository.findByTenantIdAndUsername(tenantId, authentication.getName())
+                        .map(u -> ResponseEntity.ok(userService.findByUsername(authentication.getName())))
+                        .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+            }
+        }
+        return ResponseEntity.ok(userService.findByUsername(authentication.getName()));
     }
 }

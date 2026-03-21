@@ -1,41 +1,33 @@
 package com.inventrik.digitalestore.api;
 
+import com.inventrik.digitalestore.domain.auth.RefreshToken;
 import com.inventrik.digitalestore.domain.user.User;
 import com.inventrik.digitalestore.dto.request.ForgotPasswordRequest;
-import com.inventrik.digitalestore.dto.request.LoginRequest;
 import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.repository.UserRepository;
-import com.inventrik.digitalestore.service.IdGeneratorService;
+import com.inventrik.digitalestore.service.JwtTokenService;
 import com.inventrik.digitalestore.service.RefreshTokenService;
 import com.inventrik.digitalestore.service.certificate.CertificateService;
 import com.inventrik.digitalestore.service.certificate.SessionHelper;
-import jakarta.validation.Valid;
 import com.inventrik.digitalestore.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -50,108 +42,103 @@ public class AuthController {
     private final CertificateService certificateService;
     private final SessionHelper sessionHelper;
     private final AuthenticationManager authenticationManager;
-    private final JwtEncoder jwtEncoder;
+    private final JwtTokenService jwtTokenService;
     private final RefreshTokenService refreshTokenService;
 
-    @Value("${app.base-url}")
-    private String appBaseUrl;
-
     @PostMapping(value = "/login", consumes = "application/x-www-form-urlencoded")
+    @Operation(summary = "Platform admin login")
     public ResponseEntity<?> login(
             @RequestParam String username,
             @RequestParam String password,
-            @RequestParam(required = false, defaultValue = "false") boolean privateDevice,
-            HttpServletResponse response) {
+            @RequestParam(required = false, defaultValue = "false") boolean privateDevice) {
         try {
-            // Normalize username to lowercase for authentication
             String normalizedUsername = username.toLowerCase();
-
-            log.info("Platform login attempt - username: {}", normalizedUsername);
+            log.info("Platform login attempt for: {}", normalizedUsername);
 
             Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(normalizedUsername, password)
-            );
+                    new UsernamePasswordAuthenticationToken(normalizedUsername, password));
 
-            log.info("Authentication successful for user: {}", authentication.getName());
-
-            Optional<User> userOpt = userRepository.findByUsername(authentication.getName());
-            if (userOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid username or password"));
-            }
-
-            User user = userOpt.get();
-            log.info("Found user - tenantId: {}, userId: {}, status: {}", user.getTenantId(), user.getUserId(), user.getStatus());
-
-            String refreshToken = refreshTokenService.createRefreshToken(authentication.getName(), UUID.randomUUID().toString()).getRefreshToken();
-
-            // Generate JWT token (used for subsequent API calls)
-            Instant now = Instant.now();
-            List<String> authorities = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
-
-            JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(appBaseUrl)
-                .issuedAt(now)
-                .expiresAt(now.plus(15, ChronoUnit.MINUTES))
-                .subject(authentication.getName())
-                .claim("authorities", authorities)
-                .build();
-
-            String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+            User user = userRepository.findByUsername(authentication.getName())
+                    .orElseThrow(() -> new IllegalStateException("User not found after authentication"));
 
             if (privateDevice) {
                 String sessionId = UUID.randomUUID().toString();
-                certificateService.createSession(sessionId, new CertificateService.SessionData(user.getTenantId(), user.getUserId(), true));
+                certificateService.createSession(sessionId,
+                        new CertificateService.SessionData(user.getTenantId(), user.getUserId(), true));
 
                 return ResponseEntity.ok()
-                        .header(HttpHeaders.SET_COOKIE, sessionHelper.createSessionCookie(sessionId, 30L * 24 * 60 * 60).toString())
-                        .body(Map.of(
-                            "message", "Login successful",
-                            "userId", user.getUserId()
-                        ));
-            } else {
-                return ResponseEntity.ok(Map.of(
-                    "access_token", token,
-                    "refresh_token", refreshToken,
-                    "token_type", "Bearer",
-                    "expires_in", 900,
-                    "authorities", authorities,
-                    "username", authentication.getName()
-                ));
+                        .header(HttpHeaders.SET_COOKIE,
+                                sessionHelper.createSessionCookie(sessionId, 30L * 24 * 60 * 60).toString())
+                        .body(Map.of("message", "Login successful", "userId", user.getUserId()));
             }
 
+            // Platform admins have no tenant — loginIdentifier is plain username
+            List<String> authorities = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
+
+            String accessToken = jwtTokenService.buildAccessToken(authentication.getName(), authorities, null);
+            String refreshTokenValue = refreshTokenService
+                    .createRefreshToken(authentication.getName(), UUID.randomUUID().toString())
+                    .getRefreshToken();
+
+            return ResponseEntity.ok(Map.of(
+                    "access_token", accessToken,
+                    "refresh_token", refreshTokenValue,
+                    "token_type", "Bearer",
+                    "expires_in", JwtTokenService.ACCESS_TOKEN_SECONDS,
+                    "authorities", authorities,
+                    "username", authentication.getName()));
+
         } catch (Exception e) {
-            log.error("Authentication failed for username: {}", username, e);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid username or password"));
+            log.error("Platform login failed for username: {}", username, e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid username or password"));
         }
     }
 
-    @PostMapping(value = "/forgot-password", consumes = "application/x-www-form-urlencoded")
-    public ResponseEntity<?> forgotPassword(@Valid @ModelAttribute ForgotPasswordRequest request) {
-        try {
-            userService.sendPasswordResetEmail(request.getEmail());
-            return ResponseEntity.ok(Map.of(
-                "message", "If a platform admin account with that email exists, we've sent a password reset link.",
-                "email", request.getEmail()
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.ok(Map.of(
-                "message", "If a platform admin account with that email exists, we've sent a password reset link.",
-                "email", request.getEmail()
-            ));
+    @PostMapping("/refresh-token")
+    @Operation(summary = "Refresh access token")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> body) {
+        String oldTokenValue = body.get("refresh_token");
+        if (oldTokenValue == null || oldTokenValue.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "refresh_token is required"));
         }
+
+        RefreshToken stored = refreshTokenService.findByRefreshToken(oldTokenValue);
+        if (!refreshTokenService.isValid(stored)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid or expired refresh token"));
+        }
+
+        // Platform admin: loginIdentifier is plain username, no tenantId
+        String loginIdentifier = stored.getUsername();
+        User user = userRepository.findByUsername(loginIdentifier).orElse(null);
+        if (user == null) {
+            // User deleted after token was issued — treat token as invalid
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid or expired refresh token"));
+        }
+
+        List<String> authorities = List.of("ROLE_" + user.getUserRole().name());
+        String accessToken = jwtTokenService.buildAccessToken(loginIdentifier, authorities, null);
+        RefreshToken rotated = refreshTokenService.rotateToken(oldTokenValue, loginIdentifier);
+
+        return ResponseEntity.ok(Map.of(
+                "access_token", accessToken,
+                "refresh_token", rotated.getRefreshToken(),
+                "token_type", "Bearer",
+                "expires_in", JwtTokenService.ACCESS_TOKEN_SECONDS));
     }
 
     @PostMapping(value = "/logout", consumes = "application/x-www-form-urlencoded")
     @Operation(summary = "Logout platform admin")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response,
-            @RequestParam(required = false) String refreshToken) {
-        String sessionId = sessionHelper.getSessionIdFromCookie(request);
-        sessionHelper.performLogout(sessionId);
+    public ResponseEntity<?> logout(HttpServletRequest request,
+            @RequestParam(required = false) String refreshTokenValue) {
+        sessionHelper.performLogout(sessionHelper.getSessionIdFromCookie(request));
 
-        if (refreshToken != null) {
-            refreshTokenService.revokeRefreshToken(refreshToken);
+        if (refreshTokenValue != null) {
+            refreshTokenService.revokeRefreshToken(refreshTokenValue);
         }
 
         return ResponseEntity.ok()
@@ -159,44 +146,18 @@ public class AuthController {
                 .body(Map.of("message", "Logout successful"));
     }
 
-    @PostMapping("/refresh-token")
-    @Operation(summary = "Refresh access token")
-    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
-        String oldRefreshToken = request.get("refresh_token");
-        if (oldRefreshToken == null || oldRefreshToken.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "refresh_token is required"));
+    @PostMapping(value = "/forgot-password", consumes = "application/x-www-form-urlencoded")
+    @Operation(summary = "Request password reset")
+    public ResponseEntity<?> forgotPassword(@Valid @ModelAttribute ForgotPasswordRequest request) {
+        // Always return same message — prevents user enumeration
+        try {
+            userService.sendPasswordResetEmail(request.getEmail());
+        } catch (Exception e) {
+            log.warn("Password reset failed for email: {}", request.getEmail(), e);
         }
-
-        com.inventrik.digitalestore.domain.auth.RefreshToken token = refreshTokenService.findByRefreshToken(oldRefreshToken);
-        if (!refreshTokenService.isValid(token)) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid or expired refresh token"));
-        }
-
-        String username = token.getUsername();
-        Instant now = Instant.now();
-        List<String> authorities = userRepository.findByUsername(username)
-                .map(user -> List.of("ROLE_" + user.getUserRole().name()))
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(appBaseUrl)
-                .issuedAt(now)
-                .expiresAt(now.plus(15, ChronoUnit.MINUTES))
-                .subject(username)
-                .claim("authorities", authorities)
-                .build();
-
-        String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
-
-        com.inventrik.digitalestore.domain.auth.RefreshToken newToken =
-                        refreshTokenService.rotateToken(oldRefreshToken, username);
-
         return ResponseEntity.ok(Map.of(
-                "access_token", accessToken,
-                "refresh_token", newToken.getRefreshToken(),
-                "token_type", "Bearer",
-                "expires_in", 900
-        ));
+                "message", "If a platform admin account with that email exists, we've sent a password reset link.",
+                "email", request.getEmail()));
     }
 
     @GetMapping("/me")
@@ -204,7 +165,6 @@ public class AuthController {
     @PreAuthorize("hasAnyAuthority('USER', 'ADMIN', 'TENANT')")
     @Operation(summary = "Get current platform admin user")
     public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
-        String username = authentication.getName();
-        return ResponseEntity.ok(userService.findByUsername(username));
+        return ResponseEntity.ok(userService.findByUsername(authentication.getName()));
     }
 }

@@ -2,6 +2,8 @@ package com.inventrik.digitalestore.repository;
 
 import com.inventrik.digitalestore.domain.order.Order;
 import com.inventrik.digitalestore.domain.order.OrderItem;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -38,4 +40,22 @@ public interface OrderRepository extends JpaRepository<Order, Order.OrderPK> {
 
     @Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.product WHERE o.tenantId = :tenantId AND o.userId = :userId AND o.status = :status ORDER BY o.orderDate DESC")
     List<Order> findByTenantIdAndUserIdAndStatus(@Param("tenantId") Integer tenantId, @Param("userId") String userId, @Param("status") String status);
+
+    // --- Paged queries for order history ---
+
+    @Query(value = "SELECT o FROM Order o WHERE o.tenantId = :tenantId",
+           countQuery = "SELECT COUNT(o) FROM Order o WHERE o.tenantId = :tenantId")
+    Page<Order> findPageByTenantId(@Param("tenantId") Integer tenantId, Pageable pageable);
+
+    @Query(value = "SELECT o FROM Order o WHERE o.tenantId = :tenantId AND o.userId = :userId",
+           countQuery = "SELECT COUNT(o) FROM Order o WHERE o.tenantId = :tenantId AND o.userId = :userId")
+    Page<Order> findPageByTenantIdAndUserId(@Param("tenantId") Integer tenantId, @Param("userId") String userId, Pageable pageable);
+
+    @Query(value = "SELECT o FROM Order o WHERE o.tenantId = :tenantId AND o.status = :status",
+           countQuery = "SELECT COUNT(o) FROM Order o WHERE o.tenantId = :tenantId AND o.status = :status")
+    Page<Order> findPageByTenantIdAndStatus(@Param("tenantId") Integer tenantId, @Param("status") String status, Pageable pageable);
+
+    @Query(value = "SELECT o FROM Order o WHERE o.tenantId = :tenantId AND o.userId = :userId AND o.status = :status",
+           countQuery = "SELECT COUNT(o) FROM Order o WHERE o.tenantId = :tenantId AND o.userId = :userId AND o.status = :status")
+    Page<Order> findPageByTenantIdAndUserIdAndStatus(@Param("tenantId") Integer tenantId, @Param("userId") String userId, @Param("status") String status, Pageable pageable);
 }

@@ -3,12 +3,12 @@ package com.inventrik.digitalestore.service.order;
 import com.inventrik.digitalestore.dto.request.OrderRequest;
 import com.inventrik.digitalestore.dto.request.OrderUpdateRequest;
 import com.inventrik.digitalestore.dto.response.OrderResponse;
-
-import java.util.List;
+import com.inventrik.digitalestore.dto.response.PagedResponse;
 
 public interface OrderService {
 
-    List<OrderResponse> getAllOrders(Integer tenantId, String username, boolean canAccessAllOrders, String status);
+    PagedResponse<OrderResponse> getAllOrders(Integer tenantId, String username, boolean canAccessAllOrders,
+                                              String status, int page, int size);
 
     OrderResponse getOrder(Integer tenantId, String orderId);
 
