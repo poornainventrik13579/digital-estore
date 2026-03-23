@@ -39,7 +39,13 @@ public class Order {
     
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
-    
+
+    @Column(name = "tax_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal taxAmount = BigDecimal.ZERO;
+
+    @Column(name = "discount_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
     @Column(name = "exchange_rate", nullable = false, precision = 10, scale = 2)
     private BigDecimal exchangeRate;
     

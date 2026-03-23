@@ -14,11 +14,12 @@ public class OrderItemResponse {
     private String orderItemId;
     private String orderId;
     private String productId;
+    private String productName;
+    private String productImageUrl;
     private BigDecimal priceAtPurchase;
+    private int quantity;
     private String licenseKey;
     private String status;
     private LocalDateTime created;
     private LocalDateTime updated;
-    private String productName;
-    private String productImageUrl;
 }

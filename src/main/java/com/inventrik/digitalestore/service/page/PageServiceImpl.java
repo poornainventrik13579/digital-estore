@@ -47,6 +47,7 @@ public class PageServiceImpl implements PageService {
     @Override
     public List<PageResponse> getAllPages(Integer tenantId, String status, String visibility) {
         List<PageResponse> pages = pageRepository.findByTenantId(tenantId).stream()
+                .filter(p -> !"DELETED".equals(p.getStatus()))
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
 
@@ -67,6 +68,7 @@ public class PageServiceImpl implements PageService {
     @Override
     public PageResponse getPage(Integer tenantId, String pageId) {
         Page page = pageRepository.findByTenantIdAndPageId(tenantId, pageId)
+                .filter(p -> !"DELETED".equals(p.getStatus()))
                 .orElseThrow(() -> new ResourceNotFoundException("Page not found"));
         return mapToDTO(page);
     }
@@ -74,6 +76,7 @@ public class PageServiceImpl implements PageService {
     @Override
     public PageResponse getPageBySlug(Integer tenantId, String slug) {
         Page page = pageRepository.findByTenantIdAndSlug(tenantId, slug)
+                .filter(p -> !"DELETED".equals(p.getStatus()))
                 .orElseThrow(() -> new ResourceNotFoundException("Page not found with slug: " + slug));
         return mapToDTO(page);
     }
@@ -113,39 +116,54 @@ public class PageServiceImpl implements PageService {
     @Override
     @Transactional
     public PageResponse updatePage(Integer tenantId, String pageId, PageRequest request) {
+        tenantRepository.findByTenantId(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+
         Page page = pageRepository.findByTenantIdAndPageId(tenantId, pageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Page not found"));
 
+        if (!page.getSlug().equals(request.getSlug()) &&
+                pageRepository.existsByTenantIdAndSlugAndPageIdNot(tenantId, request.getSlug(), pageId)) {
+            throw new BusinessException("Slug already in use by another page");
+        }
+
         page.setTitle(request.getTitle());
+        page.setSlug(request.getSlug());
         page.setContent(request.getContent());
         page.setMetaTitle(request.getMetaTitle());
         page.setMetaDescription(request.getMetaDescription());
 
-        if (request.getTemplate() != null){
+        if (request.getTemplate() != null) {
             page.setTemplate(request.getTemplate());
         }
         if (request.getStatus() != null) {
-            String oldStatus = page.getStatus();
+            String previousStatus = page.getStatus();
             page.setStatus(request.getStatus());
-            if ("PUBLISHED".equals(request.getStatus()) && !"PUBLISHED".equals(oldStatus)) {
+            if ("PUBLISHED".equals(request.getStatus()) && !"PUBLISHED".equals(previousStatus)) {
                 page.setPublishedAt(LocalDateTime.now());
             }
         }
-
         if (request.getVisibility() != null) {
             page.setVisibility(request.getVisibility());
         }
+        if (request.getIsDefault() != null) {
+            page.setIsDefault(request.getIsDefault());
+        }
+        if (request.getLanguage() != null) {
+            page.setLanguage(request.getLanguage());
+        }
 
-        Page updated = pageRepository.save(page);
-        return mapToDTO(updated);
+        Page updatedPage = pageRepository.save(page);
+        return mapToDTO(updatedPage);
     }
 
     @Override
     @Transactional
     public void deletePage(Integer tenantId, String pageId) {
-        if (!pageRepository.findByTenantIdAndPageId(tenantId, pageId).isPresent()) {
-            throw new ResourceNotFoundException("Page not found");
-        }
-        pageRepository.deleteByTenantIdAndPageId(tenantId, pageId);
+        Page page = pageRepository.findByTenantIdAndPageId(tenantId, pageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Page not found"));
+
+        page.setStatus("DELETED");
+        pageRepository.save(page);
     }
 }

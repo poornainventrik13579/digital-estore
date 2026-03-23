@@ -33,7 +33,10 @@ public class OrderItem {
 
     @Column(name = "product_id", nullable = false)
     private String productId;
-    
+
+    @Column(name = "quantity", nullable = false)
+    private int quantity = 1;
+
     @Column(name = "price_at_purchase", nullable = false, precision = 10, scale = 2)
     private BigDecimal priceAtPurchase;
     

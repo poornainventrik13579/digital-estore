@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
@@ -29,11 +30,6 @@ public class OrderFormRequest {
     @Size(min = 3, max = 3, message = "Currency code must be exactly 3 characters")
     private String currency;
     
-    @Schema(description = "Total amount", example = "99.99", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull(message = "Total amount is required")
-    @DecimalMin(value = "0.01", inclusive = true, message = "Total amount must be greater than zero")
-    private BigDecimal totalAmount;
-    
     @Schema(description = "Exchange rate", example = "1.0", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Exchange rate is required")
     @DecimalMin(value = "0.01", inclusive = true, message = "Exchange rate must be greater than zero")
@@ -49,6 +45,10 @@ public class OrderFormRequest {
     @DecimalMin(value = "0.01", inclusive = true, message = "Price must be greater than zero")
     private BigDecimal price;
     
+    @Schema(description = "Number of units to purchase", example = "1", defaultValue = "1")
+    @Min(value = 1, message = "Quantity must be at least 1")
+    private int quantity = 1;
+
     @Schema(description = "License key (optional)", example = "XXXX-YYYY-ZZZZ")
     private String licenseKey;
     
@@ -56,12 +56,9 @@ public class OrderFormRequest {
      * Converts this simplified form to the regular OrderRequest
      */
     public OrderRequest toOrderRequest() {
-        // Create the order items list with a single item
         List<OrderItemRequest> items = new ArrayList<>();
-        OrderItemRequest item = new OrderItemRequest(productId, price, licenseKey);
-        items.add(item);
-        
-        // Create and return the full order request
-        return new OrderRequest(userId, currency, totalAmount, exchangeRate, items, null);
+        items.add(new OrderItemRequest(productId, price, quantity, licenseKey));
+        BigDecimal computedTotal = price.multiply(BigDecimal.valueOf(quantity));
+        return new OrderRequest(userId, currency, computedTotal, exchangeRate, items, null);
     }
 }

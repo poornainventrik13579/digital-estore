@@ -36,8 +36,6 @@ public class SessionHelper {
                 }
             }
         }
-        // Fallback for Safari ITP — cross-origin cookies are blocked, so the frontend
-        // sends the session ID as X-Session-ID header instead.
         return request.getHeader("X-Session-ID");
     }
 

@@ -14,5 +14,6 @@ public interface PageRepository extends JpaRepository<Page, Page.PagePK> {
     Optional<Page> findByTenantIdAndPageId(Integer tenantId, String pageId);
     Optional<Page> findByTenantIdAndSlug(Integer tenantId, String slug);
     List<Page> findByTenantIdAndStatus(Integer tenantId, PageStatus status);
+    boolean existsByTenantIdAndSlugAndPageIdNot(Integer tenantId, String slug, String pageId);
     void deleteByTenantIdAndPageId(Integer tenantId, String pageId);
 }

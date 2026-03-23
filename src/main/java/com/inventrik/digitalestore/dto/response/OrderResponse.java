@@ -21,10 +21,10 @@ public class OrderResponse {
     /** Sum of all item prices before discount. */
     private BigDecimal subTotal;
 
-    /** subTotal - totalAmount. Zero if no discount was applied. */
+    /** Discount applied. Zero if no discount code was used. */
     private BigDecimal discountAmount;
 
-    /** Tax applied to the order. Currently zero — tax flow not yet implemented. */
+    /** Tax applied at time of order creation. */
     private BigDecimal taxAmount;
 
     /** Final charged amount = subTotal - discountAmount + taxAmount. */
@@ -33,7 +33,6 @@ public class OrderResponse {
     private BigDecimal exchangeRate;
     private String status;
 
-    /** Number of distinct items in this order. */
     private int totalItems;
 
     private LocalDateTime created;

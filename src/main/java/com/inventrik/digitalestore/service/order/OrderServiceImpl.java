@@ -12,8 +12,10 @@ import com.inventrik.digitalestore.dto.response.PagedResponse;
 import com.inventrik.digitalestore.event.OrderStatusChangeEvent;
 import com.inventrik.digitalestore.exception.BusinessException;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
+import com.inventrik.digitalestore.domain.tax.Tax;
 import com.inventrik.digitalestore.repository.OrderRepository;
 import com.inventrik.digitalestore.repository.ProductRepository;
+import com.inventrik.digitalestore.repository.TaxRepository;
 import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.repository.UserRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
@@ -29,6 +31,8 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +46,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final TenantRepository tenantRepository;
+    private final TaxRepository taxRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final DiscountService discountService;
     private final IdGeneratorService idGeneratorService;
@@ -53,10 +58,8 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
 
         BigDecimal subTotal = order.getOrderItems().stream()
-                .map(OrderItem::getPriceAtPurchase)
+                .map(item -> item.getPriceAtPurchase().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal discountAmount = subTotal.subtract(order.getTotalAmount()).max(BigDecimal.ZERO);
 
         return new OrderResponse(
                 order.getOrderId(),
@@ -65,8 +68,8 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderDate(),
                 order.getCurrency(),
                 subTotal,
-                discountAmount,
-                BigDecimal.ZERO,
+                order.getDiscountAmount(),
+                order.getTaxAmount(),
                 order.getTotalAmount(),
                 order.getExchangeRate(),
                 order.getStatus(),
@@ -76,11 +79,23 @@ public class OrderServiceImpl implements OrderService {
                 orderItemResponses
         );
     }
-    
+
+    private BigDecimal resolveActiveTaxRate(Integer tenantId) {
+        return taxRepository.findByTenantIdAndDefaultFlagAndStatus(tenantId, "1", "0")
+                .filter(tax -> {
+                    LocalDate today = LocalDate.now();
+                    boolean afterStart = tax.getStartDate() == null || !today.isBefore(tax.getStartDate());
+                    boolean beforeEnd  = tax.getEndDate()   == null || !today.isAfter(tax.getEndDate());
+                    return afterStart && beforeEnd;
+                })
+                .map(Tax::getValue)
+                .orElse(BigDecimal.ZERO);
+    }
+
     private OrderItemResponse mapToOrderItemDTO(OrderItem orderItem) {
         String productName = null;
         String productImageUrl = null;
-  
+
         if (orderItem.getProduct() != null) {
             productName = orderItem.getProduct().getProductName();
             productImageUrl = orderItem.getProduct().getImage1Url();
@@ -88,17 +103,19 @@ public class OrderServiceImpl implements OrderService {
                 productImageUrl = orderItem.getProduct().getThumbnail();
             }
         }
+
         return new OrderItemResponse(
-            orderItem.getOrderItemId(),
-            orderItem.getOrderId(),
-            orderItem.getProductId(),
-            orderItem.getPriceAtPurchase(),
-            orderItem.getLicenseKey(),
-            orderItem.getStatus(),
-            orderItem.getCreated(),
-            orderItem.getUpdated(),
-            productName,
-            productImageUrl
+                orderItem.getOrderItemId(),
+                orderItem.getOrderId(),
+                orderItem.getProductId(),
+                productName,
+                productImageUrl,
+                orderItem.getPriceAtPurchase(),
+                orderItem.getQuantity(),
+                orderItem.getLicenseKey(),
+                orderItem.getStatus(),
+                orderItem.getCreated(),
+                orderItem.getUpdated()
         );
     }
     
@@ -166,19 +183,22 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
+        BigDecimal taxRate = resolveActiveTaxRate(tenantId);
+        BigDecimal taxAmount = finalAmount.multiply(taxRate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        finalAmount = finalAmount.add(taxAmount);
+
         List<OrderItem> orderItems = new ArrayList<>();
         for (OrderItemRequest itemRequest : orderRequest.getOrderItems()) {
             productRepository.findByTenantIdAndProductId(tenantId, itemRequest.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
-
-            BigDecimal itemPrice = itemRequest.getPriceAtPurchase();
 
             OrderItem orderItem = new OrderItem();
             orderItem.setTenantId(tenantId);
             orderItem.setOrderId(newOrderId);
             orderItem.setOrderItemId(idGeneratorService.generateId(tenantId, "ORDER_ITEM"));
             orderItem.setProductId(itemRequest.getProductId());
-            orderItem.setPriceAtPurchase(itemPrice);
+            orderItem.setQuantity(itemRequest.getQuantity());
+            orderItem.setPriceAtPurchase(itemRequest.getPriceAtPurchase());
             orderItem.setLicenseKey(itemRequest.getLicenseKey());
             orderItem.setStatus("0");
             orderItem.setCreatedBy(userService.getAuditCode(username));
@@ -195,6 +215,8 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderDate(LocalDateTime.now());
         order.setCurrency(orderRequest.getCurrency());
         order.setTotalAmount(finalAmount);
+        order.setTaxAmount(taxAmount);
+        order.setDiscountAmount(discountAmount);
         order.setExchangeRate(orderRequest.getExchangeRate());
         order.setStatus(OrderStatus.PENDING.getDisplayName());
         order.setCreatedBy(userService.getAuditCode(username));

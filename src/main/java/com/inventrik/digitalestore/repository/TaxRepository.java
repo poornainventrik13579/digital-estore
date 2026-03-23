@@ -12,5 +12,6 @@ public interface TaxRepository extends JpaRepository<Tax, Tax.TaxPK> {
     List<Tax> findByTenantId(Integer tenantId);
     Optional<Tax> findByTenantIdAndTaxId(Integer tenantId, String taxId);
     List<Tax> findByTenantIdAndStatus(Integer tenantId, String status);
+    Optional<Tax> findByTenantIdAndDefaultFlagAndStatus(Integer tenantId, String defaultFlag, String status);
     void deleteByTenantIdAndTaxId(Integer tenantId, String taxId);
 }
