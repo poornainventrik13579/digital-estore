@@ -193,7 +193,8 @@ public class DiscountServiceImpl implements DiscountService {
             throw new IllegalArgumentException("Discount code has reached its usage limit");
         }
 
-        int updatedRows = discountCodeRepository.incrementUsedCount(tenantId, discount.getDiscountId(), username);
+        String auditCode = userService.getAuditCode(username);
+        int updatedRows = discountCodeRepository.incrementUsedCount(tenantId, discount.getDiscountId(), auditCode);
 
         if (updatedRows == 0) {
             throw new IllegalStateException("Failed to update discount usage - discount may have been modified concurrently");

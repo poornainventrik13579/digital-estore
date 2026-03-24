@@ -81,7 +81,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private BigDecimal resolveActiveTaxRate(Integer tenantId) {
-        return taxRepository.findByTenantIdAndDefaultFlagAndStatus(tenantId, "1", "0")
+        return taxRepository.findByTenantIdAndDefaultFlagAndStatus(tenantId, "Y", "0")
                 .filter(tax -> {
                     LocalDate today = LocalDate.now();
                     boolean afterStart = tax.getStartDate() == null || !today.isBefore(tax.getStartDate());
