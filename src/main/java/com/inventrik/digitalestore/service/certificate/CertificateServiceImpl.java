@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -49,14 +50,22 @@ public class CertificateServiceImpl implements CertificateService {
         return repository.save(certificate);
     }
 
+    private static final int MASTER_KEY_EXPIRY_DAYS = 180;
+
+    private boolean isCertExpired(UserCertificate cert) {
+        return cert.getCreated().plusDays(MASTER_KEY_EXPIRY_DAYS).isBefore(LocalDateTime.now());
+    }
+
     @Override
     public Optional<UserCertificate> findBySessionId(String sessionId) {
-        return repository.findBySessionIdAndStatus(sessionId, CertificateStatus.ACTIVE);
+        return repository.findBySessionIdAndStatus(sessionId, CertificateStatus.ACTIVE)
+                .filter(cert -> !isCertExpired(cert));
     }
 
     @Override
     public Optional<UserCertificate> findByTenantIdAndUserId(Integer tenantId, String userId) {
-        return repository.findByTenantIdAndUserIdAndStatus(tenantId, userId, CertificateStatus.ACTIVE);
+        return repository.findByTenantIdAndUserIdAndStatus(tenantId, userId, CertificateStatus.ACTIVE)
+                .filter(cert -> !isCertExpired(cert));
     }
 
     @Override
