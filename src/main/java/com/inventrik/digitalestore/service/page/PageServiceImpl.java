@@ -87,7 +87,7 @@ public class PageServiceImpl implements PageService {
         tenantRepository.findByTenantId(tenantId)
             .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
 
-        if (pageRepository.findByTenantIdAndSlug(tenantId, request.getSlug()).isPresent()) {
+        if (pageRepository.findByTenantIdAndSlugAndStatusNot(tenantId, request.getSlug(), "DELETED").isPresent()) {
             throw new BusinessException("Slug already exists");
         }
 
@@ -122,16 +122,16 @@ public class PageServiceImpl implements PageService {
         Page page = pageRepository.findByTenantIdAndPageId(tenantId, pageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Page not found"));
 
-        if (!page.getSlug().equals(request.getSlug()) &&
+        if (request.getSlug() != null && !page.getSlug().equals(request.getSlug()) &&
                 pageRepository.existsByTenantIdAndSlugAndPageIdNot(tenantId, request.getSlug(), pageId)) {
             throw new BusinessException("Slug already in use by another page");
         }
 
-        page.setTitle(request.getTitle());
-        page.setSlug(request.getSlug());
-        page.setContent(request.getContent());
-        page.setMetaTitle(request.getMetaTitle());
-        page.setMetaDescription(request.getMetaDescription());
+        if (request.getTitle() != null) page.setTitle(request.getTitle());
+        if (request.getSlug() != null) page.setSlug(request.getSlug());
+        if (request.getContent() != null) page.setContent(request.getContent());
+        if (request.getMetaTitle() != null) page.setMetaTitle(request.getMetaTitle());
+        if (request.getMetaDescription() != null) page.setMetaDescription(request.getMetaDescription());
 
         if (request.getTemplate() != null) {
             page.setTemplate(request.getTemplate());

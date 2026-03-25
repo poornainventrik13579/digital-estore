@@ -13,6 +13,7 @@ public interface PageRepository extends JpaRepository<Page, Page.PagePK> {
     List<Page> findByTenantId(Integer tenantId);
     Optional<Page> findByTenantIdAndPageId(Integer tenantId, String pageId);
     Optional<Page> findByTenantIdAndSlug(Integer tenantId, String slug);
+    Optional<Page> findByTenantIdAndSlugAndStatusNot(Integer tenantId, String slug, String status);
     List<Page> findByTenantIdAndStatus(Integer tenantId, PageStatus status);
     boolean existsByTenantIdAndSlugAndPageIdNot(Integer tenantId, String slug, String pageId);
     void deleteByTenantIdAndPageId(Integer tenantId, String pageId);

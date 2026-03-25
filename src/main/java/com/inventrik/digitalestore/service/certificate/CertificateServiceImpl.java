@@ -191,7 +191,18 @@ public class CertificateServiceImpl implements CertificateService {
             return (SessionData) data;
         }
 
-        return null;
+        // Redis miss — fallback to MySQL
+        return repository.findBySessionIdAndStatus(sessionId, CertificateStatus.ACTIVE)
+                .map(cert -> {
+                    SessionData restored = new SessionData(cert.getTenantId(), cert.getUserId(), true);
+                    // Restore into Redis so subsequent requests hit cache
+                    redisTemplate.opsForValue().set(key, restored, SESSION_TTL);
+                    log.info("Session restored from MySQL to Redis for sessionId: {}", sessionId);
+                    return restored;
+                })
+                .orElse(null);
+
+        // return null; // if u want to test with redis comment above and run this line
     }
 
     @Override
