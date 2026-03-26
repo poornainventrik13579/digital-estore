@@ -67,9 +67,20 @@ public class CertificateAuthController {
 
         User user = userOpt.get();
         certificateService.revokeByTenantIdAndUserId(user.getTenantId(), user.getUserId());
-
+        certificateService.removeSession(sessionId); // evict stale Redis session
+        
+        String pk = request.getPublicKey().trim();
+        if (pk.length() > 124) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Public key exceeds maximum length"));
+        }
         try {
-            certificateService.createCertificate(user.getTenantId(), user.getUserId(), sessionId, request.getPublicKey());
+            cryptoUtil.importPublicKey(pk);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid public key format"));
+        }
+        
+        try {
+            certificateService.createCertificate(user.getTenantId(), user.getUserId(), sessionId, pk);
             return ResponseEntity.ok(Map.of("message", "Public key registered successfully", "userId", user.getUserId()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Master key already registered for this session"));

@@ -2,6 +2,7 @@ package com.inventrik.digitalestore.util;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -10,6 +11,8 @@ import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
+
+@Slf4j
 @Component
 public class CryptoUtil {
 
@@ -43,15 +46,16 @@ public class CryptoUtil {
 
             return verifier.verify(derSignature);
         } catch (Exception e) {
+            log.warn("Signature verification failed: {}", e.getMessage());
             return false;
         }
     }
 
     private byte[] convertP1363ToDER(byte[] p1363Signature) throws IOException {
         if (p1363Signature.length != 64) {
-            throw new IllegalArgumentException("Invalid P1363 signature length");
+            throw new IllegalArgumentException(
+                "Unsupported signature length " + p1363Signature.length + ". Only P-256 (64 bytes) is supported.");
         }
-
         byte[] r = new byte[32];
         byte[] s = new byte[32];
         System.arraycopy(p1363Signature, 0, r, 0, 32);

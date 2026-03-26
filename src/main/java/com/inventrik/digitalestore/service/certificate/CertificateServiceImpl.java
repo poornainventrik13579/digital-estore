@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -50,10 +51,11 @@ public class CertificateServiceImpl implements CertificateService {
         return repository.save(certificate);
     }
 
-    private static final int MASTER_KEY_EXPIRY_DAYS = 180;
+    @Value("${app.cert.master-key-expiry-days:180}")
+    private int masterKeyExpiryDays;
 
     private boolean isCertExpired(UserCertificate cert) {
-        return cert.getCreated().plusDays(MASTER_KEY_EXPIRY_DAYS).isBefore(LocalDateTime.now());
+        return cert.getCreated().plusDays(masterKeyExpiryDays).isBefore(LocalDateTime.now());
     }
 
     @Override
@@ -144,10 +146,12 @@ public class CertificateServiceImpl implements CertificateService {
         SessionKeyData data = new SessionKeyData(sessionKeyId, sessionPublicKey, expiresAt);
 
         long ttl = (expiresAt - System.currentTimeMillis()) / 1000;
-        if (ttl > 0) {
-            redisTemplate.opsForValue().set(key, data, ttl, TimeUnit.SECONDS);
-            redisTemplate.opsForValue().set(USER_CURRENT_SESSION_PREFIX + userId, sessionKeyId, SESSION_TTL);
+        if (ttl <= 0) {
+            throw new IllegalArgumentException("expiresAt is in the past or invalid");
         }
+        ttl = Math.min(ttl, 24 * 3600L);
+        redisTemplate.opsForValue().set(key, data, ttl, TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set(USER_CURRENT_SESSION_PREFIX + userId, sessionKeyId, ttl, TimeUnit.SECONDS);
     }
 
     @Override
