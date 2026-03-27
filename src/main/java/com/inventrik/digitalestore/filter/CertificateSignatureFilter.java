@@ -96,7 +96,8 @@ public class CertificateSignatureFilter implements Filter {
                 }
             }
         }
-        return null;
+        // Fallback to X-Session-ID header for Safari ITP (blocks cross-origin cookies)
+        return request.getHeader("X-Session-ID");
     }
 
     private String performSignatureVerification(String challengeId, String signature, String sessionId) {
