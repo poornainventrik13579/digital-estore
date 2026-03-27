@@ -197,10 +197,15 @@ public class UserAuthController {
     @Operation(summary = "Logout user")
     public ResponseEntity<?> logout(HttpServletRequest request,
             @RequestParam(required = false) String refreshTokenValue) {
-        sessionHelper.performLogout(sessionHelper.getSessionIdFromCookie(request));
+        String sessionId = sessionHelper.getSessionIdFromCookie(request);
+        sessionHelper.performLogout(sessionId);
 
         if (refreshTokenValue != null) {
             refreshTokenService.revokeRefreshToken(refreshTokenValue);
+        } else {
+            // refreshToken not passed — revoke all tokens for this user so none remain valid after logout
+            sessionHelper.getUserFromSession(sessionId)
+                    .ifPresent(user -> refreshTokenService.revokeAllByUsername(user.getUsername()));
         }
 
         return ResponseEntity.ok()

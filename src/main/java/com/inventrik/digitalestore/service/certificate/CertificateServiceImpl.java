@@ -48,6 +48,8 @@ public class CertificateServiceImpl implements CertificateService {
         certificate.setUserId(userId);
         certificate.setPublicKey(publicKey);
         certificate.setStatus(CertificateStatus.ACTIVE);
+        certificate.setCreated(LocalDateTime.now());
+        certificate.setUpdated(LocalDateTime.now());
         return repository.save(certificate);
     }
 
@@ -126,16 +128,9 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public boolean markChallengeUsed(String challengeId) {
         String key = CHALLENGE_PREFIX + challengeId;
-        Optional<ChallengeData> dataOpt = getChallenge(challengeId);
-
-        if (dataOpt.isPresent()) {
-            // Delete immediately — the challenge is single-use and no longer needed.
-            // Previously this re-saved with a new 30s TTL, which was wasteful.
-            redisTemplate.delete(key);
-            return true;
-        }
-
-        return false;
+        // Atomic get-and-delete prevents TOCTOU: two concurrent requests cannot both pass with the same challenge
+        Object data = redisTemplate.opsForValue().getAndDelete(key);
+        return data instanceof ChallengeData;
     }
 
     @Override
@@ -204,8 +199,9 @@ public class CertificateServiceImpl implements CertificateService {
             return (SessionData) data;
         }
 
-        // Redis miss — fallback to MySQL
+        // Redis miss — fallback to MySQL, skip if cert is logically expired
         return repository.findBySessionIdAndStatus(sessionId, CertificateStatus.ACTIVE)
+                .filter(cert -> !isCertExpired(cert))
                 .map(cert -> {
                     SessionData restored = new SessionData(cert.getTenantId(), cert.getUserId(), true);
                     // Restore into Redis so subsequent requests hit cache

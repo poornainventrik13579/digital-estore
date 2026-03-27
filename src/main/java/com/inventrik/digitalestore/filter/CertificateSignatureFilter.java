@@ -76,7 +76,8 @@ public class CertificateSignatureFilter implements Filter {
         String signature = httpRequest.getHeader(HEADER_SIGNATURE);
 
         if (challengeId != null && signature != null) {
-            String userId = performSignatureVerification(challengeId, signature);
+            String sessionId = getSessionIdFromCookie(httpRequest);
+            String userId = performSignatureVerification(challengeId, signature, sessionId);
             if (userId != null) {
                 chain.doFilter(request, response);
             } else {
@@ -87,9 +88,26 @@ public class CertificateSignatureFilter implements Filter {
         }
     }
 
-    private String performSignatureVerification(String challengeId, String signature) {
+    private String getSessionIdFromCookie(HttpServletRequest request) {
+        if (request.getCookies() != null) {
+            for (var cookie : request.getCookies()) {
+                if ("certSessionId".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    private String performSignatureVerification(String challengeId, String signature, String sessionId) {
         try {
             log.info("Certificate signature verification started - challengeId: {}", challengeId);
+
+            // Reject immediately if session cookie is missing or session is no longer valid (e.g. after logout)
+            if (sessionId == null || certificateService.getSession(sessionId) == null) {
+                log.warn("Session invalid or missing for challengeId: {}", challengeId);
+                return null;
+            }
 
             // Get challenge from Redis
             CertificateService.ChallengeData challengeData = certificateService.getChallenge(challengeId).orElse(null);

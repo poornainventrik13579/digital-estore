@@ -64,8 +64,10 @@ public class RefreshTokenService {
 
     @Transactional
     public RefreshToken rotateToken(String oldRefreshToken, String loginIdentifier) {
+        // Create new token first — if this fails, old token remains valid and user is not locked out
+        RefreshToken newToken = createRefreshToken(loginIdentifier, UUID.randomUUID().toString());
         refreshTokenRepository.revokeByRefreshToken(oldRefreshToken);
-        return createRefreshToken(loginIdentifier, UUID.randomUUID().toString());
+        return newToken;
     }
 
     public boolean isValid(RefreshToken token) {

@@ -67,6 +67,7 @@ public class CertificateAuthController {
 
         User user = userOpt.get();
         certificateService.revokeByTenantIdAndUserId(user.getTenantId(), user.getUserId());
+        certificateService.removeSessionKey(user.getUserId()); // evict stale session key from Redis
         certificateService.removeSession(sessionId); // evict stale Redis session
         
         String pk = request.getPublicKey().trim();

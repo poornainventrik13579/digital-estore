@@ -64,11 +64,12 @@ public class SessionHelper {
     public void performLogout(String sessionId) {
         if (sessionId == null) return;
 
+        // Always revoke cert by sessionId — doesn't depend on Redis session being alive
+        certificateService.revokeBySessionId(sessionId);
+
         Optional<User> userOpt = getUserFromSession(sessionId);
-        userOpt.ifPresent(user -> {
-            certificateService.revokeBySessionId(sessionId);
-            certificateService.removeSessionKey(user.getUserId());
-        });
+        userOpt.ifPresent(user -> certificateService.removeSessionKey(user.getUserId()));
+
         certificateService.removeSession(sessionId);
         log.info("Cert-auth logout completed for sessionId: {}", sessionId);
     }
