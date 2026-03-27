@@ -113,7 +113,7 @@ public class CertificateSignatureFilter implements Filter {
             CertificateService.ChallengeData challengeData = certificateService.getChallenge(challengeId).orElse(null);
 
             if (challengeData == null) {
-                log.warn(" Challenge not found in Redis: {}", challengeId);
+                log.warn("Challenge not found in Redis: {}", challengeId);
                 return null;
             }
 
@@ -184,7 +184,7 @@ public class CertificateSignatureFilter implements Filter {
                     }
 
                     // Use username as principal (not userId) so controllers can findByUsername()
-                    String username = userOpt.get().getUsername();
+                    String username = user.getUsername();
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         username,
                         null,
