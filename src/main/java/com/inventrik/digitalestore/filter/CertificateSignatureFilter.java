@@ -184,7 +184,7 @@ public class CertificateSignatureFilter implements Filter {
                     }
 
                     // Use username as principal (not userId) so controllers can findByUsername()
-                    String username = user.getUsername();
+                    String username = userOpt.get().getUsername();
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         username,
                         null,
