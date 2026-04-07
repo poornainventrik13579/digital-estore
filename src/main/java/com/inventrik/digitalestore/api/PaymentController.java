@@ -44,8 +44,7 @@ public class PaymentController {
             @RequestParam(required = false) String status,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         String username = authentication != null ? authentication.getName() : "system";
 
         boolean canAccessAllPayments = authentication.getAuthorities().stream()
@@ -63,7 +62,9 @@ public class PaymentController {
     @Operation(summary = "Get a payment by ID")
     public ResponseEntity<PaymentResponse> getPayment(
             @PathVariable Integer tenantId,
-            @PathVariable String paymentId) {
+            @PathVariable String paymentId,
+            Authentication authentication) {
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         return ResponseEntity.ok(paymentService.getPayment(tenantId, paymentId));
     }
     
@@ -75,6 +76,7 @@ public class PaymentController {
             @Valid @RequestBody PaymentRequest paymentRequest,
             Authentication authentication) {
         
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         String username = (authentication != null) ? authentication.getName() : "system";
         PaymentResponse createdPayment = paymentService.createPayment(tenantId, username, paymentRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPayment);
@@ -89,6 +91,7 @@ public class PaymentController {
             @RequestParam String transactionId,
             Authentication authentication) {
 
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         String username = (authentication != null) ? authentication.getName() : "system";
         PaymentResponse confirmedPayment = paymentService.confirmPayment(tenantId, paymentId, transactionId, username);
         return ResponseEntity.ok(confirmedPayment);
@@ -102,6 +105,7 @@ public class PaymentController {
             @PathVariable String paymentId,
             Authentication authentication) {
 
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         String username = (authentication != null) ? authentication.getName() : "system";
         PaymentResponse cancelledPayment = paymentService.cancelPayment(tenantId, paymentId, username);
         return ResponseEntity.ok(cancelledPayment);
@@ -115,6 +119,7 @@ public class PaymentController {
             @PathVariable String paymentId,
             Authentication authentication) {
 
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         String username = (authentication != null) ? authentication.getName() : "system";
         PaymentResponse refundedPayment = paymentService.refundPayment(tenantId, paymentId, username);
         return ResponseEntity.ok(refundedPayment);
@@ -134,8 +139,10 @@ public class PaymentController {
             @Valid @RequestBody PartialRefundRequest refundRequest,
             Authentication authentication) {
 
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         try {
-            PaymentResponse response = paymentService.partialRefundPayment(tenantId, paymentId, refundRequest, authentication.getName());
+            String username = (authentication != null) ? authentication.getName() : "system";
+            PaymentResponse response = paymentService.partialRefundPayment(tenantId, paymentId, refundRequest, username);
             return ResponseEntity.ok(response);
         } catch (PaymentNotFoundException e) {
             return ResponseEntity.notFound().build();

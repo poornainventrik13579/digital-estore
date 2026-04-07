@@ -44,7 +44,7 @@ public class UserRequest {
     @NotBlank(message = "Email is required")
     @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Invalid email format")
     @Email(message = "Email should be valid")
-    @Size(max = 320, message = "Email must be less than 320 characters")
+    @Size(max = 100, message = "Email must be less than 100 characters")
     private String email;
 
     @Schema(description = "Password (min 8 characters)", example = "securePassword123", requiredMode = Schema.RequiredMode.REQUIRED)

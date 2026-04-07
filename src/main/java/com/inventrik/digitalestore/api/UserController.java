@@ -35,8 +35,12 @@ public class UserController {
             @RequestParam(required = false) String status,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
+
+        // Regular users can only see their own profile
+        if (!hasAdminAccess(authentication)) {
+            return ResponseEntity.ok(userService.getAllUsers(tenantId, status, authentication.getName(), null));
+        }
 
         return ResponseEntity.ok(userService.getAllUsers(tenantId, status, null, null));
     }
@@ -50,8 +54,12 @@ public class UserController {
             @PathVariable String userId,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
+
+        if (!hasAdminAccess(authentication) &&
+                !userService.isCurrentUser(tenantId, userId, authentication.getName())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         return ResponseEntity.ok(userService.getUser(tenantId, userId));
     }
@@ -63,12 +71,12 @@ public class UserController {
     public ResponseEntity<UserResponse> getCurrentUser(
             @PathVariable Integer tenantId,
             Authentication authentication) {
+
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
+
         String username = authentication.getName();
-        UserResponse user = userService.findByUsername(username);
-        if (user.getTenantId().equals(tenantId)) {
-            return ResponseEntity.ok(user);
-        }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        UserResponse user = userService.findByTenantIdAndUsername(tenantId, username);
+        return ResponseEntity.ok(user);
     }
 
     @PostMapping("/api/v1/tenants/{tenantId}/users")
@@ -95,10 +103,18 @@ public class UserController {
             @Valid @RequestBody UserUpdateRequest updateRequest,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
 
         String username = authentication.getName();
+
+        if (!hasAdminAccess(authentication)) {
+            if (!userService.isCurrentUser(tenantId, userId, username)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            updateRequest.setUserRole(null);
+            updateRequest.setStatus(null);
+        }
+
         UserResponse updatedUser = userService.updateUser(tenantId, userId, username, updateRequest);
         return ResponseEntity.ok(updatedUser);
     }
@@ -106,15 +122,20 @@ public class UserController {
     @DeleteMapping("/api/v1/tenants/{tenantId}/users/{userId}")
     @SecurityRequirement(name = "oauth2")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
-    @Operation(summary = "Delete a user (Admin/Tenant only)")
+    @Operation(summary = "Deactivate a user (Admin/Tenant only)")
     public ResponseEntity<Void> deleteUser(
             @PathVariable Integer tenantId,
             @PathVariable String userId,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
+
         userService.deleteUser(tenantId, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    private boolean hasAdminAccess(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()) || "ROLE_TENANT".equals(a.getAuthority()));
     }
 }

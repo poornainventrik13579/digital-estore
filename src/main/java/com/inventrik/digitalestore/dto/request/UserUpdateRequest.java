@@ -36,7 +36,7 @@ public class UserUpdateRequest {
     @Schema(description = "Email address", example = "john.doe@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
     @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Invalid email format")
     @Email(message = "Email should be valid")
-    @Size(max = 320, message = "Email must be less than 320 characters")
+    @Size(max = 100, message = "Email must be less than 100 characters")
     private String email;
 
     @Schema(description = "User type (INDIVIDUAL or COMPANY)", example = "INDIVIDUAL")

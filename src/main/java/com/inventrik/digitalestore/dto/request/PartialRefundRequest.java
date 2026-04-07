@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
@@ -18,6 +19,7 @@ public class PartialRefundRequest {
     @Schema(description = "Refund amount", example = "25.00", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Refund amount is required")
     @DecimalMin(value = "0.01", inclusive = true, message = "Refund amount must be greater than zero")
+    @Digits(integer = 8, fraction = 2, message = "Refund amount must have at most 2 decimal places")
     private BigDecimal refundAmount;
     
     @Schema(description = "Reason for refund", example = "Customer requested partial refund due to incomplete delivery", requiredMode = Schema.RequiredMode.REQUIRED)

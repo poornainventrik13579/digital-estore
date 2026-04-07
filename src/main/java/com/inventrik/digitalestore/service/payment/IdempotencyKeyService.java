@@ -28,23 +28,29 @@ public class IdempotencyKeyService {
      * @return true if the key was registered successfully, false if it already exists
      */
     public boolean registerKey(String key) {
-        // Clean expired keys
         cleanExpiredKeys();
-        
-        // Check cache size limit
+
         if (idempotencyKeys.size() >= MAX_CACHE_SIZE) {
-            log.warn("Idempotency cache is full, clearing all entries to prevent memory leak");
-            idempotencyKeys.clear();
+            log.warn("Idempotency cache full, evicting expired entries");
+            cleanExpiredKeys();
+            if (idempotencyKeys.size() >= MAX_CACHE_SIZE) {
+                log.warn("Cache still full after cleanup, evicting oldest 20% of entries");
+                int toRemove = MAX_CACHE_SIZE / 5;
+                idempotencyKeys.entrySet().stream()
+                        .sorted(Map.Entry.comparingByValue())
+                        .limit(toRemove)
+                        .map(Map.Entry::getKey)
+                        .collect(java.util.stream.Collectors.toList())
+                        .forEach(idempotencyKeys::remove);
+            }
         }
-        
-        // Check if key already exists
-        if (idempotencyKeys.containsKey(key)) {
+
+        // Atomic: returns null if key was absent (success), non-null if already present (duplicate)
+        LocalDateTime existing = idempotencyKeys.putIfAbsent(key, LocalDateTime.now());
+        if (existing != null) {
             log.warn("Attempt to reuse idempotency key: {}", key);
             return false;
         }
-        
-        // Register new key
-        idempotencyKeys.put(key, LocalDateTime.now());
         return true;
     }
     

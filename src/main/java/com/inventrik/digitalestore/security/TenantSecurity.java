@@ -39,7 +39,9 @@ public class TenantSecurity {
 
         if (isTenant) {
             String username = authentication.getName();
-            return userRepository.findByTenantIdAndUsername(tenantId, username).isPresent();
+            return userRepository.findByTenantIdAndUsername(tenantId, username)
+                    .filter(u -> "0".equals(u.getStatus()))
+                    .isPresent();
         }
 
         // Check if user has ROLE_USER - verify user belongs to tenant
@@ -49,7 +51,9 @@ public class TenantSecurity {
 
         if (isUser) {
             String username = authentication.getName();
-            return userRepository.findByTenantIdAndUsername(tenantId, username).isPresent();
+            return userRepository.findByTenantIdAndUsername(tenantId, username)
+                    .filter(u -> "0".equals(u.getStatus()))
+                    .isPresent();
         }
 
         return false;

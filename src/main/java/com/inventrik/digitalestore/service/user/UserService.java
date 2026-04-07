@@ -26,6 +26,9 @@ public interface UserService {
     // Find user by username (for authentication)
     UserResponse findByUsername(String username);
 
+    // Find user by tenant and username (tenant-scoped)
+    UserResponse findByTenantIdAndUsername(Integer tenantId, String username);
+
     // Find user by email (for authentication)
     UserResponse findByEmail(String email);
 

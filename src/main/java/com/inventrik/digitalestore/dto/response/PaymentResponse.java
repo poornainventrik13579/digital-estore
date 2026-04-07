@@ -26,6 +26,12 @@ public class PaymentResponse {
     private LocalDateTime created;
     private LocalDateTime updated;
     
-    // For Stripe client-side integration
+    // For Stripe client-side integration (STRIPE_EMBED)
     private String clientSecret;
+
+    // For Stripe Checkout redirect (STRIPE_REDIRECT)
+    private String sessionUrl;
+
+    // Which payment provider was used (STRIPE_EMBED, STRIPE_REDIRECT, etc.)
+    private String paymentProvider;
 }

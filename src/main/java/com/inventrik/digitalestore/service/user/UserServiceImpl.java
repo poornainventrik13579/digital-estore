@@ -34,7 +34,6 @@ public class UserServiceImpl implements UserService {
     private final EmailNotificationService emailNotificationService;
     private final IdGeneratorService idGeneratorService;
 
-    // Utility method to convert Entity to DTO
     private UserResponse mapToDTO(User user) {
         return new UserResponse(
             user.getUserId(),
@@ -60,10 +59,6 @@ public class UserServiceImpl implements UserService {
         );
     }
 
-    /**
-     * Validates password complexity requirements
-     * Password must be at least 8 characters with uppercase, lowercase, and number
-     */
     private void validatePasswordComplexity(String password) {
         if (password == null || password.length() < 8) {
             throw new BusinessException("Password must be at least 8 characters long");
@@ -94,13 +89,19 @@ public class UserServiceImpl implements UserService {
         }
 
         if (status != null && !status.trim().isEmpty()) {
-            String statusCode = "ACTIVE".equalsIgnoreCase(status) ? "0" : "1";
+            if ("ALL".equalsIgnoreCase(status)) {
+                return userRepository.findByTenantId(tenantId).stream()
+                        .map(this::mapToDTO)
+                        .collect(Collectors.toList());
+            }
+            String statusCode = "ACTIVE".equalsIgnoreCase(status) ? "0" : "-1";
             return userRepository.findByTenantIdAndStatus(tenantId, statusCode).stream()
                     .map(this::mapToDTO)
                     .collect(Collectors.toList());
         }
 
-        return userRepository.findByTenantId(tenantId).stream()
+        // Default: return only active users
+        return userRepository.findByTenantIdAndStatus(tenantId, "0").stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -118,7 +119,7 @@ public class UserServiceImpl implements UserService {
             User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
             return user.getUsername().equals(username);
-        } catch (Exception e) {
+        } catch (ResourceNotFoundException e) {
             return false;
         }
     }
@@ -129,7 +130,7 @@ public class UserServiceImpl implements UserService {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
             return user.getUsername().equals(username);
-        } catch (Exception e) {
+        } catch (ResourceNotFoundException e) {
             return false;
         }
     }
@@ -140,7 +141,6 @@ public class UserServiceImpl implements UserService {
         tenantRepository.findByTenantId(tenantId)
             .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
 
-        // Validate password complexity before proceeding
         validatePasswordComplexity(userRequest.getPassword());
 
         if (userRepository.existsByTenantIdAndUsername(tenantId, userRequest.getUsername())) {
@@ -154,22 +154,31 @@ public class UserServiceImpl implements UserService {
         }
 
         String newUserId = idGeneratorService.generateId(tenantId, "USER");
-        // TODO: OTP feature commented out - enable when email verification is ready
-        // String otp = generateOTP();
 
         User user = new User();
         user.setTenantId(tenantId);
         user.setUserId(newUserId);
-        user.setUsername(userRequest.getUsername().toLowerCase()); // Normalize to lowercase
+        user.setUsername(userRequest.getUsername().toLowerCase());
         user.setFirstName(userRequest.getFirstName());
         user.setLastName(userRequest.getLastName());
         user.setImage(userRequest.getImage());
         user.setPhone(userRequest.getPhone());
         user.setEmail(userRequest.getEmail());
         user.setUserType(userRequest.getUserType());
-        user.setUserRole(userRequest.getUserRole() != null ? userRequest.getUserRole() : UserRole.USER);
 
-        // Set company details if user type is COMPANY
+        UserRole assignedRole = UserRole.USER;
+        if (userRequest.getUserRole() != null && userRequest.getUserRole() != UserRole.USER) {
+            try {
+                UserResponse creator = findByUsername(createdBy);
+                if (creator.getUserRole() == UserRole.ADMIN || creator.getUserRole() == UserRole.TENANT) {
+                    assignedRole = userRequest.getUserRole();
+                }
+            } catch (ResourceNotFoundException e) {
+                log.warn("Creator '{}' not found, defaulting role to USER", createdBy);
+            }
+        }
+        user.setUserRole(assignedRole);
+
         if (userRequest.getUserType() != null && userRequest.getUserType() == com.inventrik.digitalestore.domain.user.UserType.COMPANY) {
             user.setCompanyName(userRequest.getCompanyName());
             user.setCompanyRegistrationNumber(userRequest.getCompanyRegistrationNumber());
@@ -180,11 +189,8 @@ public class UserServiceImpl implements UserService {
             user.setTaxId(userRequest.getTaxId());
         }
 
-        // TODO: OTP feature commented out
-        // user.setOtp(otp);
         user.setPasswordHash(passwordEncoder.encode(userRequest.getPassword()));
-        user.setStatus("0"); // Active status
-        // Use proper audit code from createdBy parameter
+        user.setStatus("0");
         user.setCreatedBy(getAuditCode(createdBy));
         user.setUpdatedBy(getAuditCode(createdBy));
         user.setCreated(LocalDateTime.now());
@@ -202,7 +208,17 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         
-        // Update user properties if provided
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByTenantIdAndEmail(tenantId, updateRequest.getEmail())) {
+                throw new BusinessException("Email already exists");
+            }
+        }
+        if (updateRequest.getPhone() != null && !updateRequest.getPhone().equals(user.getPhone())) {
+            if (userRepository.existsByTenantIdAndPhone(tenantId, updateRequest.getPhone())) {
+                throw new BusinessException("Phone number already exists");
+            }
+        }
+
         if (updateRequest.getFirstName() != null) {
             user.setFirstName(updateRequest.getFirstName());
         }
@@ -226,7 +242,6 @@ public class UserServiceImpl implements UserService {
              user.setUserRole(updateRequest.getUserRole());
         }
         
-        // Update company details
         if (updateRequest.getCompanyName() != null) {
             user.setCompanyName(updateRequest.getCompanyName());
         }
@@ -252,7 +267,6 @@ public class UserServiceImpl implements UserService {
             user.setStatus(updateRequest.getStatus());
         }
         
-        // Ensure updatedBy doesn't exceed 2 characters
         user.setUpdatedBy(getAuditCode(updatedBy));
         user.setUpdated(LocalDateTime.now());
         
@@ -264,11 +278,12 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(Integer tenantId, String userId) {
-        if (!userRepository.findByTenantIdAndUserId(tenantId, userId).isPresent()) {
-            throw new ResourceNotFoundException("User not found with id: " + userId);
-        }
+        User user = userRepository.findByTenantIdAndUserId(tenantId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-        userRepository.deleteByTenantIdAndUserId(tenantId, userId);
+        user.setStatus("-1");
+        user.setUpdated(LocalDateTime.now());
+        userRepository.save(user);
     }
 
     @Override
@@ -279,31 +294,36 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponse findByTenantIdAndUsername(Integer tenantId, String username) {
+        User user = userRepository.findByTenantIdAndUsername(tenantId, username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return mapToDTO(user);
+    }
+
+    @Override
     public UserResponse findByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
         return mapToDTO(user);
     }
 
-    // Helper method to generate OTP
     private String generateOTP() {
         Random random = new Random();
-        int otp = 100000 + random.nextInt(900000); // 6-digit OTP
+        int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp);
     }
-    
+
     @Override
     public void sendPasswordResetEmail(String email) {
         try {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
 
-            // TODO: OTP/Reset token feature commented out
-            // Generate reset token and store in OTP field
-            // String resetToken = generateOTP();
-            // user.setOtp(resetToken);
-            // user.setUpdated(LocalDateTime.now());
-            // userRepository.save(user);
+            // Don't send reset emails to deactivated users
+            if (!"0".equals(user.getStatus())) {
+                log.warn("Password reset attempted for inactive user: {}", email);
+                return;
+            }
 
             // Send password reset email (without token for now)
             String resetToken = generateOTP();
@@ -315,45 +335,9 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    // TODO: OTP features - implement when email verification is ready
-    /*
-    @Override
-    @Transactional
-    public void resetPassword(String email, String otp, String newPassword) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BusinessException("Invalid email or OTP"));
-
-        if (user.getOtp() == null || !user.getOtp().equals(otp)) {
-            throw new BusinessException("Invalid or expired OTP");
-        }
-
-        validatePasswordComplexity(newPassword);
-        user.setPasswordHash(passwordEncoder.encode(newPassword));
-        user.setOtp(null); // Clear OTP after use
-        user.setUpdated(LocalDateTime.now());
-        userRepository.save(user);
-    }
-
-    @Override
-    @Transactional
-    public void verifyEmail(String email, String otp) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BusinessException("Invalid email or OTP"));
-
-        if (user.getOtp() == null || !user.getOtp().equals(otp)) {
-            throw new BusinessException("Invalid or expired OTP");
-        }
-
-        user.setOtp(null); // Clear OTP after verification
-        user.setStatus("0"); // Activate user
-        user.setUpdated(LocalDateTime.now());
-        userRepository.save(user);
-    }
-    */
-    
     public String getAuditCode(String username) {
                 if (username == null || username.isEmpty()) {
-            return "SY";  // System
+            return "SY";
         }
         try {
             UserResponse user = findByUsername(username);
@@ -362,27 +346,24 @@ public class UserServiceImpl implements UserService {
             if (user.getUserRole() != null) {
                 switch (user.getUserRole()) {
                     case ADMIN:
-                        return "AD";  // Admin
+                        return "AD";
                     case TENANT:
-                        return "TN";  // Tenant
+                        return "TN";
                     case USER:
-                        return "US";  // User
+                        return "US";
                     default:
-                        return "US";  // Default to User
+                        return "US";
                 }
             }
-            return "US";  // Default if role is null
+            return "US";
             
         } catch (Exception e) {
             // Fallback if user not found
             log.warn("User not found for audit code generation: {}", username);
-            return "UN";  // Unknown
+            return "UN";
         }
     }
     
-    /**
-     * Safely truncates username to 2 characters for database audit fields
-     */
     public String truncateUsernameForAudit(String username) {
         return getAuditCode(username);
     }
