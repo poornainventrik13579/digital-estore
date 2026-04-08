@@ -155,6 +155,7 @@ public class AuthServerConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/api/v1/webhooks/**").permitAll()
                 .requestMatchers("/api/v1/cert-auth/**").permitAll()
                 .requestMatchers("/api/v1/auth/logout").permitAll()
                 .anyRequest().authenticated()
