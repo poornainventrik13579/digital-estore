@@ -21,6 +21,7 @@ import com.inventrik.digitalestore.service.invoice.InvoiceService;
 import com.inventrik.digitalestore.service.logging.PaymentEventLogger;
 import com.inventrik.digitalestore.service.transaction.TransactionCoordinatorService;
 import com.inventrik.digitalestore.service.user.UserService;
+import com.stripe.exception.EventDataObjectDeserializationException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
@@ -376,7 +377,7 @@ public class StripePaymentService implements PaymentService {
                 Order order = orderRepository.findByTenantIdAndOrderId(tenantId, payment.getOrderId())
                         .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + payment.getOrderId()));
 
-                order.setStatus("Processing");
+                order.setStatus("Completed");
                 order.setUpdatedBy(truncatedUsername);
                 order.setUpdated(LocalDateTime.now());
                 Order savedOrder = orderRepository.save(order);
@@ -694,13 +695,17 @@ public class StripePaymentService implements PaymentService {
     
     private void processStripeEvent(Event event) {
         EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
-        StripeObject stripeObject = null;
-        
+        StripeObject stripeObject;
         if (dataObjectDeserializer.getObject().isPresent()) {
             stripeObject = dataObjectDeserializer.getObject().get();
         } else {
-            log.error("Failed to deserialize Stripe event object");
-            return;
+            try {
+                stripeObject = dataObjectDeserializer.deserializeUnsafe();
+            } catch (EventDataObjectDeserializationException e) {
+                log.error("Failed to deserialize Stripe event {} type={} apiVersion={}: {}",
+                        event.getId(), event.getType(), event.getApiVersion(), e.getMessage());
+                throw new PaymentProcessingException("Event deserialization failed", e, true);
+            }
         }
 
 
@@ -778,7 +783,7 @@ public class StripePaymentService implements PaymentService {
                 if (!"Completed".equals(order.getStatus()) && 
                     !"Cancelled".equals(order.getStatus()) && 
                     !"Refunded".equals(order.getStatus())) {
-                    order.setStatus("Processing");
+                    order.setStatus("Completed");
                     order.setUpdated(LocalDateTime.now());
                     order.setUpdatedBy("wh");
                     Order savedOrder = orderRepository.save(order);
@@ -860,7 +865,7 @@ public class StripePaymentService implements PaymentService {
                     !"Cancelled".equals(order.getStatus()) &&
                     !"Refunded".equals(order.getStatus())) {
 
-                    order.setStatus("Processing");
+                    order.setStatus("Completed");
                     order.setUpdated(LocalDateTime.now());
                     order.setUpdatedBy("wh");
                     Order savedOrder = orderRepository.save(order);
