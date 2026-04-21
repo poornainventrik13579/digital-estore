@@ -47,6 +47,7 @@ public class TenantServiceImpl implements TenantService {
     @Override
     public List<TenantResponse> getAllTenants() {
         return tenantRepository.findAll().stream()
+                .filter(t -> !"-1".equals(t.getStatus()))
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -54,6 +55,7 @@ public class TenantServiceImpl implements TenantService {
     @Override
     public TenantResponse getTenant(Integer tenantId) {
         Tenant tenant = tenantRepository.findByTenantId(tenantId)
+                .filter(t -> !"-1".equals(t.getStatus()))
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
         return mapToDTO(tenant);
     }
@@ -157,9 +159,12 @@ public class TenantServiceImpl implements TenantService {
     @Override
     @Transactional
     public void deleteTenant(Integer tenantId) {
-        if (!tenantRepository.existsById(tenantId)) {
-            throw new ResourceNotFoundException("Tenant not found with id: " + tenantId);
+        Tenant tenant = tenantRepository.findByTenantId(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found with id: " + tenantId));
+        if ("-1".equals(tenant.getStatus())) {
+            return;
         }
-        tenantRepository.deleteById(tenantId);
+        tenant.setStatus("-1");
+        tenantRepository.save(tenant);
     }
 }

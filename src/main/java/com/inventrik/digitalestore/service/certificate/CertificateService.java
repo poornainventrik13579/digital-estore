@@ -5,20 +5,27 @@ import com.inventrik.digitalestore.domain.certificate.UserCertificate;
 import java.util.Optional;
 
 public interface CertificateService {
+    // Challenge lifetime. Single source of truth for both Redis TTL (CertificateServiceImpl) and
+    // in-code expiry check (ChallengeData.isExpired). 60s gives enough headroom for page fan-out
+    // (e.g. /taxes + /discounts) under slow networks without widening the replay window too far.
+    long CHALLENGE_TTL_MS = 60_000L;
+
     UserCertificate createCertificate(Integer tenantId, String userId, String sessionId, String publicKey) throws IllegalStateException;
+
+    /**
+     * Atomically rotate the master public key for (tenantId, userId):
+     *   - revoke every ACTIVE cert for this user EXCEPT the one keyed by currentSessionId
+     *   - upsert currentSessionId's row with the new publicKey, status=ACTIVE
+     * Runs in a single transaction so concurrent reads never see a REVOKED state
+     * on the current session's row.
+     */
+    UserCertificate rotateMasterKey(Integer tenantId, String userId, String currentSessionId, String publicKey);
     Optional<UserCertificate> findBySessionId(String sessionId);
     Optional<UserCertificate> findByTenantIdAndUserId(Integer tenantId, String userId);
 
-    /** @deprecated Use {@link #revokeBySessionId(String)} for audit-safe soft delete */
-    @Deprecated
-    void deleteBySessionId(String sessionId);
-
-    /** @deprecated Use {@link #revokeByTenantIdAndUserId(Integer, String)} for audit-safe soft delete */
-    @Deprecated
-    void deleteByTenantIdAndUserId(Integer tenantId, String userId);
-
     void revokeBySessionId(String sessionId);
     void revokeByTenantIdAndUserId(Integer tenantId, String userId);
+    boolean reactivateBySessionId(String sessionId);
 
     String createChallenge(String userId, Integer tenantId);
     Optional<ChallengeData> getChallenge(String challengeId);
@@ -62,7 +69,7 @@ public interface CertificateService {
         public boolean isUsed() { return used; }
         public void setUsed(boolean used) { this.used = used; }
         @com.fasterxml.jackson.annotation.JsonIgnore
-        public boolean isExpired() { return System.currentTimeMillis() - createdAt > 30000; }
+        public boolean isExpired() { return System.currentTimeMillis() - createdAt > CHALLENGE_TTL_MS; }
         @com.fasterxml.jackson.annotation.JsonIgnore
         public boolean isValid() { return !used && !isExpired(); }
     }

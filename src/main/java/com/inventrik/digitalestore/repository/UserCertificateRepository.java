@@ -41,4 +41,21 @@ public interface UserCertificateRepository extends JpaRepository<UserCertificate
                                   @Param("userId") String userId,
                                   @Param("newStatus") CertificateStatus newStatus,
                                   @Param("currentStatus") CertificateStatus currentStatus);
+
+    @Modifying
+    @Query("UPDATE UserCertificate c SET c.status = :newStatus, c.updated = CURRENT_TIMESTAMP " +
+            "WHERE c.sessionId = :sessionId AND c.status = :currentStatus")
+    int reactivateBySessionId(@Param("sessionId") String sessionId,
+                              @Param("newStatus") CertificateStatus newStatus,
+                              @Param("currentStatus") CertificateStatus currentStatus);
+
+    @Modifying
+    @Query("UPDATE UserCertificate c SET c.status = :newStatus " +
+            "WHERE c.tenantId = :tenantId AND c.userId = :userId " +
+            "AND c.sessionId <> :currentSessionId AND c.status = :currentStatus")
+    int revokeByTenantIdAndUserIdExcludingSession(@Param("tenantId") Integer tenantId,
+                                                  @Param("userId") String userId,
+                                                  @Param("currentSessionId") String currentSessionId,
+                                                  @Param("newStatus") CertificateStatus newStatus,
+                                                  @Param("currentStatus") CertificateStatus currentStatus);
 }

@@ -4,7 +4,6 @@ import com.inventrik.digitalestore.dto.request.DiscountCodeRequest;
 import com.inventrik.digitalestore.dto.request.ValidateDiscountRequest;
 import com.inventrik.digitalestore.dto.response.DiscountCodeResponse;
 import com.inventrik.digitalestore.dto.response.DiscountValidationResponse;
-import com.inventrik.digitalestore.security.TenantSecurity;
 import com.inventrik.digitalestore.service.discount.DiscountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,7 +32,6 @@ import java.util.Map;
 public class DiscountController {
 
     private final DiscountService discountService;
-    private final TenantSecurity tenantSecurity;
     
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TENANT')")
@@ -47,9 +45,6 @@ public class DiscountController {
             @PathVariable Integer tenantId,
             @Valid @RequestBody DiscountCodeRequest request,
             Authentication authentication) {
-
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
 
         try {
             DiscountCodeResponse response = discountService.createDiscountCode(tenantId, request, authentication.getName());
@@ -73,9 +68,6 @@ public class DiscountController {
             @PathVariable String discountId,
             @Valid @RequestBody DiscountCodeRequest request,
             Authentication authentication) {
-
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
 
         try {
             DiscountCodeResponse response = discountService.updateDiscountCode(tenantId, discountId, request, authentication.getName());

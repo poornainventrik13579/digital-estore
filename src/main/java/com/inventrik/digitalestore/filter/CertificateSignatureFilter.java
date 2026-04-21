@@ -105,8 +105,13 @@ public class CertificateSignatureFilter implements Filter {
             log.info("Certificate signature verification started - challengeId: {}", challengeId);
 
             // Reject immediately if session cookie is missing or session is no longer valid (e.g. after logout)
-            if (sessionId == null || certificateService.getSession(sessionId) == null) {
-                log.warn("Session invalid or missing for challengeId: {}", challengeId);
+            if (sessionId == null) {
+                log.warn("Session missing for challengeId: {}", challengeId);
+                return null;
+            }
+            CertificateService.SessionData session = certificateService.getSession(sessionId);
+            if (session == null) {
+                log.warn("Session invalid for challengeId: {}", challengeId);
                 return null;
             }
 
@@ -120,6 +125,14 @@ public class CertificateSignatureFilter implements Filter {
 
             if (!challengeData.isValid()) {
                 log.warn("Challenge invalid - used: {}, expired: {}", challengeData.isUsed(), challengeData.isExpired());
+                return null;
+            }
+
+            // Cross-check: challenge must belong to the same user as the session. Prevents a valid
+            // session from verifying against a challenge issued to a different user on the same device.
+            if (session.getUserId() == null || !session.getUserId().equals(challengeData.getUserId())) {
+                log.warn("Session/challenge userId mismatch - session: {}, challenge: {}",
+                        session.getUserId(), challengeData.getUserId());
                 return null;
             }
 
@@ -143,7 +156,9 @@ public class CertificateSignatureFilter implements Filter {
                 log.info("Signature valid: {}", signatureValid);
 
                 if (signatureValid) {
-                    certificateService.markChallengeUsed(challengeId);
+                    // Challenge is time-windowed (60s TTL) instead of single-use so concurrent
+                    // requests from the same page load (e.g. /taxes + /discounts) can reuse it.
+                    // Replay window bounded by ChallengeData.isExpired().
                     String userId = challengeData.getUserId();
                     Integer tenantId = challengeData.getTenantId();
 

@@ -17,13 +17,17 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantId}/orders")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Order Management", description = "APIs for managing orders")
 @SecurityRequirement(name = "oauth2")
 public class OrderController {
@@ -37,12 +41,11 @@ public class OrderController {
     public ResponseEntity<PagedResponse<OrderResponse>> getAllOrders(
             @Parameter(description = "Tenant ID", required = true) @PathVariable Integer tenantId,
             @Parameter(description = "Filter by order status") @RequestParam(required = false) String status,
-            @Parameter(description = "Page number, 0-based") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Page number, 0-based") @RequestParam(defaultValue = "0") @Min(0) int page,
+            @Parameter(description = "Page size (1-100)") @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
 
         boolean canAccessAllOrders = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_TENANT"));
@@ -58,8 +61,7 @@ public class OrderController {
             @PathVariable Integer tenantId,
             @PathVariable String orderId,
             Authentication authentication) {
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         return ResponseEntity.ok(orderService.getOrder(tenantId, orderId));
     }
 
@@ -71,8 +73,7 @@ public class OrderController {
             @Valid @ModelAttribute OrderFormRequest formRequest,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(orderService.createOrder(tenantId, authentication.getName(), formRequest.toOrderRequest()));
     }
@@ -85,8 +86,7 @@ public class OrderController {
             @Valid @RequestBody OrderRequest orderRequest,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(orderService.createOrder(tenantId, authentication.getName(), orderRequest));
     }
@@ -100,8 +100,7 @@ public class OrderController {
             @Valid @RequestBody OrderUpdateRequest updateRequest,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         return ResponseEntity.ok(
                 orderService.updateOrder(tenantId, orderId, authentication.getName(), updateRequest));
     }
@@ -115,8 +114,7 @@ public class OrderController {
             @Valid @ModelAttribute OrderUpdateRequest updateRequest,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         return ResponseEntity.ok(
                 orderService.updateOrder(tenantId, orderId, authentication.getName(), updateRequest));
     }
@@ -126,9 +124,9 @@ public class OrderController {
     @Operation(summary = "Delete an order")
     public ResponseEntity<Void> deleteOrder(
             @PathVariable Integer tenantId,
-            @PathVariable String orderId) {
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+            @PathVariable String orderId,
+            Authentication authentication) {
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         orderService.deleteOrder(tenantId, orderId);
         return ResponseEntity.noContent().build();
     }
@@ -141,8 +139,7 @@ public class OrderController {
             @PathVariable String orderId,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         return ResponseEntity.ok(orderService.completeOrder(tenantId, orderId, authentication.getName()));
     }
 
@@ -154,8 +151,7 @@ public class OrderController {
             @PathVariable String orderId,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         return ResponseEntity.ok(orderService.cancelOrder(tenantId, orderId, authentication.getName()));
     }
 
@@ -167,8 +163,7 @@ public class OrderController {
             @PathVariable String orderId,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+        tenantSecurity.validateTenantAccess(authentication, tenantId);
         return ResponseEntity.ok(orderService.refundOrder(tenantId, orderId, authentication.getName()));
     }
 }

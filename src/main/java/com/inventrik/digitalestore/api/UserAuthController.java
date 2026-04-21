@@ -8,6 +8,7 @@ import com.inventrik.digitalestore.dto.request.SignupRequest;
 import com.inventrik.digitalestore.dto.request.UserRequest;
 import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.repository.UserRepository;
+import com.inventrik.digitalestore.service.JwtDenylistService;
 import com.inventrik.digitalestore.service.JwtTokenService;
 import com.inventrik.digitalestore.service.RefreshTokenService;
 import com.inventrik.digitalestore.service.certificate.CertificateService;
@@ -52,6 +53,8 @@ public class UserAuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenService jwtTokenService;
     private final RefreshTokenService refreshTokenService;
+    private final JwtDenylistService jwtDenylistService;
+    private final org.springframework.security.oauth2.jwt.JwtDecoder jwtDecoder;
 
     @PostMapping(value = "/signup", consumes = "application/x-www-form-urlencoded")
     @Operation(summary = "Register a new user")
@@ -199,6 +202,7 @@ public class UserAuthController {
             @RequestParam(required = false) String refreshTokenValue) {
         String sessionId = sessionHelper.getSessionIdFromCookie(request);
         sessionHelper.performLogout(sessionId);
+        denyBearerToken(request);
 
         if (refreshTokenValue != null) {
             refreshTokenService.revokeRefreshToken(refreshTokenValue);
@@ -211,5 +215,16 @@ public class UserAuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, sessionHelper.clearSessionCookie().toString())
                 .body(Map.of("message", "Logout successful"));
+    }
+
+    private void denyBearerToken(HttpServletRequest request) {
+        String auth = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (auth == null || !auth.startsWith("Bearer ")) return;
+        try {
+            org.springframework.security.oauth2.jwt.Jwt jwt = jwtDecoder.decode(auth.substring(7));
+            jwtDenylistService.add(jwt.getId(), jwt.getExpiresAt());
+        } catch (Exception ignored) {
+            // already expired/invalid — no denial needed
+        }
     }
 }

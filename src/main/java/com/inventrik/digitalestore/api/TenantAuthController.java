@@ -7,6 +7,7 @@ import com.inventrik.digitalestore.dto.request.TenantSignupRequest;
 import com.inventrik.digitalestore.dto.response.TenantResponse;
 import com.inventrik.digitalestore.dto.response.UserResponse;
 import com.inventrik.digitalestore.repository.UserRepository;
+import com.inventrik.digitalestore.service.JwtDenylistService;
 import com.inventrik.digitalestore.service.JwtTokenService;
 import com.inventrik.digitalestore.service.RefreshTokenService;
 import com.inventrik.digitalestore.service.certificate.CertificateService;
@@ -49,6 +50,8 @@ public class TenantAuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenService jwtTokenService;
     private final RefreshTokenService refreshTokenService;
+    private final JwtDenylistService jwtDenylistService;
+    private final org.springframework.security.oauth2.jwt.JwtDecoder jwtDecoder;
 
     @PostMapping(value = "/signup", consumes = "application/x-www-form-urlencoded")
     @Operation(summary = "Create a new tenant with admin account")
@@ -93,7 +96,7 @@ public class TenantAuthController {
                 return ResponseEntity.ok()
                         .header(HttpHeaders.SET_COOKIE,
                                 sessionHelper.createSessionCookie(sessionId, 30L * 24 * 60 * 60).toString())
-                        .body(Map.of("message", "Login successful", "userId", user.getUserId()));
+                        .body(Map.of("message", "Login successful", "userId", user.getUserId(), "sessionId", sessionId));
             }
 
             List<String> authorities = authentication.getAuthorities().stream()
@@ -166,6 +169,7 @@ public class TenantAuthController {
     public ResponseEntity<?> logout(HttpServletRequest request,
             @RequestParam(required = false) String refreshTokenValue) {
         sessionHelper.performLogout(sessionHelper.getSessionIdFromCookie(request));
+        denyBearerToken(request);
 
         if (refreshTokenValue != null) {
             refreshTokenService.revokeRefreshToken(refreshTokenValue);
@@ -174,6 +178,16 @@ public class TenantAuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, sessionHelper.clearSessionCookie().toString())
                 .body(Map.of("message", "Logout successful"));
+    }
+
+    private void denyBearerToken(HttpServletRequest request) {
+        String auth = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (auth == null || !auth.startsWith("Bearer ")) return;
+        try {
+            org.springframework.security.oauth2.jwt.Jwt jwt = jwtDecoder.decode(auth.substring(7));
+            jwtDenylistService.add(jwt.getId(), jwt.getExpiresAt());
+        } catch (Exception ignored) {
+        }
     }
 
     @PostMapping(value = "/forgot-password", consumes = "application/x-www-form-urlencoded")

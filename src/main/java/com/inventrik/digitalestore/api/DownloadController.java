@@ -3,7 +3,6 @@ package com.inventrik.digitalestore.api;
 import com.inventrik.digitalestore.dto.request.DigitalProductDetailsRequest;
 import com.inventrik.digitalestore.dto.response.DigitalProductDetailsResponse;
 import com.inventrik.digitalestore.dto.response.DownloadHistoryResponse;
-import com.inventrik.digitalestore.security.TenantSecurity;
 import com.inventrik.digitalestore.service.download.DownloadService;
 import com.inventrik.digitalestore.util.HttpUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +29,6 @@ import java.util.List;
 public class DownloadController {
 
     private final DownloadService downloadService;
-    private final TenantSecurity tenantSecurity;
 
     @PostMapping("/tenants/{tenantId}/order-items/{orderItemId}/record-download")
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
@@ -40,9 +38,6 @@ public class DownloadController {
             @PathVariable String orderItemId,
             HttpServletRequest request,
             Authentication authentication) {
-
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
 
         String username = (authentication != null) ? authentication.getName() : "system";
         String ipAddress = HttpUtils.getClientIpAddress(request);
@@ -57,11 +52,7 @@ public class DownloadController {
     @Operation(summary = "Get download history for order item")
     public ResponseEntity<List<DownloadHistoryResponse>> getDownloadHistory(
             @PathVariable Integer tenantId,
-            @PathVariable String orderItemId,
-            Authentication authentication) {
-
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+            @PathVariable String orderItemId) {
 
         List<DownloadHistoryResponse> history = downloadService.getDownloadHistory(tenantId, orderItemId);
         return ResponseEntity.ok(history);
@@ -74,9 +65,6 @@ public class DownloadController {
             @PathVariable Integer tenantId,
             @PathVariable String userId,
             Authentication authentication) {
-
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
 
         String username = authentication.getName();
 
@@ -94,9 +82,6 @@ public class DownloadController {
             @Valid @RequestBody DigitalProductDetailsRequest request,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
-
         String username = (authentication != null) ? authentication.getName() : "system";
         DigitalProductDetailsResponse response = downloadService.createDigitalProductDetails(tenantId, username, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -111,9 +96,6 @@ public class DownloadController {
             @Valid @RequestBody DigitalProductDetailsRequest request,
             Authentication authentication) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
-
         String username = (authentication != null) ? authentication.getName() : "system";
         DigitalProductDetailsResponse response = downloadService.updateDigitalProductDetails(tenantId, productId, username, request);
         return ResponseEntity.ok(response);
@@ -124,11 +106,7 @@ public class DownloadController {
     @Operation(summary = "Get digital product details")
     public ResponseEntity<DigitalProductDetailsResponse> getDigitalProductDetails(
             @PathVariable Integer tenantId,
-            @PathVariable String productId,
-            Authentication authentication) {
-
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+            @PathVariable String productId) {
 
         DigitalProductDetailsResponse response = downloadService.getDigitalProductDetails(tenantId, productId);
         return ResponseEntity.ok(response);
@@ -138,11 +116,7 @@ public class DownloadController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_TENANT')")
     @Operation(summary = "Get all digital product details")
     public ResponseEntity<List<DigitalProductDetailsResponse>> getAllDigitalProductDetails(
-            @PathVariable Integer tenantId,
-            Authentication authentication) {
-
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+            @PathVariable Integer tenantId) {
 
         List<DigitalProductDetailsResponse> response = downloadService.getAllDigitalProductDetails(tenantId);
         return ResponseEntity.ok(response);
@@ -153,11 +127,7 @@ public class DownloadController {
     @Operation(summary = "Delete digital product details")
     public ResponseEntity<Void> deleteDigitalProductDetails(
             @PathVariable Integer tenantId,
-            @PathVariable String productId,
-            Authentication authentication) {
-
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
+            @PathVariable String productId) {
 
         downloadService.deleteDigitalProductDetails(tenantId, productId);
         return ResponseEntity.noContent().build();

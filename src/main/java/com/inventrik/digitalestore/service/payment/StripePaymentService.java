@@ -224,7 +224,10 @@ public class StripePaymentService implements PaymentService {
                 if ("STRIPE_REDIRECT".equals(paymentProvider)) {
                     Session checkoutSession = retryService.executeWithRetry(() -> {
                         try {
-                            long amountLong = paymentRequest.getAmount().setScale(0, BigDecimal.ROUND_HALF_UP).longValue();
+                            long amountLong = paymentRequest.getAmount()
+                                    .multiply(new BigDecimal("100"))
+                                    .setScale(0, java.math.RoundingMode.HALF_UP)
+                                    .longValue();
 
                             SessionCreateParams params = SessionCreateParams.builder()
                                     .setMode(SessionCreateParams.Mode.PAYMENT)
@@ -260,7 +263,10 @@ public class StripePaymentService implements PaymentService {
                         try {
                             Map<String, Object> params = new HashMap<>();
                             params.put("currency", paymentRequest.getCurrency().toLowerCase());
-                            long amountLong = paymentRequest.getAmount().setScale(0, BigDecimal.ROUND_HALF_UP).longValue();
+                            long amountLong = paymentRequest.getAmount()
+                                    .multiply(new BigDecimal("100"))
+                                    .setScale(0, java.math.RoundingMode.HALF_UP)
+                                    .longValue();
                             params.put("amount", amountLong);
                             params.put("description", "Payment for order #" + paymentRequest.getOrderId());
                             params.put("capture_method", "automatic");

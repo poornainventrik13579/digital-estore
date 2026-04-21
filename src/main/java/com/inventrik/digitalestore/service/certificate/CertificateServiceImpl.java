@@ -27,7 +27,7 @@ public class CertificateServiceImpl implements CertificateService {
     private static final String CERT_LOGIN_SESSION_PREFIX = "cert_session:";  // Stores login session (certSessionId)
     private static final String USER_CURRENT_SESSION_PREFIX = "user_session_key:";  // Maps userId → active sessionKeyId
 
-    private static final Duration CHALLENGE_TTL = Duration.ofSeconds(30);
+    private static final Duration CHALLENGE_TTL = Duration.ofMillis(CHALLENGE_TTL_MS);
     private static final Duration SESSION_TTL = Duration.ofDays(30);
 
     public CertificateServiceImpl(UserCertificateRepository repository, RedisTemplate<String, Object> redisTemplate) {
@@ -53,6 +53,27 @@ public class CertificateServiceImpl implements CertificateService {
         return repository.save(certificate);
     }
 
+    @Override
+    @Transactional
+    public UserCertificate rotateMasterKey(Integer tenantId, String userId, String currentSessionId, String publicKey) {
+        // Revoke OTHER sessions' certs first — current session's row is never REVOKED in this txn.
+        repository.revokeByTenantIdAndUserIdExcludingSession(
+                tenantId, userId, currentSessionId, CertificateStatus.REVOKED, CertificateStatus.ACTIVE);
+
+        UserCertificate cert = repository.findBySessionId(currentSessionId).orElseGet(UserCertificate::new);
+        boolean isNew = cert.getCreated() == null;
+        cert.setSessionId(currentSessionId);
+        cert.setTenantId(tenantId);
+        cert.setUserId(userId);
+        cert.setPublicKey(publicKey);
+        cert.setStatus(CertificateStatus.ACTIVE);
+        if (isNew) {
+            cert.setCreated(LocalDateTime.now());
+        }
+        cert.setUpdated(LocalDateTime.now());
+        return repository.save(cert);
+    }
+
     @Value("${app.cert.master-key-expiry-days:180}")
     private int masterKeyExpiryDays;
 
@@ -74,6 +95,16 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     @Transactional
+    public boolean reactivateBySessionId(String sessionId) {
+        int updated = repository.reactivateBySessionId(sessionId, CertificateStatus.ACTIVE, CertificateStatus.REVOKED);
+        if (updated > 0) {
+            log.info("Reactivated cert for sessionId: {} (was REVOKED, master signature verified)", sessionId);
+        }
+        return updated > 0;
+    }
+
+    @Override
+    @Transactional
     public void revokeBySessionId(String sessionId) {
         int updated = repository.revokeBySessionId(sessionId, CertificateStatus.REVOKED, CertificateStatus.ACTIVE);
         log.info("Revoked {} certificate(s) for sessionId: {}", updated, sessionId);
@@ -84,22 +115,6 @@ public class CertificateServiceImpl implements CertificateService {
     public void revokeByTenantIdAndUserId(Integer tenantId, String userId) {
         int updated = repository.revokeByTenantIdAndUserId(tenantId, userId, CertificateStatus.REVOKED, CertificateStatus.ACTIVE);
         log.info("Revoked {} certificate(s) for tenantId: {}, userId: {}", updated, tenantId, userId);
-    }
-
-    @Override
-    @Deprecated
-    @Transactional
-    public void deleteBySessionId(String sessionId) {
-        // Delegate to soft-delete for backward compatibility
-        revokeBySessionId(sessionId);
-    }
-
-    @Override
-    @Deprecated
-    @Transactional
-    public void deleteByTenantIdAndUserId(Integer tenantId, String userId) {
-        // Delegate to soft-delete for backward compatibility
-        revokeByTenantIdAndUserId(tenantId, userId);
     }
 
     @Override
@@ -199,19 +214,47 @@ public class CertificateServiceImpl implements CertificateService {
             return (SessionData) data;
         }
 
-        // Redis miss — fallback to MySQL, skip if cert is logically expired
-        return repository.findBySessionIdAndStatus(sessionId, CertificateStatus.ACTIVE)
-                .filter(cert -> !isCertExpired(cert))
-                .map(cert -> {
-                    SessionData restored = new SessionData(cert.getTenantId(), cert.getUserId(), true);
-                    // Restore into Redis so subsequent requests hit cache
+        if (data instanceof java.util.Map) {
+            // Stale entry serialized without Jackson type info — reconstruct manually and rewrite
+            try {
+                @SuppressWarnings("unchecked")
+                java.util.Map<String, Object> map = (java.util.Map<String, Object>) data;
+                Object tenantIdObj = map.get("tenantId");
+                Object userIdObj = map.get("userId");
+                Object authObj = map.get("authenticated");
+                if (tenantIdObj instanceof Integer && userIdObj instanceof String && authObj instanceof Boolean) {
+                    SessionData restored = new SessionData((Integer) tenantIdObj, (String) userIdObj, (Boolean) authObj);
                     redisTemplate.opsForValue().set(key, restored, SESSION_TTL);
-                    log.info("Session restored from MySQL to Redis for sessionId: {}", sessionId);
+                    log.info("getSession: rewrote stale Map entry as SessionData for key '{}'", key);
                     return restored;
-                })
-                .orElse(null);
+                }
+            } catch (Exception e) {
+                log.warn("getSession: failed to recover Map entry for key '{}'", key, e);
+            }
+        }
 
-        // return null; // if u want to test with redis comment above and run this line
+        if (data != null) {
+            log.warn("getSession: Redis key '{}' holds unexpected type {} — treating as miss",
+                    key, data.getClass().getName());
+        }
+
+        Optional<UserCertificate> certOpt = repository.findBySessionIdAndStatus(sessionId, CertificateStatus.ACTIVE);
+        if (certOpt.isEmpty()) {
+            Optional<UserCertificate> any = repository.findBySessionId(sessionId);
+            log.warn("getSession: no ACTIVE cert for sessionId={} (anyRowPresent={}, status={})",
+                    sessionId, any.isPresent(), any.map(c -> c.getStatus().name()).orElse("n/a"));
+            return null;
+        }
+        UserCertificate cert = certOpt.get();
+        if (isCertExpired(cert)) {
+            log.warn("getSession: cert expired for sessionId={} (created={}, expiryDays={})",
+                    sessionId, cert.getCreated(), masterKeyExpiryDays);
+            return null;
+        }
+        SessionData restored = new SessionData(cert.getTenantId(), cert.getUserId(), true);
+        redisTemplate.opsForValue().set(key, restored, SESSION_TTL);
+        log.info("Session restored from MySQL to Redis for sessionId: {}", sessionId);
+        return restored;
     }
 
     @Override

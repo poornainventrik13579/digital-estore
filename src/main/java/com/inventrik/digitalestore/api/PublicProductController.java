@@ -7,13 +7,17 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/public/tenants/{tenantId}/products")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Public Product Access", description = "Public APIs for browsing products without authentication")
 public class PublicProductController {
 
@@ -23,8 +27,8 @@ public class PublicProductController {
     @Operation(summary = "Get all products with pagination")
     public ResponseEntity<PagedResponse<ProductResponse>> getAllProducts(
             @PathVariable Integer tenantId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size, null, null, null));
     }
 
@@ -41,8 +45,8 @@ public class PublicProductController {
     public ResponseEntity<PagedResponse<ProductResponse>> getProductsByCategory(
             @PathVariable Integer tenantId,
             @PathVariable String categoryId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size, categoryId, null, null));
     }
 
@@ -50,8 +54,8 @@ public class PublicProductController {
     @Operation(summary = "Get active products")
     public ResponseEntity<PagedResponse<ProductResponse>> getActiveProducts(
             @PathVariable Integer tenantId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size, null, "ACTIVE", null));
     }
 
@@ -60,8 +64,8 @@ public class PublicProductController {
     public ResponseEntity<PagedResponse<ProductResponse>> searchProducts(
             @PathVariable Integer tenantId,
             @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size, null, null, keyword));
     }
 } 

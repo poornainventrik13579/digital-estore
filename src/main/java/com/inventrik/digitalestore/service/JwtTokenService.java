@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Centralises JWT access-token building so controllers don't duplicate
@@ -42,6 +43,7 @@ public class JwtTokenService {
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(ACCESS_TOKEN_SECONDS))
                 .subject(subject)
+                .id(UUID.randomUUID().toString())
                 .claim("authorities", authorities);
 
         if (tenantId != null) {

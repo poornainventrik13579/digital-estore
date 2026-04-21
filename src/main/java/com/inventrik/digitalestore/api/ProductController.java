@@ -4,7 +4,6 @@ import com.inventrik.digitalestore.dto.request.ProductRequest;
 import com.inventrik.digitalestore.dto.request.ProductUpdateRequest;
 import com.inventrik.digitalestore.dto.response.PagedResponse;
 import com.inventrik.digitalestore.dto.response.ProductResponse;
-import com.inventrik.digitalestore.security.TenantSecurity;
 import com.inventrik.digitalestore.service.product.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -15,20 +14,23 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantId}/products")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Product Management", description = "APIs for managing products")
 @SecurityRequirement(name = "oauth2")
 public class ProductController {
 
     private final ProductService productService;
-    private final TenantSecurity tenantSecurity;
     
     /**
      * Get all products with optional filtering
@@ -45,15 +47,12 @@ public class ProductController {
     @Operation(summary = "Get all products with optional filters (category, status, keyword)")
     public ResponseEntity<PagedResponse<ProductResponse>> getAllProducts(
             @PathVariable Integer tenantId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(required = false) String categoryId,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String keyword,
-            Authentication authentication) {
+            @RequestParam(required = false) String keyword) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
         return ResponseEntity.ok(productService.getAllProductsPaginated(tenantId, page, size, categoryId, status, keyword));
     }
     
@@ -62,11 +61,8 @@ public class ProductController {
     @Operation(summary = "Get a product by ID")
     public ResponseEntity<ProductResponse> getProduct(
             @PathVariable Integer tenantId,
-            @PathVariable String productId,
-            Authentication authentication) {
+            @PathVariable String productId) {
 
-        // TODO: Uncomment when roles are properly configured in JWT
-        // tenantSecurity.validateTenantAccess(authentication, tenantId);
         return ResponseEntity.ok(productService.getProduct(tenantId, productId));
     }
     
@@ -102,8 +98,7 @@ public class ProductController {
     @Operation(summary = "Delete a product")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable Integer tenantId,
-            @PathVariable String productId,
-            Authentication authentication) {
+            @PathVariable String productId) {
         productService.deleteProduct(tenantId, productId);
         return ResponseEntity.noContent().build();
     }

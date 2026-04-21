@@ -53,6 +53,11 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.inventrik.digitalestore.filter.CertificateSignatureFilter;
+import com.inventrik.digitalestore.service.JwtDenylistService;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -276,8 +281,23 @@ public class AuthServerConfig {
     }
 
     @Bean
-    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource, JwtDenylistService denylist) {
+        org.springframework.security.oauth2.jwt.NimbusJwtDecoder decoder =
+                (org.springframework.security.oauth2.jwt.NimbusJwtDecoder)
+                        OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+
+        OAuth2TokenValidator<org.springframework.security.oauth2.jwt.Jwt> denyValidator = jwt -> {
+            String jti = jwt.getId();
+            if (jti != null && denylist.isDenied(jti)) {
+                return OAuth2TokenValidatorResult.failure(
+                        new OAuth2Error("invalid_token", "Token has been revoked", null));
+            }
+            return OAuth2TokenValidatorResult.success();
+        };
+
+        decoder.setJwtValidator(new org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefault(), denyValidator));
+        return decoder;
     }
     
     @Bean

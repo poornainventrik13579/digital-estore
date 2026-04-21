@@ -30,8 +30,6 @@ public interface UserRepository extends JpaRepository<User, User.UserPK> {
 
     Optional<User> findByPhone(String phone);
 
-    void deleteByTenantIdAndUserId(Integer tenantId, String userId);
-
     boolean existsByUsername(String username);
 
     boolean existsByTenantIdAndUsername(Integer tenantId, String username);
