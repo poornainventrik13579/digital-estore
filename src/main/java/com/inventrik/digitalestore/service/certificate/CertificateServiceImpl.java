@@ -137,6 +137,32 @@ public class CertificateServiceImpl implements CertificateService {
             return Optional.of((ChallengeData) data);
         }
 
+        if (data instanceof java.util.Map) {
+            // Stale entry serialized without Jackson type info — reconstruct manually and rewrite
+            try {
+                @SuppressWarnings("unchecked")
+                java.util.Map<String, Object> map = (java.util.Map<String, Object>) data;
+                Object userIdObj = map.get("userId");
+                Object tenantIdObj = map.get("tenantId");
+                Object createdAtObj = map.get("createdAt");
+                Object usedObj = map.get("used");
+
+                Integer tenantId = tenantIdObj instanceof Integer ? (Integer) tenantIdObj : null;
+                long createdAt = createdAtObj instanceof Number ? ((Number) createdAtObj).longValue() : 0L;
+                boolean used = usedObj instanceof Boolean && (Boolean) usedObj;
+
+                if (userIdObj instanceof String && createdAt > 0L) {
+                    ChallengeData restored = new ChallengeData((String) userIdObj, tenantId, createdAt);
+                    restored.setUsed(used);
+                    redisTemplate.opsForValue().set(key, restored, CHALLENGE_TTL);
+                    log.info("getChallenge: rewrote stale Map entry as ChallengeData for key '{}'", key);
+                    return Optional.of(restored);
+                }
+            } catch (Exception e) {
+                log.warn("getChallenge: failed to recover Map entry for key '{}'", key, e);
+            }
+        }
+
         return Optional.empty();
     }
 
