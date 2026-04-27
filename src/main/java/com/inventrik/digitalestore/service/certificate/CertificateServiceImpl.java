@@ -1,5 +1,6 @@
 package com.inventrik.digitalestore.service.certificate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.inventrik.digitalestore.domain.certificate.CertificateStatus;
 import com.inventrik.digitalestore.domain.certificate.UserCertificate;
 import com.inventrik.digitalestore.repository.UserCertificateRepository;
@@ -21,6 +22,7 @@ public class CertificateServiceImpl implements CertificateService {
 
     private final UserCertificateRepository repository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     private static final String CHALLENGE_PREFIX = "challenge:";
     private static final String CERT_SESSION_KEY_PREFIX = "session_key:";      // Stores ECDSA session key data
@@ -30,9 +32,12 @@ public class CertificateServiceImpl implements CertificateService {
     private static final Duration CHALLENGE_TTL = Duration.ofMillis(CHALLENGE_TTL_MS);
     private static final Duration SESSION_TTL = Duration.ofDays(30);
 
-    public CertificateServiceImpl(UserCertificateRepository repository, RedisTemplate<String, Object> redisTemplate) {
+    public CertificateServiceImpl(UserCertificateRepository repository,
+                                  RedisTemplate<String, Object> redisTemplate,
+                                  ObjectMapper objectMapper) {
         this.repository = repository;
         this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -133,36 +138,33 @@ public class CertificateServiceImpl implements CertificateService {
         String key = CHALLENGE_PREFIX + challengeId;
         Object data = redisTemplate.opsForValue().get(key);
 
+        if (data == null) {
+            log.warn("getChallenge: key '{}' not present in Redis (expired or never written)", key);
+            return Optional.empty();
+        }
+
         if (data instanceof ChallengeData) {
             return Optional.of((ChallengeData) data);
         }
 
         if (data instanceof java.util.Map) {
-            // Stale entry serialized without Jackson type info — reconstruct manually and rewrite
+            // Stale entry from prior serializer config (no Jackson type info). Use ObjectMapper
+            // to coerce field names/numeric types correctly, then rewrite with proper type info.
             try {
-                @SuppressWarnings("unchecked")
-                java.util.Map<String, Object> map = (java.util.Map<String, Object>) data;
-                Object userIdObj = map.get("userId");
-                Object tenantIdObj = map.get("tenantId");
-                Object createdAtObj = map.get("createdAt");
-                Object usedObj = map.get("used");
-
-                Integer tenantId = tenantIdObj instanceof Integer ? (Integer) tenantIdObj : null;
-                long createdAt = createdAtObj instanceof Number ? ((Number) createdAtObj).longValue() : 0L;
-                boolean used = usedObj instanceof Boolean && (Boolean) usedObj;
-
-                if (userIdObj instanceof String && createdAt > 0L) {
-                    ChallengeData restored = new ChallengeData((String) userIdObj, tenantId, createdAt);
-                    restored.setUsed(used);
+                ChallengeData restored = objectMapper.convertValue(data, ChallengeData.class);
+                if (restored.getUserId() != null && restored.getCreatedAt() > 0L) {
                     redisTemplate.opsForValue().set(key, restored, CHALLENGE_TTL);
                     log.info("getChallenge: rewrote stale Map entry as ChallengeData for key '{}'", key);
                     return Optional.of(restored);
                 }
+                log.warn("getChallenge: recovered Map missing required fields for key '{}': raw={}", key, data);
             } catch (Exception e) {
-                log.warn("getChallenge: failed to recover Map entry for key '{}'", key, e);
+                log.warn("getChallenge: failed to recover Map entry for key '{}', raw={}", key, data, e);
             }
+            return Optional.empty();
         }
 
+        log.warn("getChallenge: unexpected type {} for key '{}'", data.getClass().getName(), key);
         return Optional.empty();
     }
 
@@ -241,21 +243,18 @@ public class CertificateServiceImpl implements CertificateService {
         }
 
         if (data instanceof java.util.Map) {
-            // Stale entry serialized without Jackson type info — reconstruct manually and rewrite
+            // Stale entry from prior serializer config (no Jackson type info). Use ObjectMapper
+            // to coerce field names/numeric types correctly, then rewrite with proper type info.
             try {
-                @SuppressWarnings("unchecked")
-                java.util.Map<String, Object> map = (java.util.Map<String, Object>) data;
-                Object tenantIdObj = map.get("tenantId");
-                Object userIdObj = map.get("userId");
-                Object authObj = map.get("authenticated");
-                if (tenantIdObj instanceof Integer && userIdObj instanceof String && authObj instanceof Boolean) {
-                    SessionData restored = new SessionData((Integer) tenantIdObj, (String) userIdObj, (Boolean) authObj);
+                SessionData restored = objectMapper.convertValue(data, SessionData.class);
+                if (restored.getUserId() != null && restored.getTenantId() != null) {
                     redisTemplate.opsForValue().set(key, restored, SESSION_TTL);
                     log.info("getSession: rewrote stale Map entry as SessionData for key '{}'", key);
                     return restored;
                 }
+                log.warn("getSession: recovered Map missing required fields for key '{}': raw={}", key, data);
             } catch (Exception e) {
-                log.warn("getSession: failed to recover Map entry for key '{}'", key, e);
+                log.warn("getSession: failed to recover Map entry for key '{}', raw={}", key, data, e);
             }
         }
 
