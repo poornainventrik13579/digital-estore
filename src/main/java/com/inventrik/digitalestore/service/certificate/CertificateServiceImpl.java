@@ -25,16 +25,16 @@ public class CertificateServiceImpl implements CertificateService {
     private final ObjectMapper objectMapper;
 
     private static final String CHALLENGE_PREFIX = "challenge:";
-    private static final String CERT_SESSION_KEY_PREFIX = "session_key:";      // Stores ECDSA session key data
-    private static final String CERT_LOGIN_SESSION_PREFIX = "cert_session:";  // Stores login session (certSessionId)
-    private static final String USER_CURRENT_SESSION_PREFIX = "user_session_key:";  // Maps userId → active sessionKeyId
+    private static final String CERT_SESSION_KEY_PREFIX = "session_key:"; // Stores ECDSA session key data
+    private static final String CERT_LOGIN_SESSION_PREFIX = "cert_session:"; // Stores login session (certSessionId)
+    private static final String USER_CURRENT_SESSION_PREFIX = "user_session_key:"; // Maps userId → active sessionKeyId
 
     private static final Duration CHALLENGE_TTL = Duration.ofMillis(CHALLENGE_TTL_MS);
     private static final Duration SESSION_TTL = Duration.ofDays(30);
 
     public CertificateServiceImpl(UserCertificateRepository repository,
-                                  RedisTemplate<String, Object> redisTemplate,
-                                  ObjectMapper objectMapper) {
+            RedisTemplate<String, Object> redisTemplate,
+            ObjectMapper objectMapper) {
         this.repository = repository;
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
@@ -61,7 +61,8 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     @Transactional
     public UserCertificate rotateMasterKey(Integer tenantId, String userId, String currentSessionId, String publicKey) {
-        // Revoke OTHER sessions' certs first — current session's row is never REVOKED in this txn.
+        // Revoke OTHER sessions' certs first — current session's row is never REVOKED
+        // in this txn.
         repository.revokeByTenantIdAndUserIdExcludingSession(
                 tenantId, userId, currentSessionId, CertificateStatus.REVOKED, CertificateStatus.ACTIVE);
 
@@ -94,7 +95,8 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Override
     public Optional<UserCertificate> findByTenantIdAndUserId(Integer tenantId, String userId) {
-        return repository.findByTenantIdAndUserIdAndStatus(tenantId, userId, CertificateStatus.ACTIVE)
+        return repository
+                .findFirstByTenantIdAndUserIdAndStatusOrderByUpdatedDesc(tenantId, userId, CertificateStatus.ACTIVE)
                 .filter(cert -> !isCertExpired(cert));
     }
 
@@ -118,14 +120,16 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     @Transactional
     public void revokeByTenantIdAndUserId(Integer tenantId, String userId) {
-        int updated = repository.revokeByTenantIdAndUserId(tenantId, userId, CertificateStatus.REVOKED, CertificateStatus.ACTIVE);
+        int updated = repository.revokeByTenantIdAndUserId(tenantId, userId, CertificateStatus.REVOKED,
+                CertificateStatus.ACTIVE);
         log.info("Revoked {} certificate(s) for tenantId: {}, userId: {}", updated, tenantId, userId);
     }
 
     @Override
     public String createChallenge(String userId, Integer tenantId) {
         String challengeId = UUID.randomUUID().toString();
-        ChallengeData data = new ChallengeData(userId, tenantId, System.currentTimeMillis());
+        String sessionKeyId = (String) redisTemplate.opsForValue().get(USER_CURRENT_SESSION_PREFIX + userId);
+        ChallengeData data = new ChallengeData(userId, tenantId, System.currentTimeMillis(), sessionKeyId);
 
         String key = CHALLENGE_PREFIX + challengeId;
         redisTemplate.opsForValue().set(key, data, CHALLENGE_TTL);
@@ -148,8 +152,10 @@ public class CertificateServiceImpl implements CertificateService {
         }
 
         if (data instanceof java.util.Map) {
-            // Stale entry from prior serializer config (no Jackson type info). Use ObjectMapper
-            // to coerce field names/numeric types correctly, then rewrite with proper type info.
+            // Stale entry from prior serializer config (no Jackson type info). Use
+            // ObjectMapper
+            // to coerce field names/numeric types correctly, then rewrite with proper type
+            // info.
             try {
                 ChallengeData restored = objectMapper.convertValue(data, ChallengeData.class);
                 if (restored.getUserId() != null && restored.getCreatedAt() > 0L) {
@@ -166,14 +172,6 @@ public class CertificateServiceImpl implements CertificateService {
 
         log.warn("getChallenge: unexpected type {} for key '{}'", data.getClass().getName(), key);
         return Optional.empty();
-    }
-
-    @Override
-    public boolean markChallengeUsed(String challengeId) {
-        String key = CHALLENGE_PREFIX + challengeId;
-        // Atomic get-and-delete prevents TOCTOU: two concurrent requests cannot both pass with the same challenge
-        Object data = redisTemplate.opsForValue().getAndDelete(key);
-        return data instanceof ChallengeData;
     }
 
     @Override
@@ -195,14 +193,16 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public Optional<SessionKeyData> getSessionKey(String userId) {
         String sessionKeyId = (String) redisTemplate.opsForValue().get(USER_CURRENT_SESSION_PREFIX + userId);
+        return getSessionKeyById(sessionKeyId);
+    }
 
+    @Override
+    public Optional<SessionKeyData> getSessionKeyById(String sessionKeyId) {
         if (sessionKeyId == null) {
             return Optional.empty();
         }
-
         String key = CERT_SESSION_KEY_PREFIX + sessionKeyId;
         Object data = redisTemplate.opsForValue().get(key);
-
         if (data instanceof SessionKeyData) {
             SessionKeyData sessionKey = (SessionKeyData) data;
             if (!sessionKey.isExpired()) {
@@ -211,7 +211,6 @@ public class CertificateServiceImpl implements CertificateService {
                 redisTemplate.delete(key);
             }
         }
-
         return Optional.empty();
     }
 
@@ -243,8 +242,10 @@ public class CertificateServiceImpl implements CertificateService {
         }
 
         if (data instanceof java.util.Map) {
-            // Stale entry from prior serializer config (no Jackson type info). Use ObjectMapper
-            // to coerce field names/numeric types correctly, then rewrite with proper type info.
+            // Stale entry from prior serializer config (no Jackson type info). Use
+            // ObjectMapper
+            // to coerce field names/numeric types correctly, then rewrite with proper type
+            // info.
             try {
                 SessionData restored = objectMapper.convertValue(data, SessionData.class);
                 if (restored.getUserId() != null && restored.getTenantId() != null) {

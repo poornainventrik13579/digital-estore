@@ -32,8 +32,7 @@ public class CertificateSignatureFilter implements Filter {
             "/api/v1/cert-auth/check-session",
             "/api/v1/cert-auth/register-key",
             "/api/v1/cert-auth/challenge",
-            "/api/v1/cert-auth/register-session-key"
-    );
+            "/api/v1/cert-auth/register-session-key");
 
     private final CertificateService certificateService;
     private final CryptoUtil cryptoUtil;
@@ -41,7 +40,7 @@ public class CertificateSignatureFilter implements Filter {
     private final ObjectMapper objectMapper;
 
     public CertificateSignatureFilter(CertificateService certificateService, CryptoUtil cryptoUtil,
-                                       UserRepository userRepository, ObjectMapper objectMapper) {
+            UserRepository userRepository, ObjectMapper objectMapper) {
         this.certificateService = certificateService;
         this.cryptoUtil = cryptoUtil;
         this.userRepository = userRepository;
@@ -104,7 +103,8 @@ public class CertificateSignatureFilter implements Filter {
         try {
             log.info("Certificate signature verification started - challengeId: {}", challengeId);
 
-            // Reject immediately if session cookie is missing or session is no longer valid (e.g. after logout)
+            // Reject immediately if session cookie is missing or session is no longer valid
+            // (e.g. after logout)
             if (sessionId == null) {
                 log.warn("Session missing for challengeId: {}", challengeId);
                 return null;
@@ -124,24 +124,31 @@ public class CertificateSignatureFilter implements Filter {
             }
 
             if (!challengeData.isValid()) {
-                log.warn("Challenge invalid - used: {}, expired: {}", challengeData.isUsed(), challengeData.isExpired());
+                log.warn("Challenge invalid - used: {}, expired: {}", challengeData.isUsed(),
+                        challengeData.isExpired());
                 return null;
             }
 
-            // Cross-check: challenge must belong to the same user as the session. Prevents a valid
-            // session from verifying against a challenge issued to a different user on the same device.
+            // Cross-check: challenge must belong to the same user as the session. Prevents
+            // a valid
+            // session from verifying against a challenge issued to a different user on the
+            // same device.
             if (session.getUserId() == null || !session.getUserId().equals(challengeData.getUserId())) {
                 log.warn("Session/challenge userId mismatch - session: {}, challenge: {}",
                         session.getUserId(), challengeData.getUserId());
                 return null;
             }
 
-            log.info("Challenge valid - userId: {}, tenantId: {}", challengeData.getUserId(), challengeData.getTenantId());
+            log.info("Challenge valid - userId: {}, tenantId: {}", challengeData.getUserId(),
+                    challengeData.getTenantId());
 
-            // Get user's session key from Redis
-            var sessionKeyOpt = certificateService.getSessionKey(challengeData.getUserId());
+            // Use session key pinned at challenge creation (immune to pointer race)
+            String pinnedKeyId = challengeData.getSessionKeyId();
+            var sessionKeyOpt = pinnedKeyId != null
+                    ? certificateService.getSessionKeyById(pinnedKeyId)
+                    : certificateService.getSessionKey(challengeData.getUserId());
             if (sessionKeyOpt.isEmpty()) {
-                log.warn("Session key not found for userId: {}", challengeData.getUserId());
+                log.warn("Session key not found for userId: {} (pinnedKeyId: {})", challengeData.getUserId(), pinnedKeyId);
                 return null;
             }
 
@@ -171,7 +178,8 @@ public class CertificateSignatureFilter implements Filter {
                         User user = userOpt.get();
                         String status = user.getStatus();
                         String username = user.getUsername();
-                        log.info("User found - username: {}, status: {}, role: {}", username, status, user.getUserRole());
+                        log.info("User found - username: {}, status: {}, role: {}", username, status,
+                                user.getUserRole());
 
                         if ("0".equals(status)) { // Active user
                             switch (user.getUserRole()) {
@@ -202,10 +210,9 @@ public class CertificateSignatureFilter implements Filter {
                     // Use username as principal (not userId) so controllers can findByUsername()
                     String username = userOpt.get().getUsername();
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        username,
-                        null,
-                        authorities
-                    );
+                            username,
+                            null,
+                            authorities);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     log.info("Certificate auth successful for username: {}", username);
 

@@ -16,14 +16,14 @@ public interface UserCertificateRepository extends JpaRepository<UserCertificate
 
     Optional<UserCertificate> findBySessionId(String sessionId);
 
-    Optional<UserCertificate> findByTenantIdAndUserId(Integer tenantId, String userId);
+    Optional<UserCertificate> findFirstByTenantIdAndUserIdOrderByUpdatedDesc(Integer tenantId, String userId);
 
     boolean existsBySessionId(String sessionId);
 
     // Status-filtered finders (for active certificate lookups)
     Optional<UserCertificate> findBySessionIdAndStatus(String sessionId, CertificateStatus status);
 
-    Optional<UserCertificate> findByTenantIdAndUserIdAndStatus(Integer tenantId, String userId, CertificateStatus status);
+    Optional<UserCertificate> findFirstByTenantIdAndUserIdAndStatusOrderByUpdatedDesc(Integer tenantId, String userId, CertificateStatus status);
 
     List<UserCertificate> findAllByTenantIdAndUserIdAndStatus(Integer tenantId, String userId, CertificateStatus status);
 
