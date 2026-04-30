@@ -201,7 +201,23 @@ public class StripePaymentService implements PaymentService {
                         } else {
                             log.warn("Duplicate payment attempt detected for order {}, returning existing payment {} (allowRetry: {})",
                                     paymentRequest.getOrderId(), existingPayment.getPaymentId(), allowRetry);
-                            return mapToDTO(existingPayment);
+                            PaymentResponse existingResponse = mapToDTO(existingPayment);
+                            String existingTxId = existingPayment.getTransactionId();
+                            if (existingTxId != null && existingTxId.startsWith("cs_")) {
+                                existingResponse.setPaymentProvider("STRIPE_REDIRECT");
+                                try {
+                                    Session existingSession = Session.retrieve(existingTxId);
+                                    if ("open".equals(existingSession.getStatus())) {
+                                        existingResponse.setSessionUrl(existingSession.getUrl());
+                                    }
+                                } catch (StripeException e) {
+                                    log.warn("Failed to retrieve existing Stripe session {} for order {}: {}",
+                                            existingTxId, existingPayment.getOrderId(), e.getMessage());
+                                }
+                            } else if (existingTxId != null) {
+                                existingResponse.setPaymentProvider(configService.getPaymentProvider(tenantId));
+                            }
+                            return existingResponse;
                         }
                     }
                 }
@@ -232,7 +248,7 @@ public class StripePaymentService implements PaymentService {
                             SessionCreateParams params = SessionCreateParams.builder()
                                     .setMode(SessionCreateParams.Mode.PAYMENT)
                                     .setSuccessUrl(stripeConfig.getCheckoutSuccessUrl())
-                                    .setCancelUrl(stripeConfig.getCheckoutCancelUrl())
+                                    .setCancelUrl(stripeConfig.getCheckoutCancelUrl() + "&orderId=" + paymentRequest.getOrderId())
                                     .addLineItem(SessionCreateParams.LineItem.builder()
                                             .setQuantity(1L)
                                             .setPriceData(SessionCreateParams.LineItem.PriceData.builder()

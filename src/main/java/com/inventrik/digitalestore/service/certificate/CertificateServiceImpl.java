@@ -12,9 +12,14 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.SessionCallback;
 
 @Slf4j
 @Service
@@ -28,6 +33,7 @@ public class CertificateServiceImpl implements CertificateService {
     private static final String CERT_SESSION_KEY_PREFIX = "session_key:"; // Stores ECDSA session key data
     private static final String CERT_LOGIN_SESSION_PREFIX = "cert_session:"; // Stores login session (certSessionId)
     private static final String USER_CURRENT_SESSION_PREFIX = "user_session_key:"; // Maps userId → active sessionKeyId
+    private static final String USER_CURRENT_SESSION_EXPIRES_PREFIX = "user_session_key_expires:"; // Tracks expiresAt for atomic pointer updates
 
     private static final Duration CHALLENGE_TTL = Duration.ofMillis(CHALLENGE_TTL_MS);
     private static final Duration SESSION_TTL = Duration.ofDays(30);
@@ -185,9 +191,44 @@ public class CertificateServiceImpl implements CertificateService {
         if (ttl <= 0) {
             throw new IllegalArgumentException("expiresAt is in the past or invalid");
         }
-        ttl = Math.min(ttl, 24 * 3600L);
-        redisTemplate.opsForValue().set(key, data, ttl, TimeUnit.SECONDS);
-        redisTemplate.opsForValue().set(USER_CURRENT_SESSION_PREFIX + userId, sessionKeyId, ttl, TimeUnit.SECONDS);
+        final long finalTtl = Math.min(ttl, 24 * 3600L);
+
+        // Write session key data unconditionally — each key ID is unique, no conflict possible
+        redisTemplate.opsForValue().set(key, data, finalTtl, TimeUnit.SECONDS);
+
+        // Update the user→sessionKeyId pointer atomically using WATCH-MULTI-EXEC.
+        // Rapid page refreshes each register a new session key concurrently; we must
+        // ensure the pointer always points to the NEWEST key (highest expiresAt).
+        // Without atomicity, an older registration's second write can race ahead and
+        // overwrite the newer pointer — causing the next challenge to pin a stale key.
+        final String ptrKey = USER_CURRENT_SESSION_PREFIX + userId;
+        final String expKey = USER_CURRENT_SESSION_EXPIRES_PREFIX + userId;
+        final String finalSessionKeyId = sessionKeyId;
+        final long finalExpiresAt = expiresAt;
+
+        for (int attempt = 0; attempt < 3; attempt++) {
+            List<Object> txResult = redisTemplate.execute(new SessionCallback<List<Object>>() {
+                @Override
+                @SuppressWarnings("unchecked")
+                public List<Object> execute(RedisOperations operations) throws DataAccessException {
+                    operations.watch(expKey);
+                    Object storedExpObj = operations.opsForValue().get(expKey);
+                    long storedExp = storedExpObj instanceof Number
+                            ? ((Number) storedExpObj).longValue() : 0L;
+                    if (finalExpiresAt < storedExp) {
+                        // A newer registration already owns the pointer — don't overwrite
+                        operations.unwatch();
+                        return Collections.emptyList();
+                    }
+                    operations.multi();
+                    operations.opsForValue().set(ptrKey, finalSessionKeyId, finalTtl, TimeUnit.SECONDS);
+                    operations.opsForValue().set(expKey, finalExpiresAt, finalTtl, TimeUnit.SECONDS);
+                    return operations.exec(); // null = WATCH triggered (concurrent write), retry
+                }
+            });
+            if (txResult != null) break; // empty = no-op (older key), non-empty = success
+            log.debug("storeSessionKey: WATCH triggered for userId {}, retrying ({}/3)", userId, attempt + 1);
+        }
     }
 
     @Override
@@ -224,6 +265,7 @@ public class CertificateServiceImpl implements CertificateService {
         }
 
         redisTemplate.delete(USER_CURRENT_SESSION_PREFIX + userId);
+        redisTemplate.delete(USER_CURRENT_SESSION_EXPIRES_PREFIX + userId);
     }
 
     @Override
