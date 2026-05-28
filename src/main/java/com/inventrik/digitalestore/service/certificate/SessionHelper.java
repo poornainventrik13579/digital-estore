@@ -64,10 +64,11 @@ public class SessionHelper {
     public void performLogout(String sessionId) {
         if (sessionId == null) return;
 
-        // Always revoke cert by sessionId — doesn't depend on Redis session being alive
-        certificateService.revokeBySessionId(sessionId);
-
+        // Resolve the user BEFORE revoking. getSession's MySQL fallback keys off the ACTIVE cert,
+        // so revoking first can make this lookup miss and leave the session key orphaned in Redis.
         Optional<User> userOpt = getUserFromSession(sessionId);
+
+        certificateService.revokeBySessionId(sessionId);
         userOpt.ifPresent(user -> certificateService.removeSessionKey(user.getUserId()));
 
         certificateService.removeSession(sessionId);

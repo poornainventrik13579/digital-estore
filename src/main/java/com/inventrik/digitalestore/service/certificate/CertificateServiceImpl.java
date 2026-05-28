@@ -38,6 +38,11 @@ public class CertificateServiceImpl implements CertificateService {
     private static final Duration CHALLENGE_TTL = Duration.ofMillis(CHALLENGE_TTL_MS);
     private static final Duration SESSION_TTL = Duration.ofDays(30);
 
+    // When a session key is superseded we don't let it keep its full lifetime — it only needs
+    // to outlive any challenge already pinned to it (CHALLENGE_TTL). This grace covers that
+    // window with margin, then the stale key self-expires instead of lingering ~4h.
+    private static final long SUPERSEDED_KEY_GRACE_SECONDS = 120L;
+
     public CertificateServiceImpl(UserCertificateRepository repository,
             RedisTemplate<String, Object> redisTemplate,
             ObjectMapper objectMapper) {
@@ -220,9 +225,17 @@ public class CertificateServiceImpl implements CertificateService {
                         operations.unwatch();
                         return Collections.emptyList();
                     }
+                    // Key we're replacing. ptrKey is only ever rewritten together with expKey inside
+                    // this same MULTI, so the WATCH on expKey already guards this read for staleness.
+                    String supersededKeyId = (String) operations.opsForValue().get(ptrKey);
                     operations.multi();
                     operations.opsForValue().set(ptrKey, finalSessionKeyId, finalTtl, TimeUnit.SECONDS);
                     operations.opsForValue().set(expKey, finalExpiresAt, finalTtl, TimeUnit.SECONDS);
+                    if (supersededKeyId != null && !supersededKeyId.equals(finalSessionKeyId)) {
+                        // Invalidate the old key promptly instead of leaving it valid for ~4h.
+                        operations.expire(CERT_SESSION_KEY_PREFIX + supersededKeyId,
+                                SUPERSEDED_KEY_GRACE_SECONDS, TimeUnit.SECONDS);
+                    }
                     return operations.exec(); // null = WATCH triggered (concurrent write), retry
                 }
             });
