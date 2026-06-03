@@ -30,6 +30,12 @@ public interface ReviewRepository extends JpaRepository<Review, Review.ReviewPK>
     @Query("SELECT COUNT(r) FROM Review r WHERE r.tenantId = :tenantId AND r.productId = :productId AND r.status = '0'")
     Long countReviewsByProduct(@Param("tenantId") Integer tenantId, @Param("productId") String productId);
 
+    @Query("SELECT r.productId AS productId, AVG(r.rating) AS averageRating, COUNT(r) AS totalReviews " +
+           "FROM Review r WHERE r.tenantId = :tenantId AND r.productId IN (:productIds) AND r.status = '0' " +
+           "GROUP BY r.productId")
+    List<ProductRatingView> findRatingsByProductIds(@Param("tenantId") Integer tenantId,
+                                                    @Param("productIds") List<String> productIds);
+
     @Query("SELECT COUNT(r) FROM Review r WHERE r.tenantId = :tenantId AND r.productId = :productId AND r.rating = :rating AND r.status = '0'")
     Long countReviewsByProductAndRating(@Param("tenantId") Integer tenantId, @Param("productId") String productId, @Param("rating") Integer rating);
     

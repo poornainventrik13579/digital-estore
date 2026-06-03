@@ -1,6 +1,7 @@
 package com.inventrik.digitalestore.service.review;
 
 import com.inventrik.digitalestore.domain.review.Review;
+import com.inventrik.digitalestore.domain.user.User;
 import com.inventrik.digitalestore.dto.request.ReviewRequest;
 import com.inventrik.digitalestore.dto.response.ProductRatingResponse;
 import com.inventrik.digitalestore.dto.response.ReviewResponse;
@@ -15,6 +16,7 @@ import com.inventrik.digitalestore.service.user.UserService;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +41,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final IdGeneratorService idGeneratorService;
     
     @Override
+    @CacheEvict(value = "products", allEntries = true)
     public ReviewResponse createReview(Integer tenantId, String username, ReviewRequest reviewRequest) {
         log.info("Creating review for product {} by user {}", reviewRequest.getProductId(), username);
 
@@ -88,13 +91,8 @@ public class ReviewServiceImpl implements ReviewService {
 
         List<Review> reviews = reviewRepository.findByTenantIdAndProductIdAndStatusOrderByReviewDateDesc(
             tenantId, productId, "0");
-        
-        return reviews.stream()
-            .map(review -> {
-                var user = userService.getUser(tenantId, review.getUserId());
-                return mapToResponse(review, user.getUsername());
-            })
-            .collect(Collectors.toList());
+
+        return mapWithUsernames(tenantId, reviews);
     }
     
     @Override
@@ -125,6 +123,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
     
     @Override
+    @CacheEvict(value = "products", allEntries = true)
     public ReviewResponse updateReview(Integer tenantId, String reviewId, ReviewRequest reviewRequest, String username) {
         log.info("Updating review: {} by user: {}", reviewId, username);
 
@@ -149,6 +148,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
     
     @Override
+    @CacheEvict(value = "products", allEntries = true)
     public void deleteReview(Integer tenantId, String reviewId, String username) {
         log.info("Deleting review: {} by user: {}", reviewId, username);
 
@@ -186,23 +186,18 @@ public class ReviewServiceImpl implements ReviewService {
         
         ProductRatingResponse response = new ProductRatingResponse(productId, averageRating, totalReviews);
         response.setRatingDistribution(ratingDistribution);
-        
+
         return response;
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public List<ReviewResponse> getVerifiedReviews(Integer tenantId) {
         log.info("Fetching verified reviews for tenant: {}", tenantId);
         
         List<Review> reviews = reviewRepository.findVerifiedReviews(tenantId);
-        
-        return reviews.stream()
-            .map(review -> {
-                var user = userService.getUser(tenantId, review.getUserId());
-                return mapToResponse(review, user.getUsername());
-            })
-            .collect(Collectors.toList());
+
+        return mapWithUsernames(tenantId, reviews);
     }
     
     @Override
@@ -227,6 +222,24 @@ public class ReviewServiceImpl implements ReviewService {
     
 
     
+    // Batch-resolves usernames in one query so a list of reviews costs 2 round-trips
+    // (reviews + users) instead of one user lookup per review.
+    private List<ReviewResponse> mapWithUsernames(Integer tenantId, List<Review> reviews) {
+        List<String> userIds = reviews.stream()
+            .map(Review::getUserId)
+            .distinct()
+            .collect(Collectors.toList());
+
+        Map<String, String> usernames = userIds.isEmpty()
+            ? Map.of()
+            : userRepository.findByTenantIdAndUserIdIn(tenantId, userIds).stream()
+                .collect(Collectors.toMap(User::getUserId, User::getUsername));
+
+        return reviews.stream()
+            .map(review -> mapToResponse(review, usernames.get(review.getUserId())))
+            .collect(Collectors.toList());
+    }
+
     private ReviewResponse mapToResponse(Review review, String username) {
         return new ReviewResponse(
             review.getReviewId(),

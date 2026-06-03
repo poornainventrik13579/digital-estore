@@ -14,6 +14,8 @@ public interface UserRepository extends JpaRepository<User, User.UserPK> {
 
     Optional<User> findByTenantIdAndUserId(Integer tenantId, String userId);
 
+    List<User> findByTenantIdAndUserIdIn(Integer tenantId, List<String> userIds);
+
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId ORDER BY u.created DESC")
     List<User> findByTenantId(@Param("tenantId") Integer tenantId);
 

@@ -7,7 +7,9 @@ import com.inventrik.digitalestore.dto.response.PagedResponse;
 import com.inventrik.digitalestore.dto.response.ProductResponse;
 import com.inventrik.digitalestore.exception.ResourceNotFoundException;
 import com.inventrik.digitalestore.repository.CategoryRepository;
+import com.inventrik.digitalestore.repository.ProductRatingView;
 import com.inventrik.digitalestore.repository.ProductRepository;
+import com.inventrik.digitalestore.repository.ReviewRepository;
 import com.inventrik.digitalestore.repository.TenantRepository;
 import com.inventrik.digitalestore.service.IdGeneratorService;
 import com.inventrik.digitalestore.service.user.UserService;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,9 +37,10 @@ public class ProductServiceImpl implements ProductService {
     private final TenantRepository tenantRepository;
     private final IdGeneratorService idGeneratorService;
     private final UserService userService;
+    private final ReviewRepository reviewRepository;
     
     // Utility method to convert Entity to DTO
-    private ProductResponse mapToDTO(Product product) {
+    private ProductResponse mapToDTO(Product product, ProductRatingView rating) {
         return new ProductResponse(
             product.getProductId(),
             product.getTenantId(),
@@ -55,7 +59,9 @@ public class ProductServiceImpl implements ProductService {
             product.getCategoryId(),
             product.getStatus(),
             product.getCreated(),
-            product.getUpdated()
+            product.getUpdated(),
+            rating != null ? rating.getAverageRating() : 0.0,
+            rating != null ? rating.getTotalReviews() : 0L
         );
     }
     
@@ -76,8 +82,20 @@ public class ProductServiceImpl implements ProductService {
             productPage = productRepository.findByTenantId(tenantId, pageable);
         }
 
-        List<ProductResponse> products = productPage.getContent().stream()
-                .map(this::mapToDTO)
+        List<Product> content = productPage.getContent();
+        List<String> productIds = content.stream()
+                .map(Product::getProductId)
+                .collect(Collectors.toList());
+
+        // One grouped rating query for the whole page — keeps the list at 2 round-trips
+        // (products + ratings) regardless of page size, instead of N+1 per product.
+        Map<String, ProductRatingView> ratings = productIds.isEmpty()
+                ? Map.of()
+                : reviewRepository.findRatingsByProductIds(tenantId, productIds).stream()
+                        .collect(Collectors.toMap(ProductRatingView::getProductId, view -> view));
+
+        List<ProductResponse> products = content.stream()
+                .map(product -> mapToDTO(product, ratings.get(product.getProductId())))
                 .collect(Collectors.toList());
 
         return PagedResponse.of(products, page, size, productPage.getTotalElements());
@@ -88,7 +106,9 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse getProduct(Integer tenantId, String productId) {
         Product product = productRepository.findByTenantIdAndProductId(tenantId, productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
-        return mapToDTO(product);
+        ProductRatingView rating = reviewRepository.findRatingsByProductIds(tenantId, List.of(productId))
+                .stream().findFirst().orElse(null);
+        return mapToDTO(product, rating);
     }
 
     @Override
@@ -129,8 +149,8 @@ public class ProductServiceImpl implements ProductService {
         product.setUpdated(LocalDateTime.now());
         
         Product savedProduct = productRepository.save(product);
-        
-        return mapToDTO(savedProduct);
+
+        return mapToDTO(savedProduct, null);
     }
     
     @Override
@@ -192,8 +212,10 @@ public class ProductServiceImpl implements ProductService {
         product.setUpdated(LocalDateTime.now());
         
         Product updatedProduct = productRepository.save(product);
-        
-        return mapToDTO(updatedProduct);
+
+        ProductRatingView rating = reviewRepository.findRatingsByProductIds(tenantId, List.of(productId))
+                .stream().findFirst().orElse(null);
+        return mapToDTO(updatedProduct, rating);
     }
     
     @Override

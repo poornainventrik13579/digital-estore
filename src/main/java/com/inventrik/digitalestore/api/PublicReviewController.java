@@ -45,7 +45,7 @@ public class PublicReviewController {
         ProductRatingResponse rating = reviewService.getProductRating(tenantId, productId);
         return ResponseEntity.ok(rating);
     }
-    
+
     @GetMapping("/verified")
     @Operation(summary = "Get verified reviews")
     public ResponseEntity<List<ReviewResponse>> getVerifiedReviews(
